@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>BraeNova StockMaster</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0c0c0c; color: #ffffff; font-family: 'Inter', system-ui, -apple-system; overflow-x: hidden; padding-bottom: 20px; }
+        .summary-card { background: linear-gradient(160deg, #1a1a1a, #050505); border: 1px solid #2a2a2a; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .text-kina { color: #f91a8e; font-weight: 800; }
+        .btn-cart-add { background: #6f42c1; color: white; border: none; width: 100%; border-radius: 12px; padding: 12px; font-weight: 800; }
+        
+        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 12px; -webkit-overflow-scrolling: touch; }
+        .category-scroll::-webkit-scrollbar { height: 4px; }
+        .category-scroll::-webkit-scrollbar-track { background: #1a1a1a; border-radius: 10px; }
+        .category-scroll::-webkit-scrollbar-thumb { background: #f91a8e; border-radius: 10px; }
+        
+        .chip { padding: 8px 18px; border-radius: 20px; background: #1a1a1a; border: 1px solid #333; color: #888; white-space: nowrap; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+        .chip.active { background: #f91a8e; color: white; border-color: #f91a8e; box-shadow: 0 5px 15px rgba(249, 26, 142, 0.3); }
+        
+        .stock-progress { height: 4px; border-radius: 2px; background-color: #222; margin-top: 8px; }
+        .search-box { background: #151515; border: 1px solid #333; border-radius: 16px; color: white; padding: 15px 50px 15px 20px; }
+        .cart-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #333; padding: 15px 20px; z-index: 1050; box-shadow: 0 -10px 30px rgba(0,0,0,0.8); display: none; }
+        .cart-count { background: #ff5252; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; margin-right: 8px; }
+        .badge-category { background: rgba(249, 26, 142, 0.1); color: #f91a8e; border: 1px solid rgba(249, 26, 142, 0.2); font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .stock-count { font-size: 0.85rem; font-weight: 700; color: #fff; }
+        .expiry-label { padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; display: inline-block; margin-top: 4px; }
+        .status-soon { background: #ffb300; color: #000; }
+        
+        .alert-banner { background: #ff5252; color: white; text-align: center; padding: 8px; font-size: 0.8rem; font-weight: 800; border-radius: 10px; margin-bottom: 20px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        
+        .chart-container { background: #111; border: 1px solid #222; border-radius: 24px; padding: 20px; margin-bottom: 20px; }
+        .chart-title { font-size: 0.7rem; color: #555; text-transform: uppercase; font-weight: 900; margin-bottom: 12px; letter-spacing: 1px; }
+        
+        .legend-key { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+        .key-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .key-label { font-size: 0.65rem; color: #888; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid px-3 py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0 fw-900" style="color: #f91a8e;">BRAENOVA <span class="text-white">STOCKMASTER</span></h3>
+            <div class="d-flex gap-2">
+                {% if session.role == 'owner' %}
+                <a href="/reports" class="btn btn-sm btn-outline-light px-3 rounded-pill fw-bold border-secondary">REPORTS</a>
+                {% endif %}
+                <a href="/logout" class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold">LOGOUT</a>
+            </div>
+        </div>
+
+        {% if session.role == 'owner' %}
+        <!-- Dashboard Live Analytics -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="summary-card h-100">
+                    <div class="p-4 border-bottom border-dark d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="d-block text-muted small text-uppercase fw-bold">Revenue Dashboard</span>
+                            <h2 class="text-kina mb-0 display-6 fw-bold">{{ summary.expected_cash | kina }}</h2>
+                        </div>
+                        <button class="btn btn-danger btn-sm px-3 rounded-pill fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#closeShopModal">CLOSE SHOP</button>
+                    </div>
+                    <div class="p-3">
+                        <div class="chart-title"><span style="color: #f91a8e;">●</span> Sales Trend (7 Days)</div>
+                        <canvas id="dailySalesChart" style="max-height: 120px;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-container h-100">
+                    <div class="chart-title"><span style="color: #ffb300;">●</span> Hourly Activity (Rush Hours)</div>
+                    <canvas id="hourlySalesChart" style="max-height: 150px;"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="chart-container h-100 text-center">
+                    <div class="chart-title text-start">Top Selling Categories</div>
+                    <canvas id="categorySalesChart" style="max-height: 140px; margin: auto;"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if expired_items %}
+        <div class="alert-banner" onclick="document.getElementById('pills-mgmt-tab').click()">
+            ⚠️ {{ expired_items|length }} FRESHNESS ALERTS! Action Required in STOCK tab.
+        </div>
+        {% endif %}
+
+        <ul class="nav nav-pills nav-fill gap-2 mb-4 bg-dark bg-opacity-25 p-2 rounded-4" id="pills-tab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="pills-sales-tab" data-bs-toggle="pill" data-bs-target="#pills-sales" style="border-radius: 12px;">POS</button></li>
+            <li class="nav-item"><button class="nav-link" id="pills-dinau-tab" data-bs-toggle="pill" data-bs-target="#pills-dinau" style="border-radius: 12px;">DINAU</button></li>
+            {% if session.role == 'owner' %}
+            <li class="nav-item"><button class="nav-link" id="pills-mgmt-tab" data-bs-toggle="pill" data-bs-target="#pills-mgmt" style="border-radius: 12px;">STOCK</button></li>
+            {% endif %}
+        </ul>
+
+        <div class="tab-content">
+            <!-- TAB: POS -->
+            <div class="tab-pane fade show active" id="pills-sales">
+                <input type="text" id="itemSearch" class="form-control search-box mb-3" placeholder="Search product..." onkeyup="filterPOS()">
+                <div class="category-scroll mb-4" id="categoryTabs">
+                    <div class="chip active" onclick="setCategory('All')">All Items</div>
+                    {% for cat in categories %}
+                    <div class="chip" onclick="setCategory('{{ cat.name }}')">{{ cat.name }}</div>
+                    {% endfor %}
+                </div>
+                <div id="itemsContainer">
+                    {% for item in inventory %}
+                    <div class="item-card card bg-dark border-secondary mb-3 shadow rounded-4 overflow-hidden" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}">
+                        <div class="card-body p-3">
+                            <div class="d-flex gap-3 mb-3">
+                                {% if item.image_url %}
+                                <img src="{{ item.image_url }}" style="width: 75px; height: 75px; border-radius: 12px; object-fit: cover;">
+                                {% else %}
+                                <div style="width: 75px; height: 75px; border-radius: 12px; background: #1a1a1a; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #444;">No Img</div>
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div><h6 class="mb-0 fw-bold">{{ item.item_name }}</h6><span class="badge-category">{{ item.category }}</span></div>
+                                        <div class="text-kina fw-bold fs-5">{{ item.unit_price | kina }}</div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="stock-count text-muted">{{ item.quantity }} in stock</div>
+                                        {% if item.expiry_date %}
+                                        <div class="expiry-label status-soon">Exp: {{ item.expiry_date }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="stock-progress">
+                                        {% set percent = (item.quantity / (item.min_threshold * 3) * 100) | int %}
+                                        <div class="progress-bar {% if item.quantity < item.min_threshold %}bg-danger{% else %}bg-primary{% endif %}" style="width: {{ [percent, 100]|min }}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-cart-add py-3" onclick="addToCart({{ item.id }}, '{{ item.item_name }}', {{ item.unit_price }}, {{ item.quantity }})" {% if item.quantity == 0 %}disabled{% endif %}>
+                                {% if item.quantity == 0 %}OUT OF STOCK{% else %}+ ADD TO CART{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- TAB: DINAU -->
+            <div class="tab-pane fade" id="pills-dinau">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">Active Debts</h5>
+                    {% if session.role == 'owner' %}
+                    <button type="button" onclick="clearPaidHistory()" class="btn btn-sm btn-outline-warning rounded-pill px-3">Clear Paid History</button>
+                    {% endif %}
+                </div>
+                <div class="list-group gap-2">
+                    {% set unpaid_count = 0 %}
+                    {% for record in dinau if record.status == 'unpaid' %}
+                    <div class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-center p-3 rounded-4">
+                        <div><div class="text-light fw-bold">{{ record.customer_name }}</div><small class="text-muted">Last Updated {{ record.record_date.strftime('%d %b') }}</small></div>
+                        <div class="text-end">
+                            <div class="text-kina fw-bold">{{ record.amount | kina }}</div>
+                            <form action="/api/dinau/status" method="POST"><input type="hidden" name="record_id" value="{{ record.id }}"><input type="hidden" name="status" value="paid"><button type="submit" class="btn btn-sm btn-success rounded-pill px-4 mt-1 fw-bold">Settle</button></form>
+                        </div>
+                    </div>
+                    {% set unpaid_count = 1 %}
+                    {% endfor %}
+                    
+                    {% if not unpaid_count %}
+                    <div class="text-center py-4 text-muted small">No active debts found.</div>
+                    {% endif %}
+
+                    <div id="recentlySettledContainer">
+                        <hr class="border-secondary my-4">
+                        <h6 class="text-muted small text-uppercase fw-bold mb-3">Recently Settled</h6>
+                        {% for record in dinau if record.status == 'paid' %}
+                        <div class="list-group-item bg-black bg-opacity-25 border-dark d-flex justify-content-between align-items-center p-2 rounded-3 opacity-50 mb-2">
+                            <div><span class="text-muted">{{ record.customer_name }}</span></div>
+                            <span class="text-muted small">Settled: {{ record.amount | kina }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: STOCK MANAGEMENT -->
+            {% if session.role == 'owner' %}
+            <div class="tab-pane fade" id="pills-mgmt">
+                {% if expired_items %}
+                <div class="card bg-dark border-danger mb-4 shadow rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="text-danger mb-3 fw-bold">⚠️ Freshness Monitor</h5>
+                        <div class="list-group gap-2">
+                            {% for e in expired_items %}
+                            <div class="list-group-item bg-black border-dark rounded-3 d-flex justify-content-between align-items-center">
+                                <div><span class="fw-bold">{{ e.item_name }}</span><br>
+                                     <small class="{% if e.days_left <= 0 %}text-danger{% else %}text-warning{% endif %}">
+                                         {% if e.days_left <= 0 %}EXPIRED {{ e.days_left|abs }} days ago{% else %}Expiring in {{ e.days_left }} days{% endif %}
+                                     </small>
+                                </div>
+                                <span class="badge bg-danger rounded-pill">{{ e.quantity }} units</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card bg-dark border-warning mb-4 rounded-4">
+                    <div class="card-body p-3">
+                        <h6 class="text-warning mb-3">Create New Category</h6>
+                        <form action="/category/add" method="POST" class="d-flex gap-2">
+                            <input type="text" name="category_name" class="form-control bg-black border-secondary" placeholder="e.g. Toys, Frozen..." required>
+                            <button type="submit" class="btn btn-warning fw-bold text-dark px-4">ADD</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card bg-dark border-primary mb-4 rounded-4 shadow-lg">
+                    <div class="card-body p-4">
+                        <h5 class="text-primary mb-3">Add Stock Item</h5>
+                        <form action="/inventory/add" method="POST" enctype="multipart/form-data" class                             <div class="col-12"><input type="text" name="item_name" class="form-control" placeholder="Item Name" title="Item Name" required></div>
+                            <div class="col-12">
+                                <select name="category" class="form-select bg-black border-secondary" title="Category" required>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.name }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6"><input type="number" step="0.01" name="cost" class="form-control" placeholder="Cost Price" title="Cost Price" required></div>
+                            <div class="col-6"><input type="number" step="0.01" name="price" class="form-control" placeholder="Selling Price" title="Selling Price" required></div>
+                            <div class="col-6"><label class="small text-muted" for="qty_input">Stock Count</label><input type="number" id="qty_input" name="quantity" class="form-control" placeholder="Quantity" title="Quantity" required></div>
+                            <div class="col-6"><label class="small text-muted" for="expiry_input">Expiry Date</label><input type="date" id="expiry_input" name="expiry_date" class="form-control" title="Expiry Date"></div>
+                            <div class="col-6"><input type="number" name="threshold" class="form-control" placeholder="Min Alert" title="Minimum Threshold" required></div>
+                            <div class="col-6"><input type="file" name="image" class="form-control" placeholder="Product Image" title="Product Image" accept="image/*"></div>ge/*"></div>
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-4 mt-3">REGISTER PRODUCT</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- UI: Cart & Checkout -->
+    <div class="cart-footer" id="cartFooter">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><span class="cart-count" id="cartCount">0</span><b>In Cart</b></div>
+            <div class="text-kina fs-4" id="cartTotal">K0.00</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary flex-grow-1 fw-bold rounded-3 py-3" onclick="clearCart()">CLEAR</button>
+            <button class="btn btn-success flex-grow-1 fw-bold rounded-3 py-3" onclick="showCheckoutModal()">CHECKOUT</button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-primary rounded-4 p-4 text-center">
+                <small class="text-muted">Total Due</small>
+                <h1 class="text-kina display-4 fw-bold mb-4" id="modalTotal">K0.00</h1>
+                <input type="number" step="0.01" id="cashReceived" class="form-control form-control-lg bg-black text-white text-center mb-3" placeholder="Cash Received" onkeyup="calculateChange()">
+                <div class="d-flex justify-content-between p-3 bg-black rounded-3 mb-4"><span>Change:</span><span class="fw-bold text-success" id="changeOutput">K0.00</span></div>
+                <div class="d-grid gap-3">
+                    <button class="btn py-3 fw-bold fs-5 text-white bg-success bg-opacity-50" onclick="processCheckout('cash')" style="border: 2px solid rgba(0, 255, 163, 0.5);">CASH PAY COMPLETE</button>
+                    <input type="text" id="checkoutCustomer" class="form-control bg-black border-warning text-center" placeholder="Customer for Dinau">
+                    <button class="btn py-3 fw-bold text-white fs-5 bg-danger bg-opacity-50" onclick="processCheckout('dinau')" style="border: 2px solid rgba(255, 82, 82, 0.5);">RECORD DINAU</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="closeShopModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-primary rounded-4">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="mb-4 fw-bold">Daily Cash Reconciliation</h5>
+                    <form action="/reports/close" method="POST">
+                        <input type="number" step="0.01" name="actual_cash" class="form-control form-control-lg text-center bg-black border-danger text-white mb-4" placeholder="K0.00" required>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger py-3 fw-bold rounded-3">CONFIRM & CLOSE SHOP</button>
+                            <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let cart = [];
+        let activeCategory = 'All';
+
+        // Tab Persistence
+        document.addEventListener('DOMContentLoaded', () => {
+            const lastTab = localStorage.getItem('activeTab');
+            if (lastTab) {
+                const triggerEl = document.querySelector(`#${lastTab}`);
+                if (triggerEl) bootstrap.Tab.getOrCreateInstance(triggerEl).show();
+            }
+        });
+        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', (e) => {
+                localStorage.setItem('activeTab', e.target.id);
+            });
+        });
+
+        async function clearPaidHistory() {
+            if (!confirm('Delete all settled payment records forever?')) return;
+            const res = await fetch('/api/dinau/clear_history', { method: 'POST' });
+            if (res.ok) {
+                document.getElementById('recentlySettledContainer').innerHTML = '<h6 class="text-muted small text-uppercase fw-bold mb-3">Recently Settled</h6><div class="text-center py-2 text-muted small">History Cleared.</div>';
+            }
+        }
+
+        function setCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.chip').forEach(c => {
+                c.classList.toggle('active', c.innerText === cat || (cat === 'All' && c.innerText === 'All Items'));
+            });
+            filterPOS();
+        }
+
+        function filterPOS() {
+            const query = document.getElementById('itemSearch').value.toLowerCase();
+            document.querySelectorAll('.item-card').forEach(item => {
+                const matchName = item.getAttribute('data-name').includes(query);
+                const matchCat = activeCategory === 'All' || item.getAttribute('data-category') === activeCategory;
+                item.style.display = matchName && matchCat ? 'block' : 'none';
+            });
+        }
+
+        function addToCart(id, name, price, stock) {
+            const i = cart.find(x => x.id === id);
+            if (i) { if(i.qty < stock) i.qty++; } else { cart.push({id, name, price, qty: 1}); }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const footer = document.getElementById('cartFooter');
+            const total = cart.reduce((s, x) => s + (x.price * x.qty), 0);
+            document.getElementById('cartCount').innerText = cart.length;
+            document.getElementById('cartTotal').innerText = `K${total.toFixed(2)}`;
+            document.getElementById('modalTotal').innerText = `K${total.toFixed(2)}`;
+            footer.style.display = cart.length > 0 ? 'block' : 'none';
+            window.currentTotal = total;
+        }
+
+        function clearCart() { cart = []; updateCartUI(); }
+        function showCheckoutModal() { document.getElementById('cashReceived').value = ''; calculateChange(); new bootstrap.Modal(document.getElementById('checkoutModal')).show(); }
+        function calculateChange() { const r = parseFloat(document.getElementById('cashReceived').value) || 0; const c = r - (window.currentTotal || 0); document.getElementById('changeOutput').innerText = c >= 0 ? `K${c.toFixed(2)}` : 'K0.00'; }
+
+        let errorTimeout;
+        function showError(msg, title = "ERROR") {
+            const pop = document.getElementById('errorPop');
+            if (document.getElementById('errorTitle')) document.getElementById('errorTitle').innerText = title;
+            document.getElementById('errorMsg').innerText = msg;
+            pop.classList.add('show');
+            if (errorTimeout) clearTimeout(errorTimeout);
+            errorTimeout = setTimeout(() => pop.classList.remove('show'), 2500);
+        }
+
+        async function processCheckout(method) {
+            const cst = document.getElementById('checkoutCustomer').value;
+            if (method === 'dinau' && !cst) return showError("Enter customer name!", "INPUT REQUIRED");
+            
+            try {
+                const res = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ items: cart.map(i => ({id: i.id, qty: i.qty, total_price: i.price * i.qty})), payment_method: method, customer_name: cst })
+                });
+                const result = await res.json();
+                if (res.ok) {
+                    const pop = document.getElementById('successPop');
+                    pop.classList.add('show');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showError(result.message || "Checkout failed", "SERVER ERROR");
+                }
+            } catch (e) {
+                showError(e.message, "CONNECTION ERROR");
+            }
+        }
+
+        {% if session.role == 'owner' %}
+        // Daily Trend Chart - NEON PURPLE/PINK
+        new Chart(document.getElementById('dailySalesChart'), {
+            type: 'line',
+            data: {
+                labels: [{% for d in chart_data %}'{{ d.date.strftime("%d %b") }}',{% endfor %}],
+                datasets: [{ 
+                    label: 'Daily Sales',
+                    data: [{% for d in chart_data %}{{ d.total }},{% endfor %}], 
+                    borderColor: '#f91a8e', 
+                    tension: 0.4, 
+                    fill: true, 
+                    backgroundColor: 'rgba(249, 26, 142, 0.1)', 
+                    pointRadius: 6,
+                    pointBackgroundColor: '#f91a8e',
+                    borderWidth: 3
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666', font: { size: 10 } } } } }
+        });
+
+        // Hourly Activity Chart - SUNSET ORANGE
+        new Chart(document.getElementById('hourlySalesChart'), {
+            type: 'bar',
+            data: {
+                labels: [{% for h in hourly_data %}'{{ h.hour }}:00',{% endfor %}],
+                datasets: [{ 
+                    label: 'Sales Volume',
+                    data: [{% for h in hourly_data %}{{ h.total }},{% endfor %}], 
+                    backgroundColor: '#ffb300',
+                    borderRadius: 8,
+                    hoverBackgroundColor: '#ffd000'
+                }]
+            },
+            options: { 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1a1a1a', titleColor: '#ffb300', bodyColor: '#fff', displayColors: false }
+                }, 
+                scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#666', font: { size: 10 } } } } 
+            }
+        });
+
+        // Category Pie Chart - RAINBOW PALETTE
+        new Chart(document.getElementById('categorySalesChart'), {
+            type: 'doughnut',
+            data: {
+                labels: [{% for c in cat_dist %}'{{ c.category }}',{% endfor %}],
+                datasets: [{ 
+                    data: [{% for c in cat_dist %}{{ c.total }},{% endfor %}], 
+                    backgroundColor: ['#00ffa3', '#f91a8e', '#0dcaf0', '#ffb300', '#6f42c1', '#fd7e14'],
+                    borderWidth: 2,
+                    borderColor: '#111'
+                }]
+            },
+            options: { 
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'right', 
+                        labels: { 
+                            color: '#ccc', 
+                            boxWidth: 12, 
+                            padding: 15,
+                            font: { size: 11, weight: 'bold' } 
+                        } 
+                    } 
+                }, 
+                cutout: '75%',
+                radius: '90%'
+            }
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

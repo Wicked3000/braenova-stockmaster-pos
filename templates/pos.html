@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS - BraeNova StockMaster</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#f91a8e">
+    <style>
+        body { background-color: #0c0c0c; color: #ffffff; font-family: 'Inter', system-ui, -apple-system; padding-top: 75px; padding-bottom: 90px; }
+        .app-header { position: fixed; top: 0; left: 0; right: 0; height: 65px; background: #111; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1100; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-img { height: 45px; width: auto; border-radius: 8px; border: 1px solid #333; }
+        .brand-text { color: #fff; font-weight: 900; letter-spacing: -0.5px; font-size: 1.1rem; line-height: 1.1; }
+        .brand-text span { color: #f91a8e; display: block; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #111; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; box-shadow: 0 -5px 25px rgba(0,0,0,0.5); height: 75px; align-items: center; }
+        .nav-btn { color: #555; text-decoration: none; text-align: center; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; flex-grow: 1; display: flex; flex-direction: column; align-items: center; }
+        .nav-btn.active { color: #f91a8e; }
+        .nav-icon { font-size: 1.7rem; display: block; line-height: 1; margin-bottom: 4px; }
+        
+        .category-scroll { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 12px; }
+        .chip { padding: 8px 18px; border-radius: 20px; background: #1a1a1a; border: 1px solid #333; color: #888; white-space: nowrap; cursor: pointer; }
+        .chip.active { background: #f91a8e; color: white; border-color: #f91a8e; }
+        
+        .item-card { background: #151515; border: 1px solid #222; border-radius: 20px; overflow: hidden; margin-bottom: 15px; position: relative; }
+        .item-card.out-of-stock { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
+        .sold-out-overlay { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); 
+            border: 4px solid #ff5252; color: #ff5252; padding: 5px 15px; 
+            font-weight: 900; font-size: 1.5rem; letter-spacing: 2px;
+            z-index: 10; background: rgba(0,0,0,0.8); border-radius: 10px;
+            display: none;
+        }
+        .item-card.out-of-stock .sold-out-overlay { display: block; }
+        
+        .btn-cart-add { background: #6f42c1; color: white; border: none; width: 100%; border-radius: 12px; padding: 12px; font-weight: 800; transition: transform 0.1s; }
+        .btn-cart-add:active { transform: scale(0.95); }
+        .text-kina { color: #f91a8e; font-weight: 800; }
+        .cart-footer { position: fixed; bottom: 75px; left: 0; right: 0; background: #111; border-top: 1px solid #333; padding: 15px 20px; z-index: 1050; display: none; box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
+        .cart-count { background: #ff5252; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; margin-right: 8px; }
+        .ownership-tag { text-align: center; padding: 20px 10px; opacity: 0.4; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; color: #fff; }
+        
+        .calc-box { background: #000; border-radius: 15px; padding: 15px; border: 1px solid #333; margin-top: 15px; }
+        .change-text { color: #00ff00; font-family: monospace; font-size: 1.5rem; }
+
+        /* Success Pop Style */
+        #successPop, #errorPop { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 2000; 
+            display: none; align-items: center; justify-content: center; 
+            flex-direction: column; text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .pop-card { 
+            background: #111; border: 2px solid #00ff00; border-radius: 30px; 
+            padding: 40px; box-shadow: 0 0 50px rgba(0, 255, 0, 0.2);
+            transform: scale(0.8); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #successPop.show, #errorPop.show { display: flex; }
+        #successPop.show .pop-card, #errorPop.show .pop-card { transform: scale(1); }
+        .check-icon { font-size: 5rem; color: #00ff00; margin-bottom: 20px; display: block; }
+        
+        #errorPop .pop-card { border-color: #ff5252; box-shadow: 0 0 50px rgba(255, 82, 82, 0.2); }
+        .error-icon { font-size: 5rem; color: #ff5252; margin-bottom: 20px; display: block; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <a href="/" class="brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+            <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <button id="installBtn" class="btn btn-sm btn-outline-warning rounded-pill fw-bold border-opacity-25" style="display: none;">INSTALL APP</button>
+            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25" style="width: 40px; height: 40px; padding: 0;">🔄</button>
+            <a href="/logout" class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold">LOGOUT</a>
+        </div>
+    </header>
+
+    <div class="container py-3">
+        <h4 class="fw-900 mb-4" style="color: #f91a8e;">Point of Sale</h4>
+        <input type="text" id="itemSearch" class="form-control mb-3 bg-dark border-secondary text-white py-3 rounded-4" placeholder="Search product..." onkeyup="filterPOS()">
+        <div class="category-scroll mb-4">
+            <div class="chip active" onclick="setCategory('All')">All Items</div>
+            {% for cat in categories %}<div class="chip" onclick="setCategory('{{ cat.name }}')">{{ cat.name }}</div>{% endfor %}
+        </div>
+        <div id="itemsContainer">
+            {% for item in inventory %}
+            <div class="item-card card p-3 {% if item.quantity <= 0 %}out-of-stock{% endif %}" data-id="{{ item.id }}" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}">
+                <div class="sold-out-overlay">SOLD OUT</div>
+                <div class="d-flex gap-3 mb-3">
+                    {% if item.image_url %}<img src="{{ item.image_url }}" style="width: 70px; height: 70px; border-radius: 12px; object-fit: cover;">{% else %}<div style="width: 70px; height: 70px; border-radius: 12px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #444;">No Img</div>{% endif %}
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between"><h6 class="mb-0 fw-bold">{{ item.item_name }}</h6><div class="text-kina">{{ item.unit_price | kina }}</div></div>
+                        <small class="text-muted stock-count">{{ item.quantity }} in stock</small>
+                    </div>
+                </div>
+                <button class="btn btn-cart-add" onclick="addToCart({{ item.id }})" {% if item.quantity <= 0 %}disabled{% endif %}>{% if item.quantity <= 0 %}OUT OF STOCK{% else %}+ ADD TO CART{% endif %}</button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="ownership-tag pb-5">Created and Owned by<br><span style="color: #f91a8e;">BraeNova IT Solutions</span></div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-success rounded-4">
+                <div class="modal-body p-4">
+                    <h5 class="fw-bold mb-3 text-success">Complete Sale</h5>
+                    <div id="orderSummary" class="mb-4 small text-muted"></div>
+                    <div class="d-flex justify-content-between mb-2"><span class="fs-5 fw-bold">TOTAL:</span><span class="fs-5 fw-bold text-kina" id="modalTotal">K0.00</span></div>
+                    
+                    <div class="mb-3">
+                        <label class="small text-muted mb-2">Payment Method</label>
+                        <select id="paymentMethod" class="form-select bg-black text-white border-secondary mb-3" onchange="toggleCustomer()">
+                            <option value="cash">💵 Cash Payment</option>
+                            <option value="card">💳 Card / EFTPOS</option>
+                            <option value="mobile">📱 Mobile Transfer (Kina/BSP)</option>
+                            <option value="dinau">📖 Dinau (Credit)</option>
+                        </select>
+                        <input type="text" id="customerName" class="form-control bg-black text-white border-secondary" placeholder="Customer Name" style="display:none;">
+                    </div>
+
+                    <div id="cashCalcBox" class="calc-box mb-4">
+                        <label class="small text-muted mb-2">Cash Received (Kina)</label>
+                        <input type="number" id="cashReceived" class="form-control bg-black text-white border-success mb-3 py-3 fs-3 fw-bold" placeholder="0.00" onkeyup="calculateChange()">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold">CHANGE:</span>
+                            <span class="change-text fw-bold" id="changeAmount">K0.00</span>
+                        </div>
+                    </div>
+
+                    <button id="confirmBtn" class="btn btn-success w-100 py-3 fw-bold rounded-3 text-white" onclick="submitCheckout()">CONFIRM TRANSACTION</button>
+                    <button class="btn btn-dark w-100 mt-2 py-2 small opacity-50" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Pop -->
+    <div id="successPop">
+        <div class="pop-card">
+            <span class="check-icon">✓</span>
+            <h2 class="fw-bold text-white">SUCCESS</h2>
+            <p class="text-muted mb-0">Transaction Completed</p>
+        </div>
+    </div>
+
+    <div class="nav-bar">{% if session.role == 'owner' %}<a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>{% endif %}<a href="/pos" class="nav-btn active"><span class="nav-icon">🛒</span>POS</a><a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a><a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>{% if session.role == 'owner' %}<a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>{% endif %}</div>
+    
+    <div class="cart-footer" id="cartFooter">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div><span class="cart-count" id="cartCount">0</span><b>In Cart</b></div>
+            <div class="text-kina fs-4" id="cartTotal">K0.00</div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-secondary flex-grow-1 fw-bold rounded-3 py-3" onclick="clearCart()">CLEAR</button>
+            <button class="btn btn-success flex-grow-1 fw-bold rounded-3 py-3" onclick="openCheckout()">CHECKOUT</button>
+        </div>
+    </div>
+
+    <!-- Error Pop -->
+    <div id="errorPop">
+        <div class="pop-card">
+            <span class="error-icon">⚠</span>
+            <h2 class="fw-bold text-white" id="errorTitle">ERROR</h2>
+            <p class="text-white opacity-50 mb-0" id="errorMsg">Something went wrong</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js');
+        }
+
+        let deferredPrompt;
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        let cart = [];
+        let currentTotal = 0;
+        let stockRegistry = {}; // Centralized stock state
+        const checkoutModal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+
+        // Initialize registry from pre-rendered data
+        document.querySelectorAll('.item-card').forEach(card => {
+            const id = parseInt(card.getAttribute('data-id'));
+            const name = card.querySelector('h6').innerText;
+            const price = parseFloat(card.querySelector('.text-kina').innerText.replace('K', ''));
+            const qty = parseInt(card.querySelector('.stock-count').innerText);
+            stockRegistry[id] = { name, price, qty };
+        });
+
+        let errorTimeout;
+        function showError(msg, title = "LIMIT REACHED") {
+            const pop = document.getElementById('errorPop');
+            document.getElementById('errorTitle').innerText = title;
+            document.getElementById('errorMsg').innerText = msg;
+            pop.classList.add('show');
+            
+            if (errorTimeout) clearTimeout(errorTimeout);
+            errorTimeout = setTimeout(() => {
+                pop.classList.remove('show');
+                errorTimeout = null;
+            }, 2500);
+        }
+
+        function addToCart(id) {
+            const registryItem = stockRegistry[id];
+            if (!registryItem) return;
+
+            const itemInCart = cart.find(i => i.id === id);
+            if (itemInCart) {
+                if (itemInCart.qty < registryItem.qty) {
+                    itemInCart.qty++;
+                } else {
+                    showError("LIMIT REACHED: No more stock left");
+                }
+            } else {
+                if (registryItem.qty > 0) {
+                    cart.push({ id, name: registryItem.name, price: registryItem.price, qty: 1 });
+                } else {
+                    showError("SOLD OUT: Cannot add to cart");
+                }
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const count = cart.reduce((acc, curr) => acc + curr.qty, 0);
+            currentTotal = cart.reduce((acc, curr) => acc + (curr.price * curr.qty), 0);
+            
+            document.getElementById('cartCount').innerText = count;
+            document.getElementById('cartTotal').innerText = formatKina(currentTotal);
+            document.getElementById('cartFooter').style.display = count > 0 ? 'block' : 'none';
+        }
+
+        function formatKina(val) { return 'K' + parseFloat(val).toFixed(2); }
+
+        function clearCart() { cart = []; updateCartUI(); }
+
+        function filterPOS() {
+            const q = document.getElementById('itemSearch').value.toLowerCase();
+            document.querySelectorAll('.item-card').forEach(card => {
+                const name = card.getAttribute('data-name');
+                card.style.display = name.includes(q) ? 'block' : 'none';
+            });
+        }
+
+        function setCategory(cat) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            if (event) event.target.classList.add('active');
+            
+            document.querySelectorAll('.item-card').forEach(card => {
+                if (cat === 'All' || card.getAttribute('data-category') === cat) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function toggleCustomer() {
+            const method = document.getElementById('paymentMethod').value;
+            const btn = document.getElementById('confirmBtn');
+            document.getElementById('customerName').style.display = method === 'dinau' ? 'block' : 'none';
+            document.getElementById('cashCalcBox').style.display = method === 'cash' ? 'block' : 'none';
+            
+            // Dynamic Button Coloring
+            btn.className = "btn w-100 py-3 fw-bold rounded-3 text-white";
+            if (method === 'dinau') {
+                btn.classList.add('bg-danger', 'bg-opacity-50');
+                btn.style.border = "2px solid rgba(255, 82, 82, 0.5)";
+                btn.innerText = "RECORD DINAU SALE";
+            } else if (method === 'cash') {
+                btn.classList.add('bg-success', 'bg-opacity-50');
+                btn.style.border = "2px solid rgba(0, 255, 163, 0.5)";
+                btn.innerText = "CONFIRM CASH SALE";
+            } else {
+                btn.classList.add('btn-primary');
+                btn.style.border = "none";
+                btn.innerText = "CONFIRM TRANSACTION";
+            }
+        }
+
+        function openCheckout() {
+            const summary = cart.map(i => `${i.qty}x ${i.name}`).join(', ');
+            document.getElementById('orderSummary').innerText = summary;
+            document.getElementById('modalTotal').innerText = formatKina(currentTotal);
+            document.getElementById('cashReceived').value = '';
+            document.getElementById('changeAmount').innerText = 'K0.00';
+            toggleCustomer();
+            checkoutModal.show();
+        }
+
+        function calculateChange() {
+            const received = parseFloat(document.getElementById('cashReceived').value) || 0;
+            const change = received - currentTotal;
+            document.getElementById('changeAmount').innerText = formatKina(Math.max(0, change));
+            document.getElementById('changeAmount').style.color = change >= 0 ? '#00ff00' : '#ff5252';
+        }
+
+        async function syncStock() {
+            try {
+                const response = await fetch('/api/inventory');
+                const data = await response.json();
+                
+                data.forEach(item => {
+                    // Update global registry
+                    stockRegistry[item.id] = { 
+                        name: item.item_name, 
+                        price: item.unit_price, 
+                        qty: item.quantity 
+                    };
+
+                    const card = document.querySelector(`.item-card[data-id="${item.id}"]`);
+                    if (card) {
+                        const stockEl = card.querySelector('.stock-count');
+                        if (stockEl) stockEl.innerText = `${item.quantity} in stock`;
+                        
+                        const btn = card.querySelector('.btn-cart-add');
+                        if (item.quantity <= 0) {
+                            card.classList.add('out-of-stock');
+                            if (btn) {
+                                btn.disabled = true;
+                                btn.innerText = 'OUT OF STOCK';
+                            }
+                        } else {
+                            card.classList.remove('out-of-stock');
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerText = '+ ADD TO CART';
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error("Sync error:", e);
+            }
+        }
+
+        setInterval(syncStock, 5000); // Polling every 5s for faster feedback
+
+        async function submitCheckout() {
+            const method = document.getElementById('paymentMethod').value;
+            const customer = document.getElementById('customerName').value;
+            
+            if (method === 'dinau') {
+                if (currentTotal < 20.00) {
+                    showError("Credit (Dinau) is only allowed for totals of K20.00 or more!", "MINIMUM REQUIRED");
+                    return;
+                }
+                if (!customer) {
+                    showError("Please enter customer name for Dinau!", "INPUT REQUIRED");
+                    return;
+                }
+            }
+
+            const payload = {
+                items: cart.map(i => ({ id: i.id, qty: i.qty, total_price: i.price * i.qty })),
+                payment_method: method,
+                customer_name: customer
+            };
+
+            const response = await fetch('/api/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                checkoutModal.hide();
+                const pop = document.getElementById('successPop');
+                pop.classList.add('show');
+                setTimeout(() => {
+                    pop.classList.remove('show');
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showError(result.message || "Unknown error", "SERVER ERROR");
+            }
+        }
+    </script>
+</body>
+</html>
