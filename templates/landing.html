@@ -26,7 +26,7 @@
         .hero-section {
             padding: 150px 20px 80px;
             text-align: center;
-            background: radial-gradient(circle at 50% -20%, rgba(249, 26, 142, 0.15) 0%, rgba(12, 12, 12, 1) 60%);
+            background: radial-gradient(circle at 50% -20%, rgba(2, 139, 217, 0.15) 0%, rgba(12, 12, 12, 1) 60%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -43,7 +43,7 @@
             -webkit-text-fill-color: transparent;
         }
         .hero-title span {
-            background: linear-gradient(135deg, #f91a8e 0%, #ff6b6b 100%);
+            background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -57,21 +57,21 @@
 
         /* Buttons */
         .btn-glow {
-            background: linear-gradient(135deg, #f91a8e 0%, #ff4757 100%);
+            background: linear-gradient(135deg, #028bd9 0%, #03aaec 100%);
             color: white;
             font-weight: 800;
             padding: 15px 40px;
             border-radius: 50px;
             border: none;
             font-size: 1.1rem;
-            box-shadow: 0 10px 30px rgba(249, 26, 142, 0.4);
+            box-shadow: 0 10px 30px rgba(2, 139, 217, 0.4);
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
         }
         .btn-glow:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(249, 26, 142, 0.6);
+            box-shadow: 0 15px 40px rgba(2, 139, 217, 0.6);
             color: white;
         }
 
@@ -110,7 +110,7 @@
         }
         .feature-card:hover {
             transform: translateY(-5px);
-            border-color: rgba(249, 26, 142, 0.3);
+            border-color: rgba(2, 139, 217, 0.3);
         }
         .feature-icon {
             font-size: 2.5rem;
@@ -150,7 +150,7 @@
     <header class="app-header">
         <a href="/" class="brand">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
-            <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
+            <div class="brand-text">BRAENOVA<span style="color: #fcc11e;">STOCKMASTER</span></div>
         </a>
         <div>
             <a href="/login" class="btn btn-sm btn-outline-glow rounded-pill px-4" style="padding: 8px 20px; font-size: 0.8rem;">Login</a>
@@ -194,21 +194,21 @@
             <h2 style="font-weight: 800; font-size: 2rem; margin-bottom: 30px;">How It Works</h2>
             <div class="d-flex flex-column gap-4 text-start">
                 <div class="d-flex gap-3 align-items-center">
-                    <div style="background: rgba(249, 26, 142, 0.2); color: #f91a8e; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+                    <div style="background: rgba(2, 139, 217, 0.2); color: #03aaec; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
                     <div>
                         <h4 style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">Register Your Shop</h4>
                         <p style="color: #888; margin: 0; font-size: 0.95rem;">Sign up in seconds and get your own isolated, secure dashboard.</p>
                     </div>
                 </div>
                 <div class="d-flex gap-3 align-items-center">
-                    <div style="background: rgba(249, 26, 142, 0.2); color: #f91a8e; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
+                    <div style="background: rgba(2, 139, 217, 0.2); color: #03aaec; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
                     <div>
                         <h4 style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">Add Cashiers & Inventory</h4>
                         <p style="color: #888; margin: 0; font-size: 0.95rem;">Create accounts for your staff and quickly log your products and prices.</p>
                     </div>
                 </div>
                 <div class="d-flex gap-3 align-items-center">
-                    <div style="background: rgba(249, 26, 142, 0.2); color: #f91a8e; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</div>
+                    <div style="background: rgba(2, 139, 217, 0.2); color: #03aaec; font-weight: 900; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</div>
                     <div>
                         <h4 style="font-weight: 700; margin-bottom: 5px; font-size: 1.1rem;">Start Selling & Tracking</h4>
                         <p style="color: #888; margin: 0; font-size: 0.95rem;">Use your phone as a powerful POS to track cash, credit, and daily profits.</p>
@@ -221,12 +221,12 @@
 
     <footer style="background: #080808; border-top: 1px solid rgba(255,255,255,0.05); padding: 50px 20px 30px; text-align: center;">
         <div class="mb-4">
-            <h3 style="font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px;">BRAENOVA<span style="color: #f91a8e; display: block; font-size: 0.75rem; letter-spacing: 2px;">STOCKMASTER</span></h3>
+            <h3 style="font-weight: 900; font-size: 1.5rem; letter-spacing: -0.5px;">BRAENOVA<span style="color: #fcc11e; display: block; font-size: 0.75rem; letter-spacing: 2px;">STOCKMASTER</span></h3>
         </div>
         <div class="d-flex justify-content-center gap-4 mb-4">
             <a href="/terms" style="color: #888; text-decoration: none; font-size: 0.9rem;">Terms of Service</a>
             <a href="/privacy" style="color: #888; text-decoration: none; font-size: 0.9rem;">Privacy Policy</a>
-            <a href="/contact" style="color: #f91a8e; text-decoration: none; font-size: 0.9rem; font-weight: bold;">Contact Support</a>
+            <a href="/contact" style="color: #028bd9; text-decoration: none; font-size: 0.9rem; font-weight: bold;">Contact Support</a>
         </div>
         <div style="color: #555; font-size: 0.8rem;">
             &copy; <script>document.write(new Date().getFullYear())</script> BraeNova IT Solutions. All rights reserved.
