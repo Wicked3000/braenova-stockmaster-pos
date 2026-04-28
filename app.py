@@ -29,7 +29,8 @@ def kina_filter(val):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        if 'user_id' not in session or 'shop_id' not in session:
+            session.clear()
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -83,6 +84,10 @@ def logout():
 @app.route('/')
 def landing():
     if 'user_id' in session:
+        if 'shop_id' not in session:
+            session.clear()
+            return render_template('landing.html')
+            
         if session.get('role') == 'cashier':
             return redirect(url_for('pos'))
         return redirect(url_for('dashboard'))
