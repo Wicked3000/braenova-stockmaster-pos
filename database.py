@@ -20,6 +20,22 @@ def verify_user(username, password):
         return user
     return None
 
+def register_shop_and_owner(shop_name, owner_username, owner_password_hash):
+    # 1. Insert new shop
+    shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": True}).execute()
+    new_shop_id = shop_res.data[0]['id']
+    
+    # 2. Insert owner user
+    user_data = {
+        "username": owner_username,
+        "password_hash": owner_password_hash,
+        "role": "owner",
+        "is_active": 1,
+        "shop_id": new_shop_id
+    }
+    user_res = supabase.table('users').insert(user_data).execute()
+    return user_res.data[0]
+
 def add_user(username, password_hash, role='cashier', shop_id=1):
     data = {
         "username": username,

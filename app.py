@@ -10,7 +10,7 @@ from database import (
     delete_inventory_item, get_all_dinau, update_dinau_status,
     get_daily_sales_chart, get_hourly_sales_today, get_category_sales_distribution,
     get_expired_items, add_inventory_item, add_category, get_cashier_summary,
-    close_shop, get_all_reports, add_dinau_record, cleanup_old_sales
+    close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner
 )
 
 app = Flask(__name__)
@@ -63,9 +63,47 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- OWNER ONLY ROUTES ---
+# --- PUBLIC & ONBOARDING ROUTES ---
 
 @app.route('/')
+def landing():
+    if 'user_id' in session:
+        if session.get('role') == 'cashier':
+            return redirect(url_for('pos'))
+        return redirect(url_for('dashboard'))
+    return render_template('landing.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        shop_name = request.form['shop_name']
+        username = request.form['username']
+        password = request.form['password']
+        
+        from werkzeug.security import generate_password_hash
+        from database import register_shop_and_owner
+        
+        try:
+            password_hash = generate_password_hash(password)
+            user = register_shop_and_owner(shop_name, username, password_hash)
+            
+            # Auto-login after registration
+            session['user_id'] = user['id']
+            session['username'] = user['username']
+            session['role'] = user['role']
+            session['shop_id'] = user['shop_id']
+            
+            flash("Shop registered successfully! Welcome to StockMaster.", "success")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            # Simple error handling for duplicate username
+            flash("Registration failed. That username may already be taken.", "error")
+            
+    return render_template('register.html')
+
+# --- OWNER ONLY ROUTES ---
+
+@app.route('/dashboard')
 @login_required
 def dashboard():
     shop_id = session.get('shop_id')
