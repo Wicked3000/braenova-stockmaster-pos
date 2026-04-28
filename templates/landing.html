@@ -325,25 +325,61 @@
     <section style="background: linear-gradient(180deg, #061121 0%, #030812 100%); padding: 100px 20px;">
         <div style="text-align: center; margin-bottom: 60px;">
             <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Simple, Transparent Pricing</h2>
-            <p style="color: #888; font-size: 1.1rem;">No hidden fees. One flat rate to manage your entire shop.</p>
+            <p style="color: #888; font-size: 1.1rem;">Choose the perfect plan for your business size. No hidden fees.</p>
         </div>
-        <div style="max-width: 450px; margin: 0 auto; background: #0c0c0c; border: 1px solid rgba(2, 139, 217, 0.5); border-radius: 30px; padding: 50px 40px; text-align: center; box-shadow: 0 20px 50px rgba(2, 139, 217, 0.15); position: relative;">
-            <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%); color: #000; font-weight: 900; padding: 5px 20px; border-radius: 20px; font-size: 0.9rem;">MOST POPULAR</div>
-            <h3 style="font-weight: 800; margin-bottom: 15px; font-size: 1.8rem;">Pro Shop Plan</h3>
-            <div style="font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
-                <span style="font-size: 1.5rem; vertical-align: middle; color: #028bd9;">K</span>200<span style="font-size: 1rem; color: #888; font-weight: 600;"> / month</span>
-            </div>
+        
+        <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; align-items: stretch;">
             
-            <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 15px;">
-                <div style="display: flex; gap: 10px; align-items: center;"><span style="color: #2ed573;">✔</span> Unlimited Products & Sales</div>
-                <div style="display: flex; gap: 10px; align-items: center;"><span style="color: #2ed573;">✔</span> Secure Dinau (Credit) Ledger</div>
-                <div style="display: flex; gap: 10px; align-items: center;"><span style="color: #2ed573;">✔</span> Multi-Cashier Accounts</div>
-                <div style="display: flex; gap: 10px; align-items: center;"><span style="color: #2ed573;">✔</span> Real-Time Profit Analytics</div>
-                <div style="display: flex; gap: 10px; align-items: center;"><span style="color: #2ed573;">✔</span> Automatic Cloud Backups</div>
+            <!-- Starter Plan -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column;">
+                <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Starter Plan</h3>
+                <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span>50<span style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Up to 100 Products</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Basic Sales Tracking</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">1 Cashier Account</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Standard Email Support</span></div>
+                </div>
+                <a href="/register" class="btn btn-outline-glow rounded-pill" style="border: 2px solid #555; color: #ddd; font-weight: 700; padding: 12px; width: 100%;">Start Free Trial</a>
             </div>
-            
-            <a href="/register" class="btn-glow" style="display: block; width: 100%;">Start 14-Day Free Trial</a>
-            <p style="margin-top: 15px; color: #666; font-size: 0.85rem; margin-bottom: 0;">No credit card required for trial.</p>
+
+            <!-- Pro Plan -->
+            <div style="background: #0c0c0c; border: 2px solid #028bd9; border-radius: 30px; padding: 50px 40px; text-align: center; box-shadow: 0 20px 50px rgba(2, 139, 217, 0.15); position: relative; transform: scale(1.05); z-index: 2; display: flex; flex-direction: column;">
+                <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%); color: #000; font-weight: 900; padding: 5px 20px; border-radius: 20px; font-size: 0.9rem;">MOST POPULAR</div>
+                <h3 style="font-weight: 800; margin-bottom: 15px; font-size: 1.8rem; color: #fff;">Pro Shop Plan</h3>
+                <div style="font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.5rem; vertical-align: middle; color: #028bd9;">K</span>200<span style="font-size: 1rem; color: #888; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 15px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Unlimited Products & Sales</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Secure Dinau (Credit) Ledger</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Multi-Cashier Accounts</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Real-Time Profit Analytics</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Automatic Cloud Backups</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Daily Email Sales Reports</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;">✔</span> <span style="font-size: 1rem;">Low Stock SMS Alerts</span></div>
+                </div>
+                <a href="/register" class="btn-glow" style="display: block; width: 100%; padding: 15px;">Start 14-Day Free Trial</a>
+            </div>
+
+            <!-- Enterprise Plan -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column;">
+                <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Multi-Shop Plan</h3>
+                <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span>450<span style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">All Pro Shop Features</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Manage Up to 5 Shop Locations</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Centralized Inventory View</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Manager Access Roles</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;">✔</span> <span style="color: #bbb; font-size: 0.95rem;">Priority 24/7 Phone Support</span></div>
+                </div>
+                <a href="/register" class="btn btn-outline-glow rounded-pill" style="border: 2px solid #555; color: #ddd; font-weight: 700; padding: 12px; width: 100%;">Contact Sales</a>
+            </div>
+
         </div>
     </section>
 
