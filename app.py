@@ -216,9 +216,15 @@ def add_product():
         if 'image' in request.files:
             file = request.files['image']
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                image_url = url_for('static', filename=f"uploads/{filename}")
+                import uuid
+                from database import supabase
+                filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                supabase.storage.from_("products").upload(
+                    path=filename,
+                    file=file.read(),
+                    file_options={"content-type": file.content_type}
+                )
+                image_url = supabase.storage.from_("products").get_public_url(filename)
 
         add_inventory_item(name, qty, threshold, price, cost, category, image_url, expiry)
         flash('New product added!', 'success')
@@ -252,9 +258,15 @@ def update_product():
         if 'image' in request.files:
             file = request.files['image']
             if file and file.filename != '':
-                filename = secure_filename(f"{item_id}_{file.filename}")
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                image_url = url_for('static', filename=f"uploads/{filename}")
+                import uuid
+                from database import supabase
+                filename = f"{item_id}_{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+                supabase.storage.from_("products").upload(
+                    path=filename,
+                    file=file.read(),
+                    file_options={"content-type": file.content_type}
+                )
+                image_url = supabase.storage.from_("products").get_public_url(filename)
 
         update_inventory_item(item_id, item_name, quantity, threshold, price, cost, category, image_url, expiry_date)
         flash('Product updated successfully!', 'success')

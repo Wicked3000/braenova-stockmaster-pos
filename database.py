@@ -56,6 +56,7 @@ def add_inventory_item(name, qty, threshold, price, cost=0, category='General', 
         "is_active": 1
     }
     supabase.table('inventory').insert(data).execute()
+    clear_inventory_cache()
 
 def update_inventory_item(item_id, name=None, qty=None, threshold=None, price=None, cost=None, category=None, image_url=None, expiry_date=None):
     updates = {}
@@ -69,6 +70,7 @@ def update_inventory_item(item_id, name=None, qty=None, threshold=None, price=No
     if expiry_date: updates["expiry_date"] = expiry_date
     
     supabase.table('inventory').update(updates).eq('id', item_id).execute()
+    clear_inventory_cache()
 
 def update_inventory_quick(item_id, qty_to_add, new_price, cost_price):
     # Get current qty first
@@ -81,10 +83,12 @@ def update_inventory_quick(item_id, qty_to_add, new_price, cost_price):
         "cost_price": cost_price
     }
     supabase.table('inventory').update(updates).eq('id', item_id).execute()
+    clear_inventory_cache()
 
 def delete_inventory_item(item_id):
     # Soft delete
     supabase.table('inventory').update({"is_active": 0}).eq('id', item_id).execute()
+    clear_inventory_cache()
 
 # --- SALES & CHECKOUT ---
 
