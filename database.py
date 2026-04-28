@@ -1,12 +1,14 @@
 import os
-from supabase import create_client, Client
+from supabase import create_client, Client, ClientOptions
 from functools import lru_cache
 
 # Supabase Configuration
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://iuzlrtkhwkcfvnvvlshm.supabase.co")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml1emxydGtod2tjZnZudnZsc2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMTYwOTAsImV4cCI6MjA5MTc5MjA5MH0.EuGx7tRk8-x2fF3huD8w5Fr8ahw2_LyJbAhlNyUzl5A")
+BACKEND_SECRET = os.environ.get("BACKEND_SECRET", "v3ryS3cr3tB4ckendK3y123!")
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+opts = ClientOptions(headers={'x-stocksweep-secret': BACKEND_SECRET})
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
 
 # --- SUPER ADMIN ---
 def get_all_shops():
