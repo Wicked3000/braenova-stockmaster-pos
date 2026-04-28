@@ -44,6 +44,9 @@ def get_all_inventory():
     return res.data
 
 def add_inventory_item(name, qty, threshold, price, cost=0, category='General', image_url=None, expiry_date=None):
+    if not expiry_date:
+        expiry_date = None
+        
     data = {
         "item_name": name,
         "quantity": qty,
