@@ -480,6 +480,14 @@
             const received = document.getElementById('cashReceived').value;
             const change = document.getElementById('changeAmount').innerText;
             
+            if (method === 'cash') {
+                const receivedAmount = parseFloat(received);
+                if (isNaN(receivedAmount) || receivedAmount < currentTotal) {
+                    showError("Insufficient cash tendered! Amount must cover the total cost.", "PAYMENT ERROR");
+                    return;
+                }
+            }
+
             if (method === 'dinau') {
                 if (currentTotal < 20.00) {
                     showError("Credit (Dinau) is only allowed for totals of K20.00 or more!", "MINIMUM REQUIRED");
