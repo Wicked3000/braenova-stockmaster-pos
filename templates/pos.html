@@ -8,6 +8,7 @@
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="#f91a8e">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Inter:wght@400;600;800&display=swap');
         body { background-color: #0c0c0c; color: #ffffff; font-family: 'Inter', system-ui, -apple-system; padding-top: 75px; padding-bottom: 90px; }
         .app-header { position: fixed; top: 0; left: 0; right: 0; height: 65px; background: #111; border-bottom: 1px solid #222; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1100; box-shadow: 0 5px 25px rgba(0,0,0,0.5); }
         .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
@@ -44,6 +45,25 @@
         
         .calc-box { background: #000; border-radius: 15px; padding: 15px; border: 1px solid #333; margin-top: 15px; }
         .change-text { color: #00ff00; font-family: monospace; font-size: 1.5rem; }
+
+        /* Receipt Aesthetics */
+        .receipt-card { 
+            background: #fff; color: #000; border-radius: 2px;
+            overflow: hidden; position: relative; width: 100%; border: 1px solid #ddd;
+        }
+        .receipt-inner { padding: 30px 20px; }
+        .receipt-header-biz { text-align: center; margin-bottom: 25px; }
+        .receipt-logo { height: 65px; width: auto; margin-bottom: 15px; filter: grayscale(1); }
+        .biz-sub { font-size: 0.75rem; color: #444; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .receipt-meta { font-family: 'Courier Prime', monospace; font-size: 0.8rem; border-top: 1px dashed #ccc; border-bottom: 1px dashed #ccc; padding: 12px 0; margin-bottom: 20px; color: #222; }
+        .receipt-table { font-family: 'Courier Prime', monospace; width: 100%; font-size: 0.85rem; margin-bottom: 25px; color: #000; }
+        .receipt-table th { border-bottom: 2px solid #000; padding-bottom: 8px; text-transform: uppercase; font-size: 0.75rem; color: #000; }
+        .receipt-table td { padding: 8px 0; border-bottom: 1px solid #eee; color: #000; }
+        .receipt-total-box { border-top: 2px solid #000; padding-top: 15px; margin-top: 10px; color: #000; }
+        .total-row { display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-weight: 800; font-size: 1rem; color: #000; }
+        .total-val { font-weight: 900; font-size: 1.5rem; color: #000; }
+        .receipt-footer-msg { text-align: center; margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px; font-family: 'Courier Prime', monospace; font-size: 0.75rem; color: #000; }
 
         @media print {
             body * { visibility: hidden; }
@@ -153,26 +173,73 @@
     <!-- Receipt Modal -->
     <div class="modal fade" id="receiptModal" data-bs-backdrop="static" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content bg-white text-dark rounded-0">
-                <div class="modal-body p-4" id="receiptModalContent">
-                    <div class="text-center mb-3 border-bottom border-dark pb-2 border-2 border-dashed">
-                        <h4 class="fw-bold mb-0">StockSweep POS</h4>
-                        <small class="text-muted" id="receiptDate"></small>
-                    </div>
-                    
-                    <div id="receiptItems" class="mb-3 small fw-bold"></div>
-                    
-                    <div class="border-top border-dark pt-2 border-2 border-dashed mb-3">
-                        <div class="d-flex justify-content-between fw-bold fs-5"><span>TOTAL</span><span id="receiptTotal"></span></div>
-                        <div class="d-flex justify-content-between small text-muted mt-1"><span>Payment Method</span><span id="receiptMethod"></span></div>
-                        <div id="receiptCashDetails" style="display:none;">
-                            <div class="d-flex justify-content-between small"><span>Cash Tendered</span><span id="receiptTendered"></span></div>
-                            <div class="d-flex justify-content-between small"><span>Change</span><span id="receiptChange"></span></div>
+            <div class="modal-content bg-white text-dark rounded-0 border-0">
+                <div class="modal-body p-0" id="receiptModalContent">
+                    <div class="receipt-card m-0" style="box-shadow: none; border: none;">
+                        <div class="receipt-inner">
+                            <div class="receipt-header-biz">
+                                <img src="{{ url_for('static', filename='logo.png') }}" class="receipt-logo" alt="Logo">
+                                <div class="biz-sub">Port Moresby, PNG</div>
+                            </div>
+
+                            <div class="receipt-meta">
+                                <div class="d-flex justify-content-between">
+                                    <span id="receiptId">#NEW</span>
+                                    <span id="receiptDate"></span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span id="receiptCashier">OPER: {{ session.username | upper }}</span>
+                                    <span id="receiptTime"></span>
+                                </div>
+                            </div>
+
+                            <table class="receipt-table">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Item</th>
+                                        <th style="text-align: center;">Qty</th>
+                                        <th style="text-align: right;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="receiptItems">
+                                </tbody>
+                            </table>
+
+                            <div class="receipt-total-box">
+                                <div class="total-row">
+                                    <span class="total-label">TOTAL</span>
+                                    <span class="total-val" id="receiptTotal"></span>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; font-family: 'Courier Prime', monospace; font-size: 0.8rem; color: #000;">
+                                <div class="d-flex justify-content-between">
+                                    <span>PAID VIA:</span>
+                                    <span class="fw-bold" id="receiptMethod"></span>
+                                </div>
+                                <div id="receiptCashDetails" style="display:none;">
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span>TENDERED:</span>
+                                        <span id="receiptTendered"></span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span>CHANGE:</span>
+                                        <span id="receiptChange"></span>
+                                    </div>
+                                </div>
+                                <div id="receiptCreditDetails" style="display:none;" class="mt-1 fw-bold">
+                                    <div class="d-flex justify-content-between">
+                                        <span>CREDIT:</span>
+                                        <span id="receiptCustomer"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="receipt-footer-msg">
+                                <div style="font-weight: bold;">THANK YOU!</div>
+                                <div style="font-size: 0.6rem; opacity: 0.5; margin-top: 10px;">BraeNova IT Solutions</div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="text-center small text-muted">
-                        <p class="mb-0">Thank you for your purchase!</p>
                     </div>
                 </div>
                 <div class="modal-footer p-2 border-0 bg-light d-flex gap-2">
@@ -442,12 +509,16 @@
                 checkoutModal.hide();
                 
                 // Populate Receipt
-                document.getElementById('receiptDate').innerText = new Date().toLocaleString();
+                const d = new Date();
+                document.getElementById('receiptDate').innerText = d.toLocaleDateString('en-GB');
+                document.getElementById('receiptTime').innerText = d.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'});
+                
                 document.getElementById('receiptItems').innerHTML = cart.map(i => 
-                    `<div class="d-flex justify-content-between mb-1">
-                        <span>${i.qty}x ${i.name}</span>
-                        <span>${formatKina(i.price * i.qty)}</span>
-                    </div>`
+                    `<tr>
+                        <td style="text-align: left;">${i.name}</td>
+                        <td style="text-align: center;">${i.qty}</td>
+                        <td style="text-align: right;">${formatKina(i.price * i.qty)}</td>
+                    </tr>`
                 ).join('');
                 document.getElementById('receiptTotal').innerText = formatKina(currentTotal);
                 document.getElementById('receiptMethod').innerText = method.toUpperCase();
@@ -458,6 +529,13 @@
                     document.getElementById('receiptChange').innerText = change;
                 } else {
                     document.getElementById('receiptCashDetails').style.display = 'none';
+                }
+
+                if (method === 'dinau') {
+                    document.getElementById('receiptCreditDetails').style.display = 'block';
+                    document.getElementById('receiptCustomer').innerText = customer.toUpperCase();
+                } else {
+                    document.getElementById('receiptCreditDetails').style.display = 'none';
                 }
                 
                 receiptModal.show();
