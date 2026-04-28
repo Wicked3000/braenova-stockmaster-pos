@@ -45,6 +45,16 @@
         .calc-box { background: #000; border-radius: 15px; padding: 15px; border: 1px solid #333; margin-top: 15px; }
         .change-text { color: #00ff00; font-family: monospace; font-size: 1.5rem; }
 
+        @media print {
+            body * { visibility: hidden; }
+            #receiptModalContent, #receiptModalContent * { visibility: visible; }
+            #receiptModalContent { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 10px; background: white !important; color: black !important; }
+            .modal-content { border: none !important; box-shadow: none !important; }
+            .modal-backdrop { display: none !important; }
+            .text-kina { color: black !important; }
+        }
+        .border-dashed { border-style: dashed !important; }
+
         /* Success Pop Style */
         #successPop, #errorPop { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -135,6 +145,39 @@
 
                     <button id="confirmBtn" class="btn btn-success w-100 py-3 fw-bold rounded-3 text-white" onclick="submitCheckout()">CONFIRM TRANSACTION</button>
                     <button class="btn btn-dark w-100 mt-2 py-2 small opacity-50" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div class="modal fade" id="receiptModal" data-bs-backdrop="static" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content bg-white text-dark rounded-0">
+                <div class="modal-body p-4" id="receiptModalContent">
+                    <div class="text-center mb-3 border-bottom border-dark pb-2 border-2 border-dashed">
+                        <h4 class="fw-bold mb-0">StockSweep POS</h4>
+                        <small class="text-muted" id="receiptDate"></small>
+                    </div>
+                    
+                    <div id="receiptItems" class="mb-3 small fw-bold"></div>
+                    
+                    <div class="border-top border-dark pt-2 border-2 border-dashed mb-3">
+                        <div class="d-flex justify-content-between fw-bold fs-5"><span>TOTAL</span><span id="receiptTotal"></span></div>
+                        <div class="d-flex justify-content-between small text-muted mt-1"><span>Payment Method</span><span id="receiptMethod"></span></div>
+                        <div id="receiptCashDetails" style="display:none;">
+                            <div class="d-flex justify-content-between small"><span>Cash Tendered</span><span id="receiptTendered"></span></div>
+                            <div class="d-flex justify-content-between small"><span>Change</span><span id="receiptChange"></span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center small text-muted">
+                        <p class="mb-0">Thank you for your purchase!</p>
+                    </div>
+                </div>
+                <div class="modal-footer p-2 border-0 bg-light d-flex gap-2">
+                    <button class="btn btn-outline-dark flex-grow-1 fw-bold" onclick="printReceipt()">PRINT RECEIPT</button>
+                    <button class="btn btn-primary flex-grow-1 fw-bold" onclick="closeReceipt()">SAVE TO LOG</button>
                 </div>
             </div>
         </div>
@@ -362,9 +405,13 @@
 
         setInterval(syncStock, 5000); // Polling every 5s for faster feedback
 
+        const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+
         async function submitCheckout() {
             const method = document.getElementById('paymentMethod').value;
             const customer = document.getElementById('customerName').value;
+            const received = document.getElementById('cashReceived').value;
+            const change = document.getElementById('changeAmount').innerText;
             
             if (method === 'dinau') {
                 if (currentTotal < 20.00) {
@@ -393,15 +440,44 @@
 
             if (response.ok) {
                 checkoutModal.hide();
-                const pop = document.getElementById('successPop');
-                pop.classList.add('show');
-                setTimeout(() => {
-                    pop.classList.remove('show');
-                    window.location.reload();
-                }, 2000);
+                
+                // Populate Receipt
+                document.getElementById('receiptDate').innerText = new Date().toLocaleString();
+                document.getElementById('receiptItems').innerHTML = cart.map(i => 
+                    `<div class="d-flex justify-content-between mb-1">
+                        <span>${i.qty}x ${i.name}</span>
+                        <span>${formatKina(i.price * i.qty)}</span>
+                    </div>`
+                ).join('');
+                document.getElementById('receiptTotal').innerText = formatKina(currentTotal);
+                document.getElementById('receiptMethod').innerText = method.toUpperCase();
+                
+                if (method === 'cash') {
+                    document.getElementById('receiptCashDetails').style.display = 'block';
+                    document.getElementById('receiptTendered').innerText = formatKina(parseFloat(received) || currentTotal);
+                    document.getElementById('receiptChange').innerText = change;
+                } else {
+                    document.getElementById('receiptCashDetails').style.display = 'none';
+                }
+                
+                receiptModal.show();
             } else {
                 showError(result.message || "Unknown error", "SERVER ERROR");
             }
+        }
+        
+        function printReceipt() {
+            window.print();
+        }
+        
+        function closeReceipt() {
+            receiptModal.hide();
+            const pop = document.getElementById('successPop');
+            pop.classList.add('show');
+            setTimeout(() => {
+                pop.classList.remove('show');
+                window.location.reload();
+            }, 1000);
         }
     </script>
 </body>

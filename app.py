@@ -241,6 +241,17 @@ def add_new_category():
         flash('Category added!', 'success')
     return redirect(url_for('inventory_mgmt'))
 
+@app.route('/category/delete/<int:cat_id>')
+@owner_required
+def delete_category_route(cat_id):
+    try:
+        from database import delete_category
+        delete_category(cat_id)
+        flash('Category removed!', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+    return redirect(url_for('inventory_mgmt'))
+
 @app.route('/inventory/update', methods=['POST'])
 @owner_required
 def update_product():

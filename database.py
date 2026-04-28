@@ -290,6 +290,10 @@ def add_category(name):
     supabase.table('categories').insert({"name": name}).execute()
     clear_inventory_cache()
 
+def delete_category(category_id):
+    supabase.table('categories').delete().eq('id', category_id).execute()
+    clear_inventory_cache()
+
 # --- DINAU ---
 
 def get_all_dinau():
