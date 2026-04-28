@@ -121,6 +121,18 @@ def register():
             
     return render_template('register.html')
 
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
 # --- SUPERADMIN ROUTES ---
 
 @app.route('/superadmin')
