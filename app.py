@@ -10,7 +10,7 @@ from database import (
     delete_inventory_item, get_all_dinau, update_dinau_status,
     get_daily_sales_chart, get_hourly_sales_today, get_category_sales_distribution,
     get_expired_items, add_inventory_item, add_category, get_cashier_summary,
-    close_shop, get_all_reports, add_dinau_record
+    close_shop, get_all_reports, add_dinau_record, cleanup_old_sales
 )
 
 app = Flask(__name__)
