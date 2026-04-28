@@ -50,6 +50,8 @@ def login():
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
+            session['shop_id'] = user['shop_id']
+            
             if user['role'] == 'cashier':
                 return redirect(url_for('pos'))
             return redirect(url_for('dashboard'))
@@ -66,18 +68,19 @@ def logout():
 @app.route('/')
 @login_required
 def dashboard():
+    shop_id = session.get('shop_id')
     if session.get('role') == 'owner':
-        summary = get_sales_summary()
+        summary = get_sales_summary(shop_id)
         profit = summary['total_profit']
     else:
-        summary = get_cashier_summary(session.get('user_id'))
+        summary = get_cashier_summary(session.get('user_id'), shop_id)
         profit = None
         
-    expiry_alerts = get_expired_items()
-    inventory_status = get_inventory_status()
-    chart_data = get_daily_sales_chart()
-    hourly_data = get_hourly_sales_today()
-    cat_dist = get_category_sales_distribution()
+    expiry_alerts = get_expired_items(shop_id)
+    inventory_status = get_inventory_status(shop_id)
+    chart_data = get_daily_sales_chart(shop_id)
+    hourly_data = get_hourly_sales_today(shop_id)
+    cat_dist = get_category_sales_distribution(shop_id)
     
     total_alerts = len(expiry_alerts) + inventory_status['needs_restock']
     
@@ -95,7 +98,7 @@ def dashboard():
 @login_required
 @owner_required
 def sales_log():
-    logs = get_sales_history()
+    logs = get_sales_history(session.get('shop_id'))
     return render_template('sales_log.html', history=logs)
 
 @app.route('/reports')
@@ -103,7 +106,7 @@ def sales_log():
 @owner_required
 def daily_reports_history():
     from database import get_all_reports
-    history = get_all_reports()
+    history = get_all_reports(session.get('shop_id'))
     return render_template('reports.html', history=history)
 
 # --- SHARED/CASHIER ACCESSIBLE ROUTES ---
@@ -111,23 +114,24 @@ def daily_reports_history():
 @app.route('/pos')
 @login_required
 def pos():
-    inventory = get_all_inventory()
-    categories = get_all_categories()
+    inventory = get_all_inventory(session.get('shop_id'))
+    categories = get_all_categories(session.get('shop_id'))
     return render_template('pos.html', inventory=inventory, categories=categories)
 
 @app.route('/inventory')
 @login_required
 def inventory_mgmt():
-    inventory = get_all_inventory()
-    categories = get_all_categories()
-    financials = get_inventory_financials()
-    cashiers = get_all_cashiers() if session.get('role') == 'owner' else []
+    shop_id = session.get('shop_id')
+    inventory = get_all_inventory(shop_id)
+    categories = get_all_categories(shop_id)
+    financials = get_inventory_financials(shop_id)
+    cashiers = get_all_cashiers(shop_id) if session.get('role') == 'owner' else []
     return render_template('inventory.html', inventory=inventory, categories=categories, financials=financials, cashiers=cashiers)
 
 @app.route('/dinau')
 @login_required
 def dinau_mgmt():
-    list_items = get_all_dinau()
+    list_items = get_all_dinau(session.get('shop_id'))
     return render_template('dinau.html', dinau=list_items)
 
 # --- API & ACTIONS ---
@@ -156,6 +160,7 @@ def checkout():
                 inventory_id=item['id'],
                 qty_sold=item['qty'],
                 total_price=item['total_price'],
+                shop_id=session.get('shop_id'),
                 cashier_id=session.get('user_id'),
                 is_dinau=(payment_method == 'dinau'),
                 customer_name=customer_name,
@@ -164,11 +169,11 @@ def checkout():
             )
         
         # Automatically purge sales records older than 30 days
-        cleanup_old_sales()
+        cleanup_old_sales(session.get('shop_id'))
 
         # If it's a credit (dinau) sale, record the total debt once
         if payment_method == 'dinau' and customer_name:
-            add_dinau_record(customer_name, total_transaction_amount)
+            add_dinau_record(customer_name, total_transaction_amount, session.get('shop_id'))
         
         return jsonify({'success': True})
             
@@ -182,7 +187,7 @@ def update_debt_status():
     record_id = request.form.get('record_id')
     status = request.form.get('status', 'paid')
     if record_id:
-        update_dinau_status(record_id, status)
+        update_dinau_status(record_id, status, session.get('shop_id'))
         flash(f"Debt marked as {status.upper()}", "success")
     return redirect(url_for('dinau_mgmt'))
 
@@ -194,7 +199,7 @@ def quick_update():
         qty_add = int(request.form.get('qty_add', 0))
         new_price = float(request.form.get('new_price'))
         cost_price = float(request.form.get('cost_price'))
-        update_inventory_quick(item_id, qty_add, new_price, cost_price)
+        update_inventory_quick(item_id, qty_add, new_price, cost_price, session.get('shop_id'))
         flash('Inventory updated successfully!', 'success')
     except Exception as e:
         flash(f'Update failed: {str(e)}', 'error')
@@ -226,7 +231,7 @@ def add_product():
                 )
                 image_url = supabase.storage.from_("products").get_public_url(filename)
 
-        add_inventory_item(name, qty, threshold, price, cost, category, image_url, expiry)
+        add_inventory_item(name, qty, threshold, price, session.get('shop_id'), cost, category, image_url, expiry)
         flash('New product added!', 'success')
     except Exception as e:
         flash(f'Error adding product: {str(e)}', 'error')
@@ -237,7 +242,7 @@ def add_product():
 def add_new_category():
     name = request.form.get('category_name')
     if name:
-        add_category(name)
+        add_category(name, session.get('shop_id'))
         flash('Category added!', 'success')
     return redirect(url_for('inventory_mgmt'))
 
@@ -246,7 +251,7 @@ def add_new_category():
 def delete_category_route(cat_id):
     try:
         from database import delete_category
-        delete_category(cat_id)
+        delete_category(cat_id, session.get('shop_id'))
         flash('Category removed!', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'error')
@@ -279,7 +284,7 @@ def update_product():
                 )
                 image_url = supabase.storage.from_("products").get_public_url(filename)
 
-        update_inventory_item(item_id, item_name, quantity, threshold, price, cost, category, image_url, expiry_date)
+        update_inventory_item(item_id, session.get('shop_id'), item_name, quantity, threshold, price, cost, category, image_url, expiry_date)
         flash('Product updated successfully!', 'success')
     except Exception as e:
         flash(f'Error updating product: {str(e)}', 'error')
@@ -288,7 +293,7 @@ def update_product():
 @app.route('/inventory/delete/<int:item_id>')
 @owner_required
 def delete_item(item_id):
-    delete_inventory_item(item_id)
+    delete_inventory_item(item_id, session.get('shop_id'))
     flash("Item deleted successfully", "success")
     return redirect(url_for('inventory_mgmt'))
 
@@ -298,7 +303,7 @@ def create_user():
     data = request.form
     from werkzeug.security import generate_password_hash
     password_hash = generate_password_hash(data['password'])
-    add_user(data['username'], password_hash)
+    add_user(data['username'], password_hash, shop_id=session.get('shop_id'))
     flash("Cashier registered successfully!", "success")
     return redirect(url_for('inventory_mgmt'))
 
@@ -308,7 +313,7 @@ def reset_pw():
     data = request.form
     from werkzeug.security import generate_password_hash
     password_hash = generate_password_hash(data['new_password'])
-    reset_password(data['user_id'], password_hash)
+    reset_password(data['user_id'], password_hash, session.get('shop_id'))
     flash("Password reset successfully!", "success")
     return redirect(url_for('inventory_mgmt'))
 
@@ -316,14 +321,14 @@ def reset_pw():
 @owner_required
 def remove_user():
     user_id = request.form.get('user_id')
-    delete_user(user_id)
+    delete_user(user_id, session.get('shop_id'))
     flash("User removed successfully.", "success")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/api/inventory')
 @login_required
 def get_inventory_api():
-    inventory = get_all_inventory()
+    inventory = get_all_inventory(session.get('shop_id'))
     return jsonify(inventory)
 
 @app.route('/reports/close', methods=['POST'])
@@ -331,8 +336,8 @@ def get_inventory_api():
 def close_report():
     actual_cash = float(request.form.get('actual_cash', 0))
     restock_notes = request.form.get('restock_notes', '')
-    summary = get_sales_summary()
-    close_shop(actual_cash, summary['expected_cash'], summary['total_sales'], summary['total_profit'], restock_notes)
+    summary = get_sales_summary(session.get('shop_id'))
+    close_shop(actual_cash, summary['expected_cash'], session.get('shop_id'), summary['total_sales'], summary['total_profit'], restock_notes)
     flash("Shop closed. Daily report generated!", "success")
     return redirect(url_for('dashboard'))
 
@@ -341,7 +346,7 @@ def close_report():
 def purge_sales():
     try:
         from database import cleanup_old_sales
-        cleanup_old_sales()
+        cleanup_old_sales(session.get('shop_id'))
         flash("Old sales records (30+ days) have been cleared.", "success")
     except Exception as e:
         flash(f"Purge failed: {e}", "error")
