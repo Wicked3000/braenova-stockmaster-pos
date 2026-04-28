@@ -8,16 +8,31 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+# --- SUPER ADMIN ---
+def get_all_shops():
+    res = supabase.table('shops').select('*, users(username, role)').execute()
+    # Post-process to find the owner username for each shop
+    shops = res.data
+    for s in shops:
+        owners = [u['username'] for u in s.get('users', []) if u.get('role') == 'owner']
+        s['owner_username'] = owners[0] if owners else 'Unknown'
+    return shops
+
+def toggle_shop_status(shop_id, is_active):
+    supabase.table('shops').update({"is_active": is_active}).eq('id', shop_id).execute()
+
 # --- AUTH & USER MGMT ---
 
 def verify_user(username, password):
     from werkzeug.security import check_password_hash
-    res = supabase.table('users').select('*').eq('username', username).eq('is_active', 1).execute()
+    res = supabase.table('users').select('*, shops!inner(is_active)').eq('username', username).eq('is_active', 1).execute()
     user = res.data[0] if res.data else None
+    
     if user and check_password_hash(user['password_hash'], password):
-        # We also need to get shop info if we want to check if the shop is active
-        # But for now, we just return the user, which has shop_id
-        return user
+        if user['role'] == 'superadmin' or user['shops']['is_active']:
+            return user
+        else:
+            return "suspended"
     return None
 
 def register_shop_and_owner(shop_name, owner_username, owner_password_hash):

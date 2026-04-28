@@ -10,7 +10,8 @@ from database import (
     delete_inventory_item, get_all_dinau, update_dinau_status,
     get_daily_sales_chart, get_hourly_sales_today, get_category_sales_distribution,
     get_expired_items, add_inventory_item, add_category, get_cashier_summary,
-    close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner
+    close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner,
+    get_all_shops, toggle_shop_status
 )
 
 app = Flask(__name__)
@@ -36,9 +37,18 @@ def login_required(f):
 def owner_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('role') != 'owner':
+        if session.get('role') not in ['owner', 'superadmin']:
             flash("Unauthorized Access: Owners Only", "error")
             return redirect(url_for('pos'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def superadmin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'superadmin':
+            flash("Unauthorized Access", "error")
+            return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -46,12 +56,17 @@ def owner_required(f):
 def login():
     if request.method == 'POST':
         user = verify_user(request.form['username'], request.form['password'])
-        if user:
+        if user == "suspended":
+            flash("Your shop account is currently suspended. Please contact support.", "error")
+            return redirect(url_for('login'))
+        elif user:
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
             session['shop_id'] = user['shop_id']
             
+            if user['role'] == 'superadmin':
+                return redirect(url_for('superadmin_dashboard'))
             if user['role'] == 'cashier':
                 return redirect(url_for('pos'))
             return redirect(url_for('dashboard'))
@@ -100,6 +115,25 @@ def register():
             flash("Registration failed. That username may already be taken.", "error")
             
     return render_template('register.html')
+
+# --- SUPERADMIN ROUTES ---
+
+@app.route('/superadmin')
+@login_required
+@superadmin_required
+def superadmin_dashboard():
+    shops = get_all_shops()
+    return render_template('superadmin.html', shops=shops)
+
+@app.route('/superadmin/toggle', methods=['POST'])
+@login_required
+@superadmin_required
+def toggle_shop():
+    shop_id = request.form.get('shop_id')
+    status = request.form.get('status') == 'true'
+    toggle_shop_status(shop_id, status)
+    flash(f"Shop status updated successfully.", "success")
+    return redirect(url_for('superadmin_dashboard'))
 
 # --- OWNER ONLY ROUTES ---
 
