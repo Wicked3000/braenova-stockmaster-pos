@@ -148,17 +148,19 @@
         </div>
     </header>
 
-    <section class="hero-section">
-        <h1 class="hero-title">Manage Your Tuck Shop<br><span>Like a Pro.</span></h1>
-        <p class="hero-subtitle">Stop losing money to shrinkage. Track every sale, manage inventory, and handle Dinau (credit) seamlessly from your phone.</p>
-        
-        <div class="d-flex gap-3 mt-2">
-            <a href="/register" class="btn-glow">Start 14-Day Free Trial</a>
+    <section class="hero-section" style="padding-top: 75px; padding-left: 0; padding-right: 0;">
+        <div class="hero-banner-container" style="width: 100%; height: 400px; overflow: hidden; position: relative; margin-bottom: 50px;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, transparent 50%, #0c0c0c 100%); z-index: 2;"></div>
+            <img src="{{ url_for('static', filename='hero_banner.png') }}" alt="Tuck Shop POS in Action" style="width: 100%; height: 100%; object-fit: cover; object-position: center 20%; position: relative; z-index: 1;">
         </div>
 
-        <div class="hero-image-container" style="margin-top: 50px; position: relative;">
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #f91a8e; filter: blur(80px); opacity: 0.15; z-index: 0; border-radius: 30px;"></div>
-            <img src="{{ url_for('static', filename='hero_banner.png') }}" alt="Tuck Shop POS in Action" class="img-fluid" style="border-radius: 25px; border: 1px solid rgba(255,255,255,0.1); max-width: 90%; max-height: 450px; position: relative; z-index: 1; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8);">
+        <div style="padding: 0 20px;">
+            <h1 class="hero-title">Manage Your Tuck Shop<br><span>Like a Pro.</span></h1>
+            <p class="hero-subtitle">Stop losing money to shrinkage. Track every sale, manage inventory, and handle Dinau (credit) seamlessly from your phone.</p>
+            
+            <div class="d-flex gap-3 mt-2 mx-auto justify-content-center">
+                <a href="/register" class="btn-glow">Start 14-Day Free Trial</a>
+            </div>
         </div>
 
         <div class="features-grid">
