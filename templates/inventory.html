@@ -123,7 +123,7 @@
                         <small class="text-muted"><span class="stock-count">{{ item.quantity }} in stock</span> • <span class="text-info">{{ item.category }}</span></small>
                     </div>
                     <div>
-                        <button class="btn btn-quick" onclick="openQuickEdit({{ item.id }}, '{{ item.item_name | replace(\"'\", \"\\\\'\") }}', {{ item.unit_price }}, {{ item.cost_price }})">RESTOCK</button>
+                        <button class="btn btn-quick" onclick='openQuickEdit({{ item.id }}, {{ item.item_name | tojson }}, {{ item.unit_price }}, {{ item.cost_price }})'>RESTOCK</button>
                         {% if session.role == 'owner' %}
                         <button class="btn btn-edit" onclick='openFullEdit({{ item | tojson }})'>EDIT</button>
                         {% endif %}
