@@ -390,7 +390,7 @@
                                 </span>
                             </td>
                             <td>
-                                <form action="/superadmin/approve-payment" method="POST" class="d-inline">
+                                <form action="/superadmin/approve-payment" method="POST" class="d-inline confirm-submit-form" data-message="Are you sure you want to approve payment and activate this shop?" data-title="Approve Shop Payment" data-type="info">
                                     <input type="hidden" name="shop_id" value="{{ shop.id }}">
                                     <input type="hidden" name="plan" value="{{ shop.plan_name or 'starter' }}">
                                     <div class="input-group input-group-sm d-inline-flex align-items-center" style="width: auto;">
@@ -480,11 +480,11 @@
                                     <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openResetModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.users_list|tojson|forceescape }}')">🔑 Reset Passwords</a></li>
                                     <li><hr class="dropdown-divider border-secondary"></li>
                                     <li>
-                                        <form action="/superadmin/toggle" method="POST" class="m-0">
+                                        <form action="/superadmin/toggle" method="POST" class="m-0 confirm-submit-form" {% if shop.is_active %} data-message="Suspend shop access instantly? This will block owner and cashier logins." data-title="Suspend Shop Access" data-type="danger" {% else %} data-message="Are you sure you want to activate this shop location?" data-title="Activate Shop" data-type="info" {% endif %}>
                                             <input type="hidden" name="shop_id" value="{{ shop.id }}">
                                             {% if shop.is_active %}
                                                 <input type="hidden" name="status" value="false">
-                                                <button type="submit" class="dropdown-item dropdown-item-custom text-danger" onclick="return confirm('Suspend shop access instantly?')">🚫 Suspend Shop</button>
+                                                <button type="submit" class="dropdown-item dropdown-item-custom text-danger">🚫 Suspend Shop</button>
                                             {% else %}
                                                 <input type="hidden" name="status" value="true">
                                                 <button type="submit" class="dropdown-item dropdown-item-custom text-success">✅ Activate Shop</button>
@@ -555,7 +555,7 @@
                 <h5 class="modal-title fw-bold text-white">Reset Account Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="/superadmin/reset-password" method="POST">
+            <form action="/superadmin/reset-password" method="POST" class="confirm-submit-form" data-message="Confirm resetting credentials for this user?" data-title="Reset User Password" data-type="danger">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label small text-muted">Target Shop</label>
@@ -576,9 +576,30 @@
                 </div>
                 <div class="modal-footer modal-footer-custom">
                     <button type="button" class="btn btn-action btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-action btn-primary-glow" onclick="return confirm('Confirm updating credentials for this user?')">Reset Password</button>
+                    <button type="submit" class="btn btn-action btn-primary-glow">Reset Password</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cyber Confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 400px;">
+        <div class="modal-content modal-content-custom" id="confirmModalContent" style="border: 1px solid var(--neon-magenta) !important; box-shadow: var(--glow-magenta);">
+            <div class="modal-header modal-header-custom border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="confirmModalTitle">
+                    <span style="color: var(--neon-magenta);">⚠️</span> Security Confirmation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="text-white mb-0" id="confirmModalMessage" style="font-size: 0.95rem; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer modal-footer-custom border-0 pt-0 d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-action btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-action btn-primary-glow" id="confirmModalYesBtn">Proceed</button>
+            </div>
         </div>
     </div>
 </div>
@@ -646,6 +667,90 @@
             document.getElementById('reset-username-hidden').value = selectedOpt.dataset.username || '';
         }
     }
+
+    // Custom Styled Confirmation Dialog Modal
+    let confirmCallback = null;
+    const confirmModalEl = document.getElementById('confirmModal');
+    const confirmModal = new bootstrap.Modal(confirmModalEl);
+
+    // If confirm modal is shown inside another modal, adjust z-index backdrops
+    confirmModalEl.addEventListener('show.bs.modal', function () {
+        // Find if another modal is open
+        const openModals = document.querySelectorAll('.modal.show');
+        if (openModals.length > 0) {
+            // Adjust z-index of confirm modal and backdrop to stack higher
+            confirmModalEl.style.zIndex = '1070';
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop.show');
+                if (backdrops.length > 1) {
+                    backdrops[backdrops.length - 1].style.zIndex = '1065';
+                }
+            }, 0);
+        }
+    });
+
+    confirmModalEl.addEventListener('hidden.bs.modal', function () {
+        // Reset z-index
+        confirmModalEl.style.zIndex = '';
+        // If other modals are still open, restore body class to keep scrollbar correct
+        if (document.querySelectorAll('.modal.show').length > 0) {
+            document.body.classList.add('modal-open');
+        }
+    });
+
+    function showCustomConfirm(message, callback, title = "Security Confirmation", type = "danger") {
+        document.getElementById('confirmModalMessage').textContent = message;
+        document.getElementById('confirmModalTitle').innerHTML = `
+            <span style="color: ${type === 'danger' ? 'var(--neon-magenta)' : 'var(--neon-cyan)'};">
+                ${type === 'danger' ? '🚫' : '⚡'}
+            </span> ${title}
+        `;
+        
+        const yesBtn = document.getElementById('confirmModalYesBtn');
+        const modalContent = document.getElementById('confirmModalContent');
+        
+        if (type === 'danger') {
+            modalContent.style.borderColor = 'var(--neon-magenta)';
+            modalContent.style.boxShadow = 'var(--glow-magenta)';
+            yesBtn.className = 'btn btn-action btn-primary-glow';
+            yesBtn.style.background = 'linear-gradient(135deg, var(--neon-magenta) 0%, #d80766 100%)';
+            yesBtn.style.boxShadow = '0 4px 15px rgba(249, 26, 142, 0.3)';
+        } else {
+            modalContent.style.borderColor = 'var(--neon-cyan)';
+            modalContent.style.boxShadow = 'var(--glow-cyan)';
+            yesBtn.className = 'btn btn-action btn-primary-glow';
+            yesBtn.style.background = 'linear-gradient(135deg, var(--neon-cyan) 0%, hsl(197, 98%, 48%) 100%)';
+            yesBtn.style.boxShadow = '0 4px 15px rgba(2, 139, 217, 0.3)';
+        }
+        
+        confirmCallback = callback;
+        confirmModal.show();
+    }
+
+    document.getElementById('confirmModalYesBtn').addEventListener('click', function() {
+        if (confirmCallback) confirmCallback();
+        confirmModal.hide();
+    });
+
+    // Intercept form submissions for .confirm-submit-form
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.classList.contains('confirm-submit-form')) {
+            if (form.dataset.confirmed === 'true') {
+                return;
+            }
+            
+            e.preventDefault();
+            const message = form.getAttribute('data-message') || "Are you sure you want to proceed?";
+            const title = form.getAttribute('data-title') || "Confirm Action";
+            const type = form.getAttribute('data-type') || "danger";
+            
+            showCustomConfirm(message, function() {
+                form.dataset.confirmed = 'true';
+                form.submit();
+            }, title, type);
+        }
+    });
 
     // Initialize Chart.js Graphs
     document.addEventListener("DOMContentLoaded", function() {
