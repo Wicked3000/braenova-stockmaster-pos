@@ -94,9 +94,53 @@
         
         #errorPop .pop-card { border-color: #ff5252; box-shadow: 0 0 50px rgba(255, 82, 82, 0.2); }
         .error-icon { font-size: 5rem; color: #ff5252; margin-bottom: 20px; display: block; }
+        
+        {% if session.get('impersonating') %}
+        .ghost-banner {
+            background: linear-gradient(90deg, #ff007f, #7f00ff);
+            color: #fff;
+            text-align: center;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1200;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .ghost-banner a {
+            color: #000;
+            background-color: #fff;
+            text-decoration: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            transition: all 0.2s ease;
+        }
+        .ghost-banner a:hover {
+            background-color: #ff007f;
+            color: #fff;
+            box-shadow: 0 0 8px #ff007f;
+        }
+        .app-header { top: 32px !important; }
+        body { padding-top: 107px !important; }
+        {% endif %}
     </style>
 </head>
 <body>
+    {% if session.get('impersonating') %}
+    <div class="ghost-banner">
+        🕵️ You are viewing this shop in <strong>Admin Ghost Mode</strong>.
+        <a href="/superadmin/stop-impersonating">Return to Super Admin</a>
+    </div>
+    {% endif %}
     <header class="app-header">
         <a href="/" class="brand">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">

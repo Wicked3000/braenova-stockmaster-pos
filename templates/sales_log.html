@@ -83,15 +83,59 @@
 
         @media print {
             body { padding: 40px !important; margin: 0 !important; background: white !important; }
-            .app-header, .nav-bar, .ownership-tag, #logSearch, .h4-title, #selectionToolbar, .receipt-checkbox-container, .header-actions { display: none !important; }
+            .app-header, .nav-bar, .ownership-tag, #logSearch, .h4-title, #selectionToolbar, .receipt-checkbox-container, .header-actions, .ghost-banner { display: none !important; }
             body.print-selection-active .receipt-card:not(.is-selected) { display: none !important; }
             .receipt-card { border: none !important; box-shadow: none !important; margin: 0 !important; max-width: 100% !important; border-bottom: 2px dashed #000 !important; break-inside: avoid; padding: 0 !important; }
             .receipt-inner { padding: 0 !important; }
             .badge { display: none !important; }
         }
+        
+        {% if session.get('impersonating') %}
+        .ghost-banner {
+            background: linear-gradient(90deg, #ff007f, #7f00ff);
+            color: #fff;
+            text-align: center;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1200;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .ghost-banner a {
+            color: #000;
+            background-color: #fff;
+            text-decoration: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            transition: all 0.2s ease;
+        }
+        .ghost-banner a:hover {
+            background-color: #ff007f;
+            color: #fff;
+            box-shadow: 0 0 8px #ff007f;
+        }
+        .app-header { top: 32px !important; }
+        body { padding-top: 107px !important; }
+        {% endif %}
     </style>
 </head>
 <body>
+    {% if session.get('impersonating') %}
+    <div class="ghost-banner">
+        🕵️ You are viewing this shop in <strong>Admin Ghost Mode</strong>.
+        <a href="/superadmin/stop-impersonating">Return to Super Admin</a>
+    </div>
+    {% endif %}
     <header class="app-header">
         <a href="/" class="brand">
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">

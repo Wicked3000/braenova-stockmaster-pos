@@ -12,7 +12,8 @@ from database import (
     get_expired_items, add_inventory_item, add_category, get_cashier_summary,
     close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner,
     get_all_shops, toggle_shop_status, update_shop_plan_db, get_owner_shops,
-    create_additional_shop, get_centralized_inventory
+    create_additional_shop, get_centralized_inventory,
+    reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan
 )
 
 app = Flask(__name__)
@@ -25,6 +26,37 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 def kina_filter(val):
     if val is None: return "K0.00"
     return f"K{float(val):.2f}"
+
+@app.before_request
+def check_subscription_status():
+    # Ignore static files, billing pages, auth and landing routes to avoid infinite redirects
+    ignored_routes = ['login', 'logout', 'register', 'pending_activation', 'static', 'landing', 'terms', 'privacy', 'contact']
+    if request.endpoint in ignored_routes or not request.endpoint:
+        return
+        
+    if 'user_id' in session and session.get('role') != 'superadmin':
+        shop_id = session.get('shop_id')
+        if shop_id:
+            try:
+                from database import supabase, parse_shop_plan
+                shop_res = supabase.table('shops').select('is_active, plan').eq('id', shop_id).execute()
+                if shop_res.data:
+                    shop = shop_res.data[0]
+                    plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop.get('plan'))
+                    
+                    from datetime import datetime
+                    today_yymmdd = datetime.now().strftime('%y%m%d')
+                    is_expired = (expiry_yymmdd != '991231' and today_yymmdd > expiry_yymmdd)
+                    
+                    if is_expired or status_char == 'e' or not shop['is_active']:
+                        session.clear()
+                        if is_expired:
+                            flash("Your monthly subscription has expired. Please contact administration to reactivate.", "warning")
+                        else:
+                            flash("Your shop account is currently inactive or suspended.", "danger")
+                        return redirect(url_for('login'))
+            except Exception as e:
+                print(f"Subscription status check error: {e}")
 
 # RBAC Decorators
 def login_required(f):
@@ -76,6 +108,9 @@ def login():
             return redirect(url_for('pending_activation', username=request.form['username']))
         elif user == "suspended":
             flash("Your shop account is currently suspended. Please contact support.", "error")
+            return redirect(url_for('login'))
+        elif user == "expired":
+            flash("Your monthly subscription has expired. Please contact administration to renew.", "warning")
             return redirect(url_for('login'))
         elif user:
             session['user_id'] = user['id']
@@ -184,6 +219,109 @@ def update_shop_plan():
     update_shop_plan_db(shop_id, plan)
     flash(f"Shop plan updated to {plan.upper()}.", "success")
     return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/approve-payment', methods=['POST'])
+@login_required
+@superadmin_required
+def approve_payment():
+    shop_id = request.form.get('shop_id')
+    plan = request.form.get('plan', 'starter')
+    months = int(request.form.get('months', 1))
+    approve_shop_payment(shop_id, plan, months)
+    flash(f"Payment approved and shop activated on {plan.upper()} plan.", "success")
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/extend-subscription', methods=['POST'])
+@login_required
+@superadmin_required
+def extend_subscription():
+    shop_id = request.form.get('shop_id')
+    plan = request.form.get('plan')
+    expiry_yymmdd = request.form.get('expiry_date')
+    status_char = request.form.get('status', 'a')
+    
+    # Convert yyyy-mm-dd (HTML input date) to yymmdd format
+    if expiry_yymmdd and '-' in expiry_yymmdd:
+        try:
+            parts = expiry_yymmdd.split('-')
+            expiry_yymmdd = f"{parts[0][2:]}{parts[1]}{parts[2]}"
+        except Exception as e:
+            print(f"Error parsing date format: {e}")
+            
+    extend_shop_subscription(shop_id, plan, expiry_yymmdd, status_char)
+    flash("Subscription details updated successfully.", "success")
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/reset-password', methods=['POST'])
+@login_required
+@superadmin_required
+def superadmin_reset_password():
+    user_id = request.form.get('user_id')
+    username = request.form.get('username')
+    new_password = request.form.get('new_password')
+    
+    if not new_password or len(new_password) < 6:
+        flash("Password must be at least 6 characters.", "error")
+        return redirect(url_for('superadmin_dashboard'))
+        
+    from werkzeug.security import generate_password_hash
+    password_hash = generate_password_hash(new_password)
+    reset_password_by_admin(user_id, password_hash)
+    flash(f"Password for user @{username} reset successfully.", "success")
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/impersonate/<int:shop_id>')
+@login_required
+@superadmin_required
+def impersonate_shop(shop_id):
+    from database import supabase
+    res = supabase.table('users').select('*').eq('shop_id', shop_id).eq('role', 'owner').eq('is_active', 1).execute()
+    if res.data:
+        owner_user = res.data[0]
+        session['admin_user_id'] = session['user_id']
+        session['impersonating'] = True
+        
+        session['user_id'] = owner_user['id']
+        session['username'] = owner_user['username']
+        session['role'] = 'owner'
+        session['shop_id'] = shop_id
+        
+        shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
+        if shop_res.data:
+            from database import parse_shop_plan
+            plan_name, _, _ = parse_shop_plan(shop_res.data[0].get('plan'))
+            session['plan'] = plan_name
+        else:
+            session['plan'] = 'starter'
+            
+        flash(f"Impersonating owner @{owner_user['username']} for shop {shop_id}", "info")
+        return redirect(url_for('dashboard'))
+    else:
+        flash("No active owner found for this shop.", "error")
+        return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/stop-impersonating')
+@login_required
+def stop_impersonating():
+    if not session.get('impersonating') or not session.get('admin_user_id'):
+        return redirect(url_for('dashboard'))
+        
+    admin_id = session.get('admin_user_id')
+    from database import supabase
+    res = supabase.table('users').select('*').eq('id', admin_id).execute()
+    if res.data:
+        admin_user = res.data[0]
+        session.clear()
+        session['user_id'] = admin_user['id']
+        session['username'] = admin_user['username']
+        session['role'] = 'superadmin'
+        session['shop_id'] = None
+        session['plan'] = 'multi'
+        flash("Returned to Super Admin Panel", "success")
+        return redirect(url_for('superadmin_dashboard'))
+    else:
+        session.clear()
+        return redirect(url_for('login'))
 
 # --- OWNER ONLY ROUTES ---
 
