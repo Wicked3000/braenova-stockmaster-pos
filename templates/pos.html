@@ -61,7 +61,19 @@
         .chip { padding: 8px 18px; border-radius: 20px; background: #1a1a1a; border: 1px solid #333; color: #888; white-space: nowrap; cursor: pointer; }
         .chip.active { background: #f91a8e; color: white; border-color: #f91a8e; }
         
-        .item-card { background: #151515; border: 1px solid #222; border-radius: 20px; overflow: hidden; margin-bottom: 15px; position: relative; }
+        #itemsContainer {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        @media (min-width: 576px) {
+            #itemsContainer {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+        .item-card { background: #151515; border: 1px solid #222; border-radius: 20px; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .product-image-container { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #222; }
         .item-card.out-of-stock { filter: grayscale(1); opacity: 0.6; pointer-events: none; }
         .sold-out-overlay { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-15deg); 
@@ -197,16 +209,27 @@
         </div>
         <div id="itemsContainer">
             {% for item in inventory %}
-            <div class="item-card card p-3 {% if item.quantity <= 0 %}out-of-stock{% endif %}" data-id="{{ item.id }}" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}">
+            <div class="item-card card {% if item.quantity <= 0 %}out-of-stock{% endif %}" data-id="{{ item.id }}" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}">
                 <div class="sold-out-overlay">SOLD OUT</div>
-                <div class="d-flex gap-3 mb-3">
-                    {% if item.image_url %}<img src="{{ item.image_url }}" style="width: 70px; height: 70px; border-radius: 12px; object-fit: cover;">{% else %}<div style="width: 70px; height: 70px; border-radius: 12px; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #444;">No Img</div>{% endif %}
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between"><h6 class="mb-0 fw-bold">{{ item.item_name }}</h6><div class="text-kina">{{ item.unit_price | kina }}</div></div>
-                        <small class="text-muted stock-count">{{ item.quantity }} in stock</small>
-                    </div>
+                <div class="product-image-container">
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}" style="width: 100%; height: 100%; object-fit: contain; padding: 10px;">
+                    {% else %}
+                    <div style="font-size: 0.75rem; color: #444; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">No Image</div>
+                    {% endif %}
                 </div>
-                <button class="btn btn-cart-add" onclick="addToCart({{ item.id }})" {% if item.quantity <= 0 %}disabled{% endif %}>{% if item.quantity <= 0 %}OUT OF STOCK{% else %}+ ADD TO CART{% endif %}</button>
+                <div class="p-3 d-flex flex-column flex-grow-1 justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-1">
+                            <h6 class="mb-0 fw-bold" style="font-size: 1.05rem; color: #fff;">{{ item.item_name }}</h6>
+                            <div class="text-kina" style="font-size: 1.15rem; font-weight: 800; white-space: nowrap;">{{ item.unit_price | kina }}</div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted stock-count" style="font-size: 0.8rem;">{{ item.quantity }} in stock</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-cart-add" onclick="addToCart({{ item.id }})" {% if item.quantity <= 0 %}disabled{% endif %}>{% if item.quantity <= 0 %}OUT OF STOCK{% else %}+ ADD TO CART{% endif %}</button>
+                </div>
             </div>
             {% endfor %}
         </div>
