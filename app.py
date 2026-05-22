@@ -353,12 +353,37 @@ def dashboard():
     
     total_alerts = len(expiry_alerts) + inventory_status['needs_restock']
     
+    # Generate user-friendly restock & freshness alert message with names
+    low_stock_items = inventory_status['low_stock']
+    low_stock_names = [i['item_name'] for i in low_stock_items]
+    expiry_names = [i['item_name'] for i in expiry_alerts]
+    
+    alert_parts = []
+    if low_stock_names:
+        sliced = low_stock_names[:3]
+        text = ", ".join(sliced)
+        rest = len(low_stock_names) - 3
+        if rest > 0:
+            text += f" and {rest} more"
+        alert_parts.append(f"LOW STOCK: {text}")
+        
+    if expiry_names:
+        sliced = expiry_names[:3]
+        text = ", ".join(sliced)
+        rest = len(expiry_names) - 3
+        if rest > 0:
+            text += f" and {rest} more"
+        alert_parts.append(f"EXPIRED/WARNED: {text}")
+        
+    initial_alert_msg = " | ".join(alert_parts) if alert_parts else ""
+    
     return render_template('dashboard.html', 
                            summary=summary, 
                            profit=profit,
                            expired_items=expiry_alerts,
                            low_stock_count=inventory_status['needs_restock'],
                            total_alerts=total_alerts,
+                           initial_alert_msg=initial_alert_msg,
                            chart_data=chart_data,
                            hourly_data=hourly_data,
                            cat_dist=cat_dist,

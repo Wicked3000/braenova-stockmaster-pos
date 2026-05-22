@@ -164,8 +164,8 @@
         {% endwith %}
 
         <div id="alertContainer">
-            {% if total_alerts > 0 %}
-            <div class="alert-banner" id="stockAlertBanner">⚠️ {{ total_alerts }} STOCK ALERTS! Check Inventory.</div>
+            {% if initial_alert_msg %}
+            <div class="alert-banner" id="stockAlertBanner">⚠️ {{ initial_alert_msg }}! Check Inventory.</div>
             {% endif %}
         </div>
 
@@ -304,11 +304,15 @@
                 const data = await response.json();
                 
                 // Count low stock items (quantity <= min_threshold)
-                const lowStockCount = data.filter(item => item.quantity <= item.min_threshold).length;
+                const lowStockItems = data.filter(item => item.quantity <= item.min_threshold);
+                const lowStockCount = lowStockItems.length;
                 
                 const container = document.getElementById('alertContainer');
                 if (lowStockCount > 0) {
-                    container.innerHTML = `<div class="alert-banner" id="stockAlertBanner">⚠️ ${lowStockCount} STOCK ALERTS! Check Inventory.</div>`;
+                    const names = lowStockItems.slice(0, 3).map(item => item.item_name).join(', ');
+                    const restCount = lowStockCount - 3;
+                    const nameText = restCount > 0 ? `${names} and ${restCount} more` : names;
+                    container.innerHTML = `<div class="alert-banner" id="stockAlertBanner">⚠️ LOW STOCK: ${nameText}! Check Inventory.</div>`;
                 } else {
                     container.innerHTML = '';
                 }
