@@ -72,9 +72,39 @@
 
         @media (max-width: 576px) {
             .btn-header { padding: 6px 10px; font-size: 0.6rem; }
-            .brand-text { font-size: 0.8rem; }
-            .brand-text span { font-size: 0.5rem; letter-spacing: 0.5px; }
-            .logo-img { height: 32px; }
+            .brand-text { font-size: 0.8rem !important; }
+            .brand-text span { font-size: 0.5rem !important; letter-spacing: 0.5px !important; }
+            .logo-img { height: 32px !important; }
+            .app-header { height: 56px !important; padding: 0 8px !important; }
+            body { padding-top: 65px !important; }
+            
+            .nav-bar {
+                justify-content: flex-start !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 0 10px !important;
+                height: 65px !important;
+            }
+            .nav-bar::-webkit-scrollbar {
+                display: none !important;
+            }
+            .nav-bar {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            .nav-btn {
+                flex-shrink: 0 !important;
+                width: 72px !important;
+                padding: 6px 0 !important;
+                font-size: 0.6rem !important;
+            }
+            .nav-icon {
+                font-size: 1.4rem !important;
+                margin-bottom: 2px !important;
+            }
+            body {
+                padding-bottom: 75px !important;
+            }
             .receipt-inner { padding: 20px 15px; }
             .receipt-card { width: 100%; border-radius: 0; border-left: none; border-right: none; }
         }

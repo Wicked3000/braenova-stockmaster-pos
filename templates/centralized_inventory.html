@@ -28,6 +28,42 @@
         .stock-tag.low { color: #ff5252; }
         .stock-tag.ok { color: #00ff03; }
         .ownership-tag { text-align: center; padding: 20px 10px; opacity: 0.4; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; color: #fff; }
+
+        @media (max-width: 576px) {
+            .brand-text { font-size: 0.85rem !important; }
+            .brand-text span { font-size: 0.5rem !important; letter-spacing: 0.5px !important; }
+            .logo-img { height: 32px !important; }
+            .app-header { height: 56px !important; padding: 0 8px !important; }
+            body { padding-top: 65px !important; }
+            
+            .nav-bar {
+                justify-content: flex-start !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 0 10px !important;
+                height: 65px !important;
+            }
+            .nav-bar::-webkit-scrollbar {
+                display: none !important;
+            }
+            .nav-bar {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            .nav-btn {
+                flex-shrink: 0 !important;
+                width: 72px !important;
+                padding: 6px 0 !important;
+                font-size: 0.6rem !important;
+            }
+            .nav-icon {
+                font-size: 1.4rem !important;
+                margin-bottom: 2px !important;
+            }
+            body {
+                padding-bottom: 75px !important;
+            }
+        }
         
         {% if session.get('impersonating') %}
         .ghost-banner {
@@ -81,8 +117,8 @@
             <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
         </a>
         <div class="d-flex align-items-center gap-2">
-            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25" style="width: 40px; height: 40px; padding: 0;">🔄</button>
-            <a href="/logout" class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold">LOGOUT</a>
+            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-inline-block" style="width: 40px; height: 40px; padding: 0;">🔄</button>
+            <a href="/logout" class="btn btn-sm btn-outline-danger px-2 px-sm-3 rounded-pill fw-bold" style="font-size: 0.75rem;">LOGOUT</a>
         </div>
     </header>
 

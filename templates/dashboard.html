@@ -26,6 +26,42 @@
         .alert-banner { background: #ff5252; color: white; text-align: center; padding: 8px; font-size: 0.8rem; font-weight: 800; border-radius: 12px; margin-bottom: 20px; }
         
         .ownership-tag { text-align: center; padding: 20px 10px; opacity: 0.4; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; color: #fff; }
+
+        @media (max-width: 576px) {
+            .brand-text { font-size: 0.85rem !important; }
+            .brand-text span { font-size: 0.5rem !important; letter-spacing: 0.5px !important; }
+            .logo-img { height: 32px !important; }
+            .app-header { height: 56px !important; padding: 0 8px !important; }
+            body { padding-top: 65px !important; }
+            
+            .nav-bar {
+                justify-content: flex-start !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 0 10px !important;
+                height: 65px !important;
+            }
+            .nav-bar::-webkit-scrollbar {
+                display: none !important;
+            }
+            .nav-bar {
+                -ms-overflow-style: none !important;
+                scrollbar-width: none !important;
+            }
+            .nav-btn {
+                flex-shrink: 0 !important;
+                width: 72px !important;
+                padding: 6px 0 !important;
+                font-size: 0.6rem !important;
+            }
+            .nav-icon {
+                font-size: 1.4rem !important;
+                margin-bottom: 2px !important;
+            }
+            body {
+                padding-bottom: 75px !important;
+            }
+        }
         
         {% if session.get('impersonating') %}
         .ghost-banner {
@@ -81,8 +117,9 @@
         <div class="d-flex align-items-center gap-2">
             {% if session.plan == 'multi' and owned_shops %}
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-info dropdown-toggle rounded-pill px-3 fw-bold" type="button" id="shopSwitcher" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem; border-color: rgba(13, 202, 240, 0.4);">
-                    🏪 SWITCH SHOP
+                <button class="btn btn-sm btn-outline-info dropdown-toggle rounded-pill px-2 px-sm-3 fw-bold" type="button" id="shopSwitcher" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem; border-color: rgba(13, 202, 240, 0.4);">
+                    <span class="d-none d-sm-inline">🏪 SWITCH SHOP</span>
+                    <span class="d-inline d-sm-none">🏪 SWITCH</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow" aria-labelledby="shopSwitcher">
                     <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">My Locations</h6></li>
@@ -103,8 +140,8 @@
                 </ul>
             </div>
             {% endif %}
-            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25" style="width: 40px; height: 40px; padding: 0;">🔄</button>
-            <a href="/logout" class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold">LOGOUT</a>
+            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-inline-block" style="width: 40px; height: 40px; padding: 0;">🔄</button>
+            <a href="/logout" class="btn btn-sm btn-outline-danger px-2 px-sm-3 rounded-pill fw-bold" style="font-size: 0.75rem;">LOGOUT</a>
         </div>
     </header>
 
@@ -133,7 +170,7 @@
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-{% if session.role == 'owner' and session.plan != 'starter' %}8{% else %}12{% endif %}">
+            <div class="col-12 {% if session.role == 'owner' and session.plan != 'starter' %}col-sm-8{% endif %}">
                 <div class="summary-card h-100">
                     <div class="p-4 d-flex justify-content-between align-items-center">
                         <div>
@@ -144,8 +181,8 @@
                 </div>
             </div>
             {% if session.role == 'owner' and session.plan != 'starter' %}
-            <div class="col-4">
-                <div class="summary-card h-100 p-4 d-flex flex-column justify-content-center border-success border-opacity-25">
+            <div class="col-12 col-sm-4">
+                <div class="summary-card h-100 p-4 d-flex flex-column justify-content-center border-success border-opacity-25" style="min-height: 110px;">
                     <span class="d-block text-muted small text-uppercase fw-bold">Net Profit</span>
                     <h3 class="text-profit mb-0 fw-bold">{{ profit | kina }}</h3>
                 </div>
