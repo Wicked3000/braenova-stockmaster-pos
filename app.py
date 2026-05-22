@@ -11,7 +11,8 @@ from database import (
     get_daily_sales_chart, get_hourly_sales_today, get_category_sales_distribution,
     get_expired_items, add_inventory_item, add_category, get_cashier_summary,
     close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner,
-    get_all_shops, toggle_shop_status
+    get_all_shops, toggle_shop_status, update_shop_plan_db, get_owner_shops,
+    create_additional_shop, get_centralized_inventory
 )
 
 app = Flask(__name__)
@@ -29,7 +30,11 @@ def kina_filter(val):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session or 'shop_id' not in session:
+        if 'user_id' not in session:
+            session.clear()
+            return redirect(url_for('login'))
+        # If user is not superadmin, they must have a valid shop_id
+        if session.get('role') != 'superadmin' and ('shop_id' not in session or session.get('shop_id') is None):
             session.clear()
             return redirect(url_for('login'))
         return f(*args, **kwargs)
@@ -40,6 +45,15 @@ def owner_required(f):
     def decorated_function(*args, **kwargs):
         if session.get('role') not in ['owner', 'superadmin']:
             flash("Unauthorized Access: Owners Only", "error")
+            return redirect(url_for('pos'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def manager_or_owner_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') not in ['owner', 'manager', 'superadmin']:
+            flash("Unauthorized Access: Managers & Owners Only", "error")
             return redirect(url_for('pos'))
         return f(*args, **kwargs)
     return decorated_function
@@ -57,14 +71,18 @@ def superadmin_required(f):
 def login():
     if request.method == 'POST':
         user = verify_user(request.form['username'], request.form['password'])
-        if user == "suspended":
+        if user == "inactive":
+            flash("Your shop account is pending payment activation. Please make payment to gain access.", "warning")
+            return redirect(url_for('pending_activation', username=request.form['username']))
+        elif user == "suspended":
             flash("Your shop account is currently suspended. Please contact support.", "error")
             return redirect(url_for('login'))
         elif user:
             session['user_id'] = user['id']
             session['username'] = user['username']
             session['role'] = user['role']
-            session['shop_id'] = user['shop_id']
+            session['shop_id'] = user.get('shop_id')
+            session['plan'] = user.get('plan', 'starter')
             
             if user['role'] == 'superadmin':
                 return redirect(url_for('superadmin_dashboard'))
@@ -84,7 +102,9 @@ def logout():
 @app.route('/')
 def landing():
     if 'user_id' in session:
-        if 'shop_id' not in session:
+        if session.get('role') == 'superadmin':
+            return redirect(url_for('superadmin_dashboard'))
+        if 'shop_id' not in session or session.get('shop_id') is None:
             session.clear()
             return render_template('landing.html')
             
@@ -95,31 +115,26 @@ def landing():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    plan = request.args.get('plan', 'starter')
     if request.method == 'POST':
         shop_name = request.form['shop_name']
         username = request.form['username']
         password = request.form['password']
+        selected_plan = request.form.get('plan', 'starter')
         
         from werkzeug.security import generate_password_hash
         from database import register_shop_and_owner
         
         try:
             password_hash = generate_password_hash(password)
-            user = register_shop_and_owner(shop_name, username, password_hash)
+            user = register_shop_and_owner(shop_name, username, password_hash, selected_plan)
             
-            # Auto-login after registration
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role']
-            session['shop_id'] = user['shop_id']
-            
-            flash("Shop registered successfully! Welcome to StockMaster.", "success")
-            return redirect(url_for('dashboard'))
+            flash("Shop registered successfully! Please complete payment to activate your account.", "success")
+            return redirect(url_for('pending_activation', username=username, plan=selected_plan))
         except Exception as e:
-            # Simple error handling for duplicate username
-            flash("Registration failed. That username may already be taken.", "error")
+            flash(f"Registration failed. That username may already be taken. Error: {e}", "error")
             
-    return render_template('register.html')
+    return render_template('register.html', plan=plan)
 
 @app.route('/terms')
 def terms():
@@ -132,6 +147,14 @@ def privacy():
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
+
+@app.route('/pending-activation')
+def pending_activation():
+    username = request.args.get('username')
+    plan = request.args.get('plan', 'starter')
+    price = "K50" if plan == "starter" else "K200" if plan == "pro" else "K450"
+    plan_name = "Starter Plan" if plan == "starter" else "Pro Shop Plan" if plan == "pro" else "Multi-Shop Plan"
+    return render_template('pending_activation.html', username=username, plan=plan, price=price, plan_name=plan_name)
 
 # --- SUPERADMIN ROUTES ---
 
@@ -152,15 +175,34 @@ def toggle_shop():
     flash(f"Shop status updated successfully.", "success")
     return redirect(url_for('superadmin_dashboard'))
 
+@app.route('/superadmin/update-plan', methods=['POST'])
+@login_required
+@superadmin_required
+def update_shop_plan():
+    shop_id = request.form.get('shop_id')
+    plan = request.form.get('plan')
+    update_shop_plan_db(shop_id, plan)
+    flash(f"Shop plan updated to {plan.upper()}.", "success")
+    return redirect(url_for('superadmin_dashboard'))
+
 # --- OWNER ONLY ROUTES ---
 
 @app.route('/dashboard')
 @login_required
 def dashboard():
     shop_id = session.get('shop_id')
-    if session.get('role') == 'owner':
+    is_owner = (session.get('role') == 'owner')
+    plan = session.get('plan', 'starter')
+    
+    # If owner on multi-shop plan, get all owned shops
+    owned_shops = []
+    if is_owner and plan == 'multi':
+        owned_shops = get_owner_shops(session.get('user_id'))
+        
+    if is_owner:
         summary = get_sales_summary(shop_id)
-        profit = summary['total_profit']
+        # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
+        profit = summary['total_profit'] if plan != 'starter' else None
     else:
         summary = get_cashier_summary(session.get('user_id'), shop_id)
         profit = None
@@ -181,7 +223,46 @@ def dashboard():
                            total_alerts=total_alerts,
                            chart_data=chart_data,
                            hourly_data=hourly_data,
-                           cat_dist=cat_dist)
+                           cat_dist=cat_dist,
+                           owned_shops=owned_shops,
+                           current_shop_id=shop_id)
+
+@app.route('/shops/switch/<int:target_shop_id>')
+@login_required
+@owner_required
+def switch_shop(target_shop_id):
+    owner_id = session.get('user_id')
+    owned_shops = get_owner_shops(owner_id)
+    if any(s['id'] == target_shop_id for s in owned_shops):
+        session['shop_id'] = target_shop_id
+        # Update the plan in session to match the plan of the shop we switched to
+        # (Though all owned shops by this owner should have the same plan)
+        shop_match = next(s for s in owned_shops if s['id'] == target_shop_id)
+        session['plan'] = shop_match.get('plan', 'starter')
+        flash(f"Switched to shop: {shop_match['name']}", "success")
+    else:
+        flash("Unauthorized: You do not own that shop.", "error")
+    return redirect(url_for('dashboard'))
+
+@app.route('/shops/add', methods=['POST'])
+@login_required
+@owner_required
+def add_shop_location():
+    if session.get('plan') != 'multi':
+        flash("Upgrade to Multi-Shop plan to add more locations.", "error")
+        return redirect(url_for('dashboard'))
+    
+    owner_id = session.get('user_id')
+    owned_shops = get_owner_shops(owner_id)
+    if len(owned_shops) >= 5:
+        flash("Limit reached: Multi-Shop plan is limited to 5 shop locations.", "error")
+        return redirect(url_for('dashboard'))
+        
+    shop_name = request.form.get('shop_name')
+    if shop_name:
+        create_additional_shop(shop_name, owner_id, plan='multi')
+        flash(f"New shop location '{shop_name}' created successfully!", "success")
+    return redirect(url_for('dashboard'))
 
 @app.route('/sales-log')
 @login_required
@@ -223,6 +304,18 @@ def dinau_mgmt():
     list_items = get_all_dinau(session.get('shop_id'))
     return render_template('dinau.html', dinau=list_items)
 
+@app.route('/inventory/centralized')
+@login_required
+@owner_required
+def centralized_inventory():
+    if session.get('plan') != 'multi':
+        flash("Upgrade to Multi-Shop plan to access global inventory.", "error")
+        return redirect(url_for('dashboard'))
+    
+    owner_id = session.get('user_id')
+    inventory = get_centralized_inventory(owner_id)
+    return render_template('centralized_inventory.html', inventory=inventory)
+
 # --- API & ACTIONS ---
 
 @app.route('/api/checkout', methods=['POST'])
@@ -236,6 +329,9 @@ def checkout():
         
         if not items:
             return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+
+        if payment_method == 'dinau' and session.get('plan') == 'starter':
+            return jsonify({'success': False, 'message': 'Store credit (Dinau) is not available on the Starter Plan.'}), 400
 
         total_transaction_amount = sum(float(i['total_price']) for i in items)
         if payment_method == 'dinau' and total_transaction_amount < 20.00:
@@ -298,6 +394,12 @@ def quick_update():
 @owner_required
 def add_product():
     try:
+        if session.get('plan') == 'starter':
+            inventory = get_all_inventory(session.get('shop_id'))
+            if len(inventory) >= 100:
+                flash("Starter plan limit reached: Max 100 active products allowed. Please upgrade to Pro or Multi-Shop to add more.", "error")
+                return redirect(url_for('inventory_mgmt'))
+
         name = request.form.get('item_name')
         qty = int(request.form.get('quantity'))
         threshold = int(request.form.get('threshold'))
@@ -389,6 +491,12 @@ def delete_item(item_id):
 @app.route('/users/add', methods=['POST'])
 @owner_required
 def create_user():
+    if session.get('plan') == 'starter':
+        cashiers = get_all_cashiers(session.get('shop_id'))
+        if len(cashiers) >= 1:
+            flash("Starter plan limit reached: Max 1 cashier account allowed. Please upgrade to Pro or Multi-Shop to add more.", "error")
+            return redirect(url_for('inventory_mgmt'))
+            
     data = request.form
     from werkzeug.security import generate_password_hash
     password_hash = generate_password_hash(data['password'])

@@ -35,12 +35,53 @@
             <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
         </a>
         <div class="d-flex align-items-center gap-2">
+            {% if session.plan == 'multi' and owned_shops %}
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-info dropdown-toggle rounded-pill px-3 fw-bold" type="button" id="shopSwitcher" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem; border-color: rgba(13, 202, 240, 0.4);">
+                    🏪 SWITCH SHOP
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow" aria-labelledby="shopSwitcher">
+                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">My Locations</h6></li>
+                    {% for shop in owned_shops %}
+                    <li>
+                        <a class="dropdown-item d-flex justify-content-between align-items-center {% if shop.id == current_shop_id %}active fw-bold{% endif %}" href="/shops/switch/{{ shop.id }}" style="font-size: 0.9rem;">
+                            <span>{{ shop.name }}</span>
+                            {% if shop.id == current_shop_id %}<span class="badge bg-info text-dark rounded-pill">Active</span>{% endif %}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li><hr class="dropdown-divider border-secondary"></li>
+                    <li>
+                        <button class="dropdown-item text-success fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addShopModal" style="font-size: 0.9rem;">
+                            <span>➕ Add New Location</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
             <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25" style="width: 40px; height: 40px; padding: 0;">🔄</button>
             <a href="/logout" class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold">LOGOUT</a>
         </div>
     </header>
 
     <div class="container py-3">
+        {% if session.plan == 'starter' %}
+        <div class="alert alert-info py-2 px-3 border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center" style="font-size: 0.85rem; background-color: rgba(13, 110, 253, 0.15); color: #0d6efd;">
+            <span>ℹ️ You are on the <strong>Starter Plan</strong>. Store credit (Dinau) and profit metrics are disabled.</span>
+            <a href="/contact" class="btn btn-sm btn-primary rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem;">Upgrade Plan</a>
+        </div>
+        {% endif %}
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} py-2 px-3 border-0 rounded-3 mb-4" style="font-size: 0.85rem;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div id="alertContainer">
             {% if total_alerts > 0 %}
             <div class="alert-banner" id="stockAlertBanner">⚠️ {{ total_alerts }} STOCK ALERTS! Check Inventory.</div>
@@ -48,7 +89,7 @@
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-{% if session.role == 'owner' %}8{% else %}12{% endif %}">
+            <div class="col-{% if session.role == 'owner' and session.plan != 'starter' %}8{% else %}12{% endif %}">
                 <div class="summary-card h-100">
                     <div class="p-4 d-flex justify-content-between align-items-center">
                         <div>
@@ -58,7 +99,7 @@
                     </div>
                 </div>
             </div>
-            {% if session.role == 'owner' %}
+            {% if session.role == 'owner' and session.plan != 'starter' %}
             <div class="col-4">
                 <div class="summary-card h-100 p-4 d-flex flex-column justify-content-center border-success border-opacity-25">
                     <span class="d-block text-muted small text-uppercase fw-bold">Net Profit</span>
@@ -106,10 +147,37 @@
         <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
         {% if session.role == 'owner' %}
         <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        {% if session.plan == 'multi' %}
+        <a href="/inventory/centralized" class="nav-btn"><span class="nav-icon">🌐</span>Global</a>
+        {% endif %}
         <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
         <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
         {% endif %}
     </div>
+
+    {% if session.plan == 'multi' %}
+    <!-- Add Shop Modal -->
+    <div class="modal fade" id="addShopModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary rounded-4 shadow-lg">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="mb-1 fw-bold text-white">Create Shop Location</h5>
+                    <p class="text-muted small mb-4">Add a new branch location (up to 5 total)</p>
+                    <form action="/shops/add" method="POST">
+                        <div class="mb-4 text-start">
+                            <label class="small text-muted mb-2 text-uppercase fw-bold">Shop Name</label>
+                            <input type="text" name="shop_name" class="form-control bg-black text-white border-secondary" placeholder="e.g. Town Branch" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success py-3 fw-bold rounded-4 shadow-lg">CREATE SHOP</button>
+                            <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 text-white opacity-75" data-bs-dismiss="modal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <div class="modal fade" id="closeShopModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">

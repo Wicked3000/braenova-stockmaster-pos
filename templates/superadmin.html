@@ -72,20 +72,33 @@
     <h5 class="fw-bold mb-3 mt-2">Registered Shops</h5>
 
     {% for shop in shops %}
-    <div class="shop-card">
+    <div class="shop-card flex-column flex-md-row gap-3">
         <div class="shop-info">
-            <h5>{{ shop.name }} <span class="status-badge {{ 'status-active' if shop.is_active else 'status-suspended' }} ms-2">{{ 'Active' if shop.is_active else 'Suspended' }}</span></h5>
+            <h5>
+                {{ shop.name }} 
+                <span class="status-badge {{ 'status-active' if shop.is_active else 'status-suspended' }} ms-1">{{ 'Active' if shop.is_active else 'Inactive/Suspended' }}</span>
+                <span class="badge bg-secondary ms-1 text-uppercase" style="font-size: 0.7rem; font-weight: bold; background-color: rgba(255,255,255,0.15) !important;">{{ shop.plan or 'starter' }}</span>
+            </h5>
             <p>Owner: @{{ shop.owner_username }} | Shop ID: {{ shop.id }}</p>
         </div>
-        <div>
-            <form action="/superadmin/toggle" method="POST">
+        <div class="d-flex align-items-center gap-2 align-self-end align-self-md-center">
+            <form action="/superadmin/update-plan" method="POST" class="d-flex align-items-center gap-1">
+                <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                <select name="plan" class="form-select form-select-sm" style="width: auto; background: #222; color: #fff; border-color: #444;" onchange="this.form.submit()">
+                    <option value="starter" {% if shop.plan == 'starter' or not shop.plan %}selected{% endif %}>Starter Plan</option>
+                    <option value="pro" {% if shop.plan == 'pro' %}selected{% endif %}>Pro Shop Plan</option>
+                    <option value="multi" {% if shop.plan == 'multi' %}selected{% endif %}>Multi-Shop Plan</option>
+                </select>
+            </form>
+
+            <form action="/superadmin/toggle" method="POST" class="m-0">
                 <input type="hidden" name="shop_id" value="{{ shop.id }}">
                 {% if shop.is_active %}
                     <input type="hidden" name="status" value="false">
                     <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Suspend this shop? Their owner and cashiers will instantly lose access.')">Suspend</button>
                 {% else %}
                     <input type="hidden" name="status" value="true">
-                    <button type="submit" class="btn btn-sm btn-outline-success">Reactivate</button>
+                    <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
                 {% endif %}
             </form>
         </div>

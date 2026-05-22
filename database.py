@@ -12,11 +12,11 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
 
 # --- SUPER ADMIN ---
 def get_all_shops():
-    res = supabase.table('shops').select('*, users(username, role)').execute()
+    res = supabase.table('shops').select('*, users!users_shop_id_fkey(username, role)').execute()
     # Post-process to find the owner username for each shop
     shops = res.data
     for s in shops:
-        owners = [u['username'] for u in s.get('users', []) if u.get('role') == 'owner']
+        owners = [u['username'] for u in s.get('users!users_shop_id_fkey', []) if u.get('role') == 'owner']
         s['owner_username'] = owners[0] if owners else 'Unknown'
     return shops
 
@@ -27,19 +27,27 @@ def toggle_shop_status(shop_id, is_active):
 
 def verify_user(username, password):
     from werkzeug.security import check_password_hash
-    res = supabase.table('users').select('*, shops!inner(is_active)').eq('username', username).eq('is_active', 1).execute()
+    res = supabase.table('users').select('*').eq('username', username).eq('is_active', 1).execute()
     user = res.data[0] if res.data else None
     
     if user and check_password_hash(user['password_hash'], password):
-        if user['role'] == 'superadmin' or user['shops']['is_active']:
+        if user['role'] == 'superadmin':
             return user
-        else:
-            return "suspended"
+        if user.get('shop_id'):
+            shop_res = supabase.table('shops').select('is_active, plan').eq('id', user['shop_id']).execute()
+            if shop_res.data:
+                shop = shop_res.data[0]
+                if shop['is_active']:
+                    user['plan'] = shop.get('plan', 'starter')
+                    user['shop_active'] = True
+                    return user
+                else:
+                    return "inactive"
     return None
 
-def register_shop_and_owner(shop_name, owner_username, owner_password_hash):
-    # 1. Insert new shop
-    shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": True}).execute()
+def register_shop_and_owner(shop_name, owner_username, owner_password_hash, plan='starter'):
+    # 1. Insert new shop (is_active = False by default)
+    shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": False, "plan": plan}).execute()
     new_shop_id = shop_res.data[0]['id']
     
     # 2. Insert owner user
@@ -51,7 +59,14 @@ def register_shop_and_owner(shop_name, owner_username, owner_password_hash):
         "shop_id": new_shop_id
     }
     user_res = supabase.table('users').insert(user_data).execute()
-    return user_res.data[0]
+    owner_user = user_res.data[0]
+    
+    # 3. Link owner back to the shop's owner_id
+    supabase.table('shops').update({"owner_id": owner_user['id']}).eq('id', new_shop_id).execute()
+    
+    owner_user['plan'] = plan
+    owner_user['shop_active'] = False
+    return owner_user
 
 def add_user(username, password_hash, role='cashier', shop_id=1):
     data = {
@@ -370,3 +385,34 @@ def get_expired_items(shop_id):
     
     res = supabase.table('inventory').select('*').eq('is_active', 1).eq('shop_id', shop_id).gt('quantity', 0).lte('expiry_date', soon).execute()
     return res.data
+
+def update_shop_plan_db(shop_id, plan):
+    supabase.table('shops').update({"plan": plan}).eq('id', shop_id).execute()
+
+def get_owner_shops(owner_id):
+    res = supabase.table('shops').select('*').eq('owner_id', owner_id).eq('is_active', True).execute()
+    return res.data
+
+def create_additional_shop(shop_name, owner_id, plan):
+    shop_res = supabase.table('shops').insert({
+        "name": shop_name,
+        "is_active": True,
+        "plan": plan,
+        "owner_id": owner_id
+    }).execute()
+    return shop_res.data[0]
+
+def get_centralized_inventory(owner_id):
+    shops = get_owner_shops(owner_id)
+    shop_ids = [s['id'] for s in shops]
+    if not shop_ids:
+        return []
+    
+    res = supabase.table('inventory').select('*').eq('is_active', 1).in_('shop_id', shop_ids).execute()
+    items = res.data
+    
+    shop_map = {s['id']: s['name'] for s in shops}
+    for item in items:
+        item['shop_name'] = shop_map.get(item['shop_id'], 'Unknown')
+        
+    return items

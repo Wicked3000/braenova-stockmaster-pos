@@ -165,7 +165,9 @@
                             <option value="cash">💵 Cash Payment</option>
                             <option value="card">💳 Card / EFTPOS</option>
                             <option value="mobile">📱 Mobile Transfer (Kina/BSP)</option>
+                            {% if session.plan != 'starter' %}
                             <option value="dinau">📖 Dinau (Credit)</option>
+                            {% endif %}
                         </select>
                         <input type="text" id="customerName" class="form-control bg-black text-white border-secondary" placeholder="Customer Name" style="display:none;">
                     </div>
