@@ -403,6 +403,21 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Navigation -->
+    <div class="nav-bar">
+        <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        <a href="/pos" class="nav-btn active"><span class="nav-icon">🛒</span>POS</a>
+        <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
+        {% if session.role == 'owner' %}
+        <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        {% if session.plan == 'multi' %}
+        <a href="/inventory/centralized" class="nav-btn"><span class="nav-icon">🌐</span>Global</a>
+        {% endif %}
+        <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
+        <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
+        {% endif %}
+    </div>
+
     <script>
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {

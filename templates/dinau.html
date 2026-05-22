@@ -134,7 +134,19 @@
         </div>
         <div class="ownership-tag pb-5">Created and Owned by<br><span style="color: #f91a8e;">BraeNova IT Solutions</span></div>
     </div>
-    <div class="nav-bar">{% if session.role == 'owner' %}<a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>{% endif %}<a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a><a href="/dinau" class="nav-btn active"><span class="nav-icon">📖</span>Dinau</a><a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>{% if session.role == 'owner' %}<a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>{% endif %}</div>
+    <div class="nav-bar">
+        <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        <a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a>
+        <a href="/dinau" class="nav-btn active"><span class="nav-icon">📖</span>Dinau</a>
+        {% if session.role == 'owner' %}
+        <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        {% if session.plan == 'multi' %}
+        <a href="/inventory/centralized" class="nav-btn"><span class="nav-icon">🌐</span>Global</a>
+        {% endif %}
+        <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
+        <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
+        {% endif %}
+    </div>
     <!-- Confirm Modal -->
     <div class="modal fade" id="confirmModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
