@@ -242,7 +242,15 @@
                     <div style="margin-top: 15px; font-family: 'Courier Prime', monospace; font-size: 0.8rem;">
                         <div class="d-flex justify-content-between">
                             <span>PAID VIA:</span>
-                            <span class="fw-bold">{{ receipt.payment_method | upper }}</span>
+                            <span class="fw-bold">
+                                {% if receipt.payment_method == 'mobile' %}
+                                MOBILE BANKING TRANSFER
+                                {% elif receipt.payment_method == 'card' %}
+                                INTERNET BANKING TRANSFER
+                                {% else %}
+                                {{ receipt.payment_method | upper }}
+                                {% endif %}
+                            </span>
                         </div>
                         {% if receipt.customer_name %}
                         <div class="d-flex justify-content-between mt-1 fw-bold">

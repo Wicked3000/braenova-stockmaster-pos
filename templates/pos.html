@@ -266,8 +266,8 @@
                         <label class="small text-muted mb-2">Payment Method</label>
                         <select id="paymentMethod" class="form-select bg-black text-white border-secondary mb-3" onchange="toggleCustomer()">
                             <option value="cash">💵 Cash Payment</option>
-                            <option value="card">💳 Card / EFTPOS</option>
-                            <option value="mobile">📱 Mobile Transfer (Kina/BSP)</option>
+                            <option value="card">💳 Internet Banking Transfer</option>
+                            <option value="mobile">📱 Mobile Banking Transfer</option>
                             {% if session.plan != 'starter' %}
                             <option value="dinau">📖 Dinau (Credit)</option>
                             {% endif %}
@@ -674,7 +674,18 @@
                     </tr>`
                 ).join('');
                 document.getElementById('receiptTotal').innerText = formatKina(currentTotal);
-                document.getElementById('receiptMethod').innerText = method.toUpperCase();
+                
+                let displayMethod = method.toUpperCase();
+                if (method === 'mobile') {
+                    displayMethod = "MOBILE BANKING TRANSFER";
+                } else if (method === 'card') {
+                    displayMethod = "INTERNET BANKING TRANSFER";
+                } else if (method === 'cash') {
+                    displayMethod = "CASH";
+                } else if (method === 'dinau') {
+                    displayMethod = "DINAU";
+                }
+                document.getElementById('receiptMethod').innerText = displayMethod;
                 
                 if (method === 'cash') {
                     document.getElementById('receiptCashDetails').style.display = 'block';
