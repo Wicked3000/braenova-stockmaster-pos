@@ -149,6 +149,58 @@
             .d-flex.gap-3 { flex-direction: column; width: 100%; max-width: 300px; margin: 0 auto; }
             .btn-glow, .btn-outline-glow { width: 100%; text-align: center; }
         }
+
+        /* CTA Section Animated Glow Blobs */
+        .cta-glow-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            z-index: 1;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+        .cta-glow-1 {
+            width: 300px;
+            height: 300px;
+            background: #fcc11e;
+            top: -100px;
+            left: -100px;
+            animation: floatBlob1 15s infinite alternate ease-in-out;
+        }
+        .cta-glow-2 {
+            width: 400px;
+            height: 400px;
+            background: #028bd9;
+            bottom: -150px;
+            right: -150px;
+            animation: floatBlob2 18s infinite alternate ease-in-out;
+        }
+        .cta-glow-3 {
+            width: 250px;
+            height: 250px;
+            background: #f91a8e;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: floatBlob3 12s infinite alternate ease-in-out;
+        }
+
+        @keyframes floatBlob1 {
+            0% { transform: translate(0px, 0px) scale(1); }
+            50% { transform: translate(80px, 40px) scale(1.15); }
+            100% { transform: translate(-20px, 60px) scale(0.9); }
+        }
+        @keyframes floatBlob2 {
+            0% { transform: translate(0px, 0px) scale(1); }
+            50% { transform: translate(-60px, -60px) scale(1.1); }
+            100% { transform: translate(40px, 20px) scale(0.95); }
+        }
+        @keyframes floatBlob3 {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-30%, -60%) scale(1.2); }
+            100% { transform: translate(-60%, -40%) scale(0.85); }
+        }
     </style>
 </head>
 <body>
@@ -497,8 +549,13 @@
     </section>
 
     <!-- FINAL CTA SECTION -->
-    <section style="background: linear-gradient(135deg, #028bd9 0%, #061121 100%); padding: 100px 20px; text-align: center; border-top: 1px solid rgba(2, 139, 217, 0.3);">
-        <div style="max-width: 600px; margin: 0 auto;">
+    <section style="background: linear-gradient(135deg, #028bd9 0%, #061121 100%); padding: 100px 20px; text-align: center; border-top: 1px solid rgba(2, 139, 217, 0.3); position: relative; overflow: hidden;">
+        <!-- Glowing animated background elements -->
+        <div class="cta-glow-blob cta-glow-1"></div>
+        <div class="cta-glow-blob cta-glow-2"></div>
+        <div class="cta-glow-blob cta-glow-3"></div>
+
+        <div style="max-width: 600px; margin: 0 auto; position: relative; z-index: 2;">
             <h2 style="font-weight: 900; font-size: 2.8rem; margin-bottom: 20px; color: #fff;">Ready to professionalize your business?</h2>
             <p style="color: #d0e8f8; font-size: 1.2rem; margin-bottom: 40px;">Stop the shrinkage. Track the Dinau. Take control today.</p>
             <a href="#pricing" class="btn-glow" style="background: #fcc11e; color: #000; box-shadow: 0 10px 30px rgba(252, 193, 30, 0.4); padding: 20px 50px; font-size: 1.3rem;">Get Started Now</a>
