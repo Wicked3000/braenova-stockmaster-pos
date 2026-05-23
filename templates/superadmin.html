@@ -491,6 +491,13 @@
                                             {% endif %}
                                         </form>
                                     </li>
+                                    <li><hr class="dropdown-divider border-secondary"></li>
+                                    <li>
+                                        <form action="/superadmin/delete-shop" method="POST" class="m-0 confirm-submit-form" data-message="DANGER: This will permanently delete this shop ({{ shop.name }}), all registered users, sales logs, dinau, and inventory data forever! Proceed?" data-title="PERMANENTLY DELETE SHOP" data-type="danger">
+                                            <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                            <button type="submit" class="dropdown-item dropdown-item-custom text-danger fw-bold">🗑️ Delete Shop</button>
+                                        </form>
+                                    </li>
                                 </ul>
                             </div>
                         </td>

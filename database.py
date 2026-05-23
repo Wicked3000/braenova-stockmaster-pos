@@ -502,3 +502,29 @@ def extend_shop_subscription(shop_id, plan_name, expiry_yymmdd, status_char='a')
     plan_str = make_shop_plan_str(plan_name, expiry_yymmdd, status_char)
     is_active = (status_char == 'a')
     supabase.table('shops').update({"is_active": is_active, "plan": plan_str}).eq('id', shop_id).execute()
+
+# --- DELETE SHOP AND DATA ---
+def delete_shop_and_data(shop_id):
+    # 1. Delete sales
+    supabase.table('sales').delete().eq('shop_id', shop_id).execute()
+    
+    # 2. Delete dinau_records
+    supabase.table('dinau_records').delete().eq('shop_id', shop_id).execute()
+    
+    # 3. Delete daily_reports
+    supabase.table('daily_reports').delete().eq('shop_id', shop_id).execute()
+    
+    # 4. Delete inventory
+    supabase.table('inventory').delete().eq('shop_id', shop_id).execute()
+    
+    # 5. Delete categories
+    supabase.table('categories').delete().eq('shop_id', shop_id).execute()
+    
+    # 6. Nullify owner_id in shops to break circular dependency
+    supabase.table('shops').update({"owner_id": None}).eq('id', shop_id).execute()
+    
+    # 7. Delete users
+    supabase.table('users').delete().eq('shop_id', shop_id).execute()
+    
+    # 8. Delete the shop itself
+    supabase.table('shops').delete().eq('id', shop_id).execute()

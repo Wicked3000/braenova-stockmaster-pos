@@ -13,7 +13,8 @@ from database import (
     close_shop, get_all_reports, add_dinau_record, cleanup_old_sales, register_shop_and_owner,
     get_all_shops, toggle_shop_status, update_shop_plan_db, get_owner_shops,
     create_additional_shop, get_centralized_inventory,
-    reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan
+    reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan,
+    delete_shop_and_data
 )
 
 app = Flask(__name__)
@@ -283,6 +284,30 @@ def superadmin_reset_password():
         flash(f"Password for user @{username} reset successfully.", "success")
     except Exception as e:
         flash(f"Error resetting password: {str(e)}", "error")
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/delete-shop', methods=['POST'])
+@login_required
+@superadmin_required
+def delete_shop():
+    try:
+        shop_id = request.form.get('shop_id')
+        if not shop_id:
+            flash("Shop ID is required.", "error")
+            return redirect(url_for('superadmin_dashboard'))
+        
+        # Verify the shop exists before deletion
+        from database import supabase
+        res = supabase.table('shops').select('name').eq('id', shop_id).execute()
+        if not res.data:
+            flash("Shop not found.", "error")
+            return redirect(url_for('superadmin_dashboard'))
+        
+        shop_name = res.data[0]['name']
+        delete_shop_and_data(shop_id)
+        flash(f"Shop '{shop_name}' and all associated users/data have been permanently deleted.", "success")
+    except Exception as e:
+        flash(f"Error deleting shop: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/impersonate/<int:shop_id>')
