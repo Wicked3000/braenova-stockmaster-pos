@@ -152,21 +152,94 @@
 
         /* Custom Slider Styling */
         .custom-slider {
-            background: rgba(255,255,255,0.05);
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
             height: 8px;
             border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            margin: 12px 0;
+            cursor: pointer;
+        }
+        .custom-slider::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 4px;
+            background: transparent;
         }
         .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             background: #fcc11e !important;
             border: 2px solid #fcc11e !important;
-            box-shadow: 0 0 10px rgba(252, 193, 30, 0.5) !important;
+            box-shadow: 0 0 10px rgba(252, 193, 30, 0.6) !important;
+            margin-top: -6px;
             cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ffd93d !important;
+        }
+        .custom-slider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
+            background: transparent;
         }
         .custom-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             background: #fcc11e !important;
             border: 2px solid #fcc11e !important;
-            box-shadow: 0 0 10px rgba(252, 193, 30, 0.5) !important;
+            box-shadow: 0 0 10px rgba(252, 193, 30, 0.6) !important;
             cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .custom-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: #ffd93d !important;
+        }
+
+        /* Pricing Cards Default Transitions */
+        .pricing-card {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+                        border-color 0.4s ease,
+                        box-shadow 0.4s ease,
+                        opacity 0.4s ease;
+        }
+        
+        /* Recommended State (Default Desktop) */
+        .pricing-card.recommended {
+            transform: scale(1.08) !important;
+            border-color: #fcc11e !important;
+            box-shadow: 0 25px 60px rgba(252, 193, 30, 0.25) !important;
+            z-index: 3 !important;
+            opacity: 1 !important;
+        }
+        
+        /* Dimmed State (Default Desktop) */
+        .pricing-card.dimmed {
+            transform: scale(0.95) !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+            box-shadow: none !important;
+            z-index: 1 !important;
+            opacity: 0.5 !important;
+        }
+
+        /* Mobile Responsive Adjustments for highlights */
+        @media (max-width: 992px) {
+            .pricing-card.recommended {
+                transform: scale(1.02) !important;
+                box-shadow: 0 15px 35px rgba(252, 193, 30, 0.2) !important;
+            }
+            .pricing-card.dimmed {
+                transform: scale(1.0) !important;
+                opacity: 0.82 !important;
+            }
         }
 
         /* Floating WhatsApp Chat Widget */
@@ -444,7 +517,7 @@
                             <span>PRODUCTS LIMIT</span>
                             <span id="calc-products-val" class="text-white fw-bold">100 Products</span>
                         </label>
-                        <input type="range" class="form-range custom-slider" id="calc-products" min="10" max="500" step="10" value="100">
+                        <input type="range" class="form-range custom-slider" id="calc-products" min="0" max="500" step="10" value="100">
                     </div>
                     <div>
                         <label class="form-label d-flex justify-content-between text-muted small fw-bold mb-2">
@@ -475,7 +548,7 @@
         <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; align-items: stretch; padding-top: 20px;">
             
             <!-- Starter Plan -->
-            <div id="card-starter" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
+            <div id="card-starter" class="pricing-card" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
                 <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Starter Plan</h3>
                 <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
                     <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span>50<span style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
@@ -491,7 +564,7 @@
             </div>
 
             <!-- Pro Plan -->
-            <div id="card-pro" style="background: #0c0c0c; border: 2px solid #028bd9; border-radius: 30px; padding: 50px 40px; text-align: center; box-shadow: 0 20px 50px rgba(2, 139, 217, 0.15); position: relative; transform: scale(1.05); z-index: 2; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);">
+            <div id="card-pro" class="pricing-card" style="background: #0c0c0c; border: 2px solid #028bd9; border-radius: 30px; padding: 50px 40px; text-align: center; box-shadow: 0 20px 50px rgba(2, 139, 217, 0.15); position: relative; transform: scale(1.05); z-index: 2; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);">
                 <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%); color: #000; font-weight: 900; padding: 5px 20px; border-radius: 20px; font-size: 0.9rem;">MOST POPULAR</div>
                 <h3 style="font-weight: 800; margin-bottom: 15px; font-size: 1.8rem; color: #fff;">Pro Shop Plan</h3>
                 <div style="font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
@@ -510,7 +583,7 @@
             </div>
 
             <!-- Enterprise Plan (Multi-Shop) -->
-            <div id="card-multi" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
+            <div id="card-multi" class="pricing-card" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
                 <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Multi-Shop Plan</h3>
                 <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
                     <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span>450<span style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
@@ -647,6 +720,11 @@
             const recommendedPrice = document.getElementById('calc-recommended-price');
             const ctaBtn = document.getElementById('calc-cta-btn');
 
+            function updateSliderProgress(slider) {
+                const percentage = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+                slider.style.background = `linear-gradient(to right, #fcc11e 0%, #fcc11e ${percentage}%, rgba(255, 255, 255, 0.1) ${percentage}%, rgba(255, 255, 255, 0.1) 100%)`;
+            }
+
             function updateCalculator() {
                 const products = parseInt(productsSlider.value);
                 const cashiers = parseInt(cashiersSlider.value);
@@ -676,7 +754,15 @@
                 }
 
                 // Update calculator details
-                recommendedName.innerText = planName;
+                if (recommendedName.innerText !== planName) {
+                    recommendedName.style.transform = 'scale(0.95)';
+                    recommendedName.style.opacity = '0.7';
+                    setTimeout(() => {
+                        recommendedName.innerText = planName;
+                        recommendedName.style.transform = 'scale(1)';
+                        recommendedName.style.opacity = '1';
+                    }, 80);
+                }
                 recommendedPrice.innerText = planPrice;
                 ctaBtn.href = `/register?plan=${planKey}`;
 
@@ -685,59 +771,60 @@
             }
 
             function updateHighlights(recommendedId) {
-                const cards = {
-                    'card-starter': {
-                        el: document.getElementById('card-starter'),
-                        defaultBg: 'rgba(255,255,255,0.02)',
-                        defaultBorder: '2px solid rgba(255,255,255,0.05)',
-                        defaultScale: '1.0',
-                        defaultZIndex: '1',
-                        defaultShadow: 'none'
-                    },
-                    'card-pro': {
-                        el: document.getElementById('card-pro'),
-                        defaultBg: '#0c0c0c',
-                        defaultBorder: '2px solid #028bd9',
-                        defaultScale: '1.05',
-                        defaultZIndex: '2',
-                        defaultShadow: '0 20px 50px rgba(2, 139, 217, 0.15)'
-                    },
-                    'card-multi': {
-                        el: document.getElementById('card-multi'),
-                        defaultBg: 'rgba(255,255,255,0.02)',
-                        defaultBorder: '2px solid rgba(255,255,255,0.05)',
-                        defaultScale: '1.0',
-                        defaultZIndex: '1',
-                        defaultShadow: 'none'
-                    }
-                };
-
-                for (const [id, config] of Object.entries(cards)) {
-                    if (!config.el) continue;
+                const cardIds = ['card-starter', 'card-pro', 'card-multi'];
+                cardIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    
+                    // Find button inside this card to highlight/reset
+                    const btn = el.querySelector('a.btn, a.btn-glow');
+                    
                     if (id === recommendedId) {
-                        // Highlight recommended card
-                        config.el.style.transform = 'scale(1.08)';
-                        config.el.style.borderColor = '#fcc11e';
-                        config.el.style.boxShadow = '0 25px 60px rgba(252, 193, 30, 0.3)';
-                        config.el.style.zIndex = '3';
-                        config.el.style.opacity = '1';
+                        el.classList.add('recommended');
+                        el.classList.remove('dimmed');
+                        
+                        if (btn) {
+                            btn.style.background = 'linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%)';
+                            btn.style.borderColor = '#fcc11e';
+                            btn.style.color = '#000';
+                            btn.style.boxShadow = '0 8px 20px rgba(252, 193, 30, 0.4)';
+                        }
                     } else {
-                        // Dim/reset other cards
-                        config.el.style.transform = 'scale(0.94)';
-                        config.el.style.borderColor = 'rgba(255,255,255,0.02)';
-                        config.el.style.boxShadow = 'none';
-                        config.el.style.zIndex = '1';
-                        config.el.style.opacity = '0.45';
+                        el.classList.add('dimmed');
+                        el.classList.remove('recommended');
+                        
+                        if (btn) {
+                            // Reset buttons to their base state styles
+                            if (id === 'card-pro') {
+                                btn.style.background = '';
+                                btn.style.borderColor = '';
+                                btn.style.color = '';
+                                btn.style.boxShadow = '';
+                            } else {
+                                btn.style.background = 'transparent';
+                                btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                                btn.style.color = '#ddd';
+                                btn.style.boxShadow = 'none';
+                            }
+                        }
                     }
-                }
+                });
             }
 
-            // Bind events
-            productsSlider.addEventListener('input', updateCalculator);
-            cashiersSlider.addEventListener('input', updateCalculator);
-            shopsSlider.addEventListener('input', updateCalculator);
+            // Bind events & handle dynamic backgrounds
+            function handleSliderInput(e) {
+                updateSliderProgress(e.target);
+                updateCalculator();
+            }
 
-            // Initial run
+            productsSlider.addEventListener('input', handleSliderInput);
+            cashiersSlider.addEventListener('input', handleSliderInput);
+            shopsSlider.addEventListener('input', handleSliderInput);
+
+            // Initial run to set progress states and card highlights
+            updateSliderProgress(productsSlider);
+            updateSliderProgress(cashiersSlider);
+            updateSliderProgress(shopsSlider);
             updateCalculator();
         });
     </script>
