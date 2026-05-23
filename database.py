@@ -357,6 +357,10 @@ def get_all_categories(shop_id):
     return res.data
 
 def add_category(name, shop_id):
+    # Check if category already exists for this shop (case-insensitive)
+    existing = supabase.table('categories').select('*').eq('shop_id', shop_id).ilike('name', name).execute()
+    if existing.data:
+        raise ValueError(f"Category '{name}' already exists in your shop.")
     supabase.table('categories').insert({"name": name, "shop_id": shop_id}).execute()
 
 def delete_category(category_id, shop_id):

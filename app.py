@@ -594,10 +594,17 @@ def add_product():
 @app.route('/category/add', methods=['POST'])
 @owner_required
 def add_new_category():
-    name = request.form.get('category_name')
-    if name:
-        add_category(name, session.get('shop_id'))
-        flash('Category added!', 'success')
+    try:
+        name = request.form.get('category_name')
+        if name:
+            add_category(name, session.get('shop_id'))
+            flash('Category added!', 'success')
+    except Exception as e:
+        err_msg = str(e)
+        if "unique constraint" in err_msg.lower() or "duplicate key" in err_msg.lower():
+            flash(f"Error adding category: '{name}' already exists in the system database.", "error")
+        else:
+            flash(f"Error adding category: {err_msg}", "error")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/category/delete/<int:cat_id>')
@@ -647,42 +654,58 @@ def update_product():
 @app.route('/inventory/delete/<int:item_id>')
 @owner_required
 def delete_item(item_id):
-    delete_inventory_item(item_id, session.get('shop_id'))
-    flash("Item deleted successfully", "success")
+    try:
+        delete_inventory_item(item_id, session.get('shop_id'))
+        flash("Item deleted successfully", "success")
+    except Exception as e:
+        flash(f"Error deleting item: {str(e)}", "error")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/users/add', methods=['POST'])
 @owner_required
 def create_user():
-    if session.get('plan') == 'starter':
-        cashiers = get_all_cashiers(session.get('shop_id'))
-        if len(cashiers) >= 1:
-            flash("Starter plan limit reached: Max 1 cashier account allowed. Please upgrade to Pro or Multi-Shop to add more.", "error")
-            return redirect(url_for('inventory_mgmt'))
-            
-    data = request.form
-    from werkzeug.security import generate_password_hash
-    password_hash = generate_password_hash(data['password'])
-    add_user(data['username'], password_hash, shop_id=session.get('shop_id'))
-    flash("Cashier registered successfully!", "success")
+    try:
+        if session.get('plan') == 'starter':
+            cashiers = get_all_cashiers(session.get('shop_id'))
+            if len(cashiers) >= 1:
+                flash("Starter plan limit reached: Max 1 cashier account allowed. Please upgrade to Pro or Multi-Shop to add more.", "error")
+                return redirect(url_for('inventory_mgmt'))
+                
+        data = request.form
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(data['password'])
+        add_user(data['username'], password_hash, shop_id=session.get('shop_id'))
+        flash("Cashier registered successfully!", "success")
+    except Exception as e:
+        err_msg = str(e)
+        if "unique constraint" in err_msg.lower() or "duplicate key" in err_msg.lower():
+            flash(f"Error registering cashier: The username '{data.get('username')}' is already taken.", "error")
+        else:
+            flash(f"Error registering cashier: {err_msg}", "error")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/users/reset', methods=['POST'])
 @owner_required
 def reset_pw():
-    data = request.form
-    from werkzeug.security import generate_password_hash
-    password_hash = generate_password_hash(data['new_password'])
-    reset_password(data['user_id'], password_hash, session.get('shop_id'))
-    flash("Password reset successfully!", "success")
+    try:
+        data = request.form
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(data['new_password'])
+        reset_password(data['user_id'], password_hash, session.get('shop_id'))
+        flash("Password reset successfully!", "success")
+    except Exception as e:
+        flash(f"Error resetting password: {str(e)}", "error")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/users/delete', methods=['POST'])
 @owner_required
 def remove_user():
-    user_id = request.form.get('user_id')
-    delete_user(user_id, session.get('shop_id'))
-    flash("User removed successfully.", "success")
+    try:
+        user_id = request.form.get('user_id')
+        delete_user(user_id, session.get('shop_id'))
+        flash("User removed successfully.", "success")
+    except Exception as e:
+        flash(f"Error removing user: {str(e)}", "error")
     return redirect(url_for('inventory_mgmt'))
 
 @app.route('/api/inventory')
