@@ -204,70 +204,85 @@ def superadmin_dashboard():
 @login_required
 @superadmin_required
 def toggle_shop():
-    shop_id = request.form.get('shop_id')
-    status = request.form.get('status') == 'true'
-    toggle_shop_status(shop_id, status)
-    flash(f"Shop status updated successfully.", "success")
+    try:
+        shop_id = request.form.get('shop_id')
+        status = request.form.get('status') == 'true'
+        toggle_shop_status(shop_id, status)
+        flash(f"Shop status updated successfully.", "success")
+    except Exception as e:
+        flash(f"Error updating shop status: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/update-plan', methods=['POST'])
 @login_required
 @superadmin_required
 def update_shop_plan():
-    shop_id = request.form.get('shop_id')
-    plan = request.form.get('plan')
-    update_shop_plan_db(shop_id, plan)
-    flash(f"Shop plan updated to {plan.upper()}.", "success")
+    try:
+        shop_id = request.form.get('shop_id')
+        plan = request.form.get('plan')
+        update_shop_plan_db(shop_id, plan)
+        flash(f"Shop plan updated to {plan.upper()}.", "success")
+    except Exception as e:
+        flash(f"Error updating shop plan: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/approve-payment', methods=['POST'])
 @login_required
 @superadmin_required
 def approve_payment():
-    shop_id = request.form.get('shop_id')
-    plan = request.form.get('plan', 'starter')
-    months = int(request.form.get('months', 1))
-    approve_shop_payment(shop_id, plan, months)
-    flash(f"Payment approved and shop activated on {plan.upper()} plan.", "success")
+    try:
+        shop_id = request.form.get('shop_id')
+        plan = request.form.get('plan', 'starter')
+        months = int(request.form.get('months', 1))
+        approve_shop_payment(shop_id, plan, months)
+        flash(f"Payment approved and shop activated on {plan.upper()} plan.", "success")
+    except Exception as e:
+        flash(f"Error approving payment: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/extend-subscription', methods=['POST'])
 @login_required
 @superadmin_required
 def extend_subscription():
-    shop_id = request.form.get('shop_id')
-    plan = request.form.get('plan')
-    expiry_yymmdd = request.form.get('expiry_date')
-    status_char = request.form.get('status', 'a')
-    
-    # Convert yyyy-mm-dd (HTML input date) to yymmdd format
-    if expiry_yymmdd and '-' in expiry_yymmdd:
-        try:
-            parts = expiry_yymmdd.split('-')
-            expiry_yymmdd = f"{parts[0][2:]}{parts[1]}{parts[2]}"
-        except Exception as e:
-            print(f"Error parsing date format: {e}")
-            
-    extend_shop_subscription(shop_id, plan, expiry_yymmdd, status_char)
-    flash("Subscription details updated successfully.", "success")
+    try:
+        shop_id = request.form.get('shop_id')
+        plan = request.form.get('plan')
+        expiry_yymmdd = request.form.get('expiry_date')
+        status_char = request.form.get('status', 'a')
+        
+        # Convert yyyy-mm-dd (HTML input date) to yymmdd format
+        if expiry_yymmdd and '-' in expiry_yymmdd:
+            try:
+                parts = expiry_yymmdd.split('-')
+                expiry_yymmdd = f"{parts[0][2:]}{parts[1]}{parts[2]}"
+            except Exception as e:
+                print(f"Error parsing date format: {e}")
+                
+        extend_shop_subscription(shop_id, plan, expiry_yymmdd, status_char)
+        flash("Subscription details updated successfully.", "success")
+    except Exception as e:
+        flash(f"Error extending subscription: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/reset-password', methods=['POST'])
 @login_required
 @superadmin_required
 def superadmin_reset_password():
-    user_id = request.form.get('user_id')
-    username = request.form.get('username')
-    new_password = request.form.get('new_password')
-    
-    if not new_password or len(new_password) < 6:
-        flash("Password must be at least 6 characters.", "error")
-        return redirect(url_for('superadmin_dashboard'))
+    try:
+        user_id = request.form.get('user_id')
+        username = request.form.get('username')
+        new_password = request.form.get('new_password')
         
-    from werkzeug.security import generate_password_hash
-    password_hash = generate_password_hash(new_password)
-    reset_password_by_admin(user_id, password_hash)
-    flash(f"Password for user @{username} reset successfully.", "success")
+        if not new_password or len(new_password) < 6:
+            flash("Password must be at least 6 characters.", "error")
+            return redirect(url_for('superadmin_dashboard'))
+            
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(new_password)
+        reset_password_by_admin(user_id, password_hash)
+        flash(f"Password for user @{username} reset successfully.", "success")
+    except Exception as e:
+        flash(f"Error resetting password: {str(e)}", "error")
     return redirect(url_for('superadmin_dashboard'))
 
 @app.route('/superadmin/impersonate/<int:shop_id>')
@@ -411,20 +426,23 @@ def switch_shop(target_shop_id):
 @login_required
 @owner_required
 def add_shop_location():
-    if session.get('plan') != 'multi':
-        flash("Upgrade to Multi-Shop plan to add more locations.", "error")
-        return redirect(url_for('dashboard'))
-    
-    owner_id = session.get('user_id')
-    owned_shops = get_owner_shops(owner_id)
-    if len(owned_shops) >= 5:
-        flash("Limit reached: Multi-Shop plan is limited to 5 shop locations.", "error")
-        return redirect(url_for('dashboard'))
+    try:
+        if session.get('plan') != 'multi':
+            flash("Upgrade to Multi-Shop plan to add more locations.", "error")
+            return redirect(url_for('dashboard'))
         
-    shop_name = request.form.get('shop_name')
-    if shop_name:
-        create_additional_shop(shop_name, owner_id, plan='multi')
-        flash(f"New shop location '{shop_name}' created successfully!", "success")
+        owner_id = session.get('user_id')
+        owned_shops = get_owner_shops(owner_id)
+        if len(owned_shops) >= 5:
+            flash("Limit reached: Multi-Shop plan is limited to 5 shop locations.", "error")
+            return redirect(url_for('dashboard'))
+            
+        shop_name = request.form.get('shop_name')
+        if shop_name:
+            create_additional_shop(shop_name, owner_id, plan='multi')
+            flash(f"New shop location '{shop_name}' created successfully!", "success")
+    except Exception as e:
+        flash(f"Error creating shop location: {str(e)}", "error")
     return redirect(url_for('dashboard'))
 
 @app.route('/sales-log')
@@ -532,11 +550,14 @@ def checkout():
 @app.route('/api/dinau/status', methods=['POST'])
 @login_required
 def update_debt_status():
-    record_id = request.form.get('record_id')
-    status = request.form.get('status', 'paid')
-    if record_id:
-        update_dinau_status(record_id, status, session.get('shop_id'))
-        flash(f"Debt marked as {status.upper()}", "success")
+    try:
+        record_id = request.form.get('record_id')
+        status = request.form.get('status', 'paid')
+        if record_id:
+            update_dinau_status(record_id, status, session.get('shop_id'))
+            flash(f"Debt marked as {status.upper()}", "success")
+    except Exception as e:
+        flash(f"Error updating debt status: {str(e)}", "error")
     return redirect(url_for('dinau_mgmt'))
 
 @app.route('/inventory/quick-update', methods=['POST'])
@@ -717,11 +738,14 @@ def get_inventory_api():
 @app.route('/reports/close', methods=['POST'])
 @owner_required
 def close_report():
-    actual_cash = float(request.form.get('actual_cash', 0))
-    restock_notes = request.form.get('restock_notes', '')
-    summary = get_sales_summary(session.get('shop_id'))
-    close_shop(actual_cash, summary['expected_cash'], session.get('shop_id'), summary['total_sales'], summary['total_profit'], restock_notes)
-    flash("Shop closed. Daily report generated!", "success")
+    try:
+        actual_cash = float(request.form.get('actual_cash', 0))
+        restock_notes = request.form.get('restock_notes', '')
+        summary = get_sales_summary(session.get('shop_id'))
+        close_shop(actual_cash, summary['expected_cash'], session.get('shop_id'), summary['total_sales'], summary['total_profit'], restock_notes)
+        flash("Shop closed. Daily report generated!", "success")
+    except Exception as e:
+        flash(f"Error closing shop: {str(e)}", "error")
     return redirect(url_for('dashboard'))
 
 @app.route('/sales-log/purge', methods=['POST'])

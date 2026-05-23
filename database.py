@@ -354,14 +354,29 @@ def get_sales_history(shop_id, limit=50):
 
 def get_all_categories(shop_id):
     res = supabase.table('categories').select('*').eq('shop_id', shop_id).order('name').execute()
-    return res.data
+    data = []
+    for cat in res.data:
+        name = cat['name']
+        if '#' in name:
+            cat['name'] = name.split('#', 1)[1]
+        data.append(cat)
+    return data
 
 def add_category(name, shop_id):
-    # Check if category already exists for this shop (case-insensitive)
-    existing = supabase.table('categories').select('*').eq('shop_id', shop_id).ilike('name', name).execute()
-    if existing.data:
+    prefixed_name = f"{shop_id}#{name}"
+    # Fetch all categories to check normalized duplicates (including legacy non-prefixed ones)
+    res = supabase.table('categories').select('*').eq('shop_id', shop_id).execute()
+    existing_names = []
+    for cat in res.data:
+        cat_name = cat['name']
+        if '#' in cat_name:
+            cat_name = cat_name.split('#', 1)[1]
+        existing_names.append(cat_name.lower())
+        
+    if name.lower() in existing_names:
         raise ValueError(f"Category '{name}' already exists in your shop.")
-    supabase.table('categories').insert({"name": name, "shop_id": shop_id}).execute()
+        
+    supabase.table('categories').insert({"name": prefixed_name, "shop_id": shop_id}).execute()
 
 def delete_category(category_id, shop_id):
     supabase.table('categories').delete().eq('id', category_id).eq('shop_id', shop_id).execute()
