@@ -136,6 +136,12 @@
             margin-bottom: 50px;
         }
 
+        .showcase-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(252, 193, 30, 0.4) !important;
+            box-shadow: 0 20px 45px rgba(252, 193, 30, 0.15) !important;
+        }
+
         @media (max-width: 768px) {
             .hero-banner-container { height: 350px; margin-bottom: 30px; }
             .hero-title { font-size: 2.2rem; }
@@ -172,6 +178,46 @@
             </div>
         </div>
 
+    </section>
+
+    <!-- SCREENSHOTS/MOCKUPS SHOWCASE -->
+    <section class="showcase-section" style="background: #0c0c0c; padding: 60px 20px 20px; border-top: 1px solid rgba(255,255,255,0.02);">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Experience the <span style="color: #fcc11e;">Premium UI</span></h2>
+            <p style="color: #888; max-width: 600px; margin: 0 auto; font-size: 1.1rem;">Clean, modern, and high-performance screens designed for PNG businesses.</p>
+        </div>
+        
+        <div class="container">
+            <div class="row g-4 justify-content-center" style="max-width: 1200px; margin: 0 auto;">
+                <div class="col-12 col-md-4">
+                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
+                        <img src="{{ url_for('static', filename='mock/mock-1.png') }}" alt="POS Sales Screen" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="padding: 20px; text-align: center;">
+                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">1. POS Sales Screen</h4>
+                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Clean checkout layout for quick transactions.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
+                        <img src="{{ url_for('static', filename='mock/Mockup-2.png') }}" alt="Inventory Management" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="padding: 20px; text-align: center;">
+                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">2. Stock Control</h4>
+                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Real-time levels and stock thresholds.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
+                        <img src="{{ url_for('static', filename='mock/Mockup-3.png') }}" alt="Analytics Dashboard" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="padding: 20px; text-align: center;">
+                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">3. Owner Analytics Dashboard</h4>
+                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Sales summary, Dinau status, and profit tracker.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <section class="features-section" style="background: linear-gradient(180deg, #0c0c0c 0%, #061121 100%); padding: 80px 20px;">
