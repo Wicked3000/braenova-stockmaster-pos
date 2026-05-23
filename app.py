@@ -478,6 +478,11 @@ def inventory_mgmt():
 @app.route('/dinau')
 @login_required
 def dinau_mgmt():
+    if session.get('plan') == 'starter':
+        flash("Dinau (Store Credit) is not available on the Starter Plan.", "error")
+        if session.get('role') == 'cashier':
+            return redirect(url_for('pos'))
+        return redirect(url_for('dashboard'))
     list_items = get_all_dinau(session.get('shop_id'))
     return render_template('dinau.html', dinau=list_items)
 
@@ -546,6 +551,11 @@ def checkout():
 @app.route('/api/dinau/status', methods=['POST'])
 @login_required
 def update_debt_status():
+    if session.get('plan') == 'starter':
+        flash("Dinau (Store Credit) is not available on the Starter Plan.", "error")
+        if session.get('role') == 'cashier':
+            return redirect(url_for('pos'))
+        return redirect(url_for('dashboard'))
     try:
         record_id = request.form.get('record_id')
         status = request.form.get('status', 'paid')

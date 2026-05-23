@@ -135,6 +135,20 @@ def run_tests():
             assert resp.status_code == 200
             print("Test 7 Passed!")
 
+        # Test 8: Starter Plan Dinau Route Blocking
+        print("\nTest 8: Starter Plan Dinau Route Blocking")
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1  # owner admin
+            sess['username'] = 'admin'
+            sess['role'] = 'owner'
+            sess['shop_id'] = 1
+            sess['plan'] = 'starter'
+        resp = client.get('/dinau', follow_redirects=True)
+        print(f"Final URL: {resp.request.path}")
+        html = resp.get_data(as_text=True)
+        assert "Dinau (Store Credit) is not available" in html
+        print("Test 8 Passed!")
+
     print("\n=== ALL TESTS PASSED SUCCESSFULLY! ===")
 
 if __name__ == '__main__':
