@@ -342,6 +342,7 @@ def stop_impersonating():
 
 @app.route('/dashboard')
 @login_required
+@manager_or_owner_required
 def dashboard():
     shop_id = session.get('shop_id')
     is_owner = (session.get('role') == 'owner')
@@ -352,13 +353,9 @@ def dashboard():
     if is_owner and plan == 'multi':
         owned_shops = get_owner_shops(session.get('user_id'))
         
-    if is_owner:
-        summary = get_sales_summary(shop_id)
-        # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
-        profit = summary['total_profit'] if plan != 'starter' else None
-    else:
-        summary = get_cashier_summary(session.get('user_id'), shop_id)
-        profit = None
+    summary = get_sales_summary(shop_id)
+    # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
+    profit = summary['total_profit'] if plan != 'starter' else None
         
     expiry_alerts = get_expired_items(shop_id)
     inventory_status = get_inventory_status(shop_id)

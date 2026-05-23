@@ -201,7 +201,9 @@
 
     <!-- Navigation -->
     <div class="nav-bar">
+        {% if session.role in ['owner', 'manager'] %}
         <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        {% endif %}
         <a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a>
         <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
         <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>

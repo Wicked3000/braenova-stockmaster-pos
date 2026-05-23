@@ -380,8 +380,6 @@
         </div>
     </div>
 
-    <div class="nav-bar">{% if session.role == 'owner' %}<a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>{% endif %}<a href="/pos" class="nav-btn active"><span class="nav-icon">🛒</span>POS</a><a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a><a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>{% if session.role == 'owner' %}<a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>{% endif %}</div>
-    
     <div class="cart-footer" id="cartFooter">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div><span class="cart-count" id="cartCount">0</span><b>In Cart</b></div>
@@ -405,7 +403,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Navigation -->
     <div class="nav-bar">
+        {% if session.role in ['owner', 'manager'] %}
         <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        {% endif %}
         <a href="/pos" class="nav-btn active"><span class="nav-icon">🛒</span>POS</a>
         <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
         {% if session.role == 'owner' %}

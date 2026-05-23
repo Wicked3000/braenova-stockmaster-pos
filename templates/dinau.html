@@ -135,7 +135,9 @@
         <div class="ownership-tag pb-5">Created and Owned by<br><span style="color: #f91a8e;">BraeNova IT Solutions</span></div>
     </div>
     <div class="nav-bar">
+        {% if session.role in ['owner', 'manager'] %}
         <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        {% endif %}
         <a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a>
         <a href="/dinau" class="nav-btn active"><span class="nav-icon">📖</span>Dinau</a>
         {% if session.role == 'owner' %}
