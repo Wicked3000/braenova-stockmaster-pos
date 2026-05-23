@@ -408,12 +408,14 @@
         {% endif %}
         <a href="/pos" class="nav-btn active"><span class="nav-icon">🛒</span>POS</a>
         <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
-        {% if session.role == 'owner' %}
+        <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
+        {% if session.role in ['owner', 'manager'] %}
         <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        {% endif %}
+        {% if session.role == 'owner' %}
         {% if session.plan == 'multi' %}
         <a href="/inventory/centralized" class="nav-btn"><span class="nav-icon">🌐</span>Global</a>
         {% endif %}
-        <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
         <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
         {% endif %}
     </div>

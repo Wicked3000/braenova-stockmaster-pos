@@ -105,6 +105,36 @@ def run_tests():
             assert "Butter" in html
             print("Test 5 Passed!")
 
+        # Test 6: Cashier Sales Log Access
+        print("\nTest 6: Cashier Sales Log Access")
+        with client.session_transaction() as sess:
+            sess['user_id'] = 2  # cashier staff
+            sess['username'] = 'staff'
+            sess['role'] = 'cashier'
+            sess['shop_id'] = 1
+            sess['plan'] = 'starter'
+        with patch('app.get_sales_history') as mock_sales_history:
+            mock_sales_history.return_value = []
+            resp = client.get('/sales-log')
+            print(f"Status code: {resp.status_code}")
+            assert resp.status_code == 200
+            print("Test 6 Passed!")
+
+        # Test 7: Owner Sales Log Access
+        print("\nTest 7: Owner Sales Log Access")
+        with client.session_transaction() as sess:
+            sess['user_id'] = 1  # owner admin
+            sess['username'] = 'admin'
+            sess['role'] = 'owner'
+            sess['shop_id'] = 1
+            sess['plan'] = 'starter'
+        with patch('app.get_sales_history') as mock_sales_history:
+            mock_sales_history.return_value = []
+            resp = client.get('/sales-log')
+            print(f"Status code: {resp.status_code}")
+            assert resp.status_code == 200
+            print("Test 7 Passed!")
+
     print("\n=== ALL TESTS PASSED SUCCESSFULLY! ===")
 
 if __name__ == '__main__':

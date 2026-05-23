@@ -444,7 +444,6 @@ def add_shop_location():
 
 @app.route('/sales-log')
 @login_required
-@owner_required
 def sales_log():
     logs = get_sales_history(session.get('shop_id'))
     return render_template('sales_log.html', history=logs)

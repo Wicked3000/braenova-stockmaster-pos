@@ -206,10 +206,16 @@
         {% endif %}
         <a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a>
         <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
-        <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
-        <a href="/inventory/centralized" class="nav-btn active"><span class="nav-icon">🌐</span>Global</a>
         <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
+        {% if session.role in ['owner', 'manager'] %}
+        <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        {% endif %}
+        {% if session.role == 'owner' %}
+        {% if session.plan == 'multi' %}
+        <a href="/inventory/centralized" class="nav-btn active"><span class="nav-icon">🌐</span>Global</a>
+        {% endif %}
         <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
+        {% endif %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
