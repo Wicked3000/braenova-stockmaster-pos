@@ -97,15 +97,17 @@
                 </div>
                 <div class="mb-4">
                     <label class="form-label text-muted small fw-bold text-uppercase">Password</label>
-                    <input type="password" name="password" class="form-control form-control-lg bg-black border-secondary border-opacity-25 text-white rounded-3" placeholder="••••••••" required>
+                    <input type="password" id="password" name="password" class="form-control form-control-lg bg-black border-secondary border-opacity-25 text-white rounded-3" placeholder="••••••••" required>
+                    <div class="form-check mt-2 text-start">
+                        <input class="form-check-input" type="checkbox" id="show-password" onclick="togglePassword()" style="cursor: pointer; accent-color: #f91a8e;">
+                        <label class="form-check-label text-muted small" for="show-password" style="cursor: pointer; user-select: none;">
+                            Show Password
+                        </label>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-login w-100 mb-4 rounded-3 shadow" style="background: #f91a8e; border: none;">LOG IN</button>
             </form>
             <div class="text-center pt-2 border-top border-secondary border-opacity-10">
-                <p class="text-muted small mb-2">Don't have a shop yet?</p>
-                <a href="/register" class="text-decoration-none d-flex align-items-center justify-content-center gap-2 py-2 mb-2 rounded-pill fw-bold small" style="background: rgba(249, 26, 142, 0.1); color: #f91a8e;">
-                    <span>✨</span> Start 14-Day Free Trial
-                </a>
                 <a href="https://wa.me/67570000000" target="_blank" class="text-decoration-none d-flex align-items-center justify-content-center gap-2 py-2 rounded-pill bg-success bg-opacity-10 text-success fw-bold small">
                     <span>💬</span> Support on WhatsApp
                 </a>
@@ -118,6 +120,15 @@
                 document.getElementById('splash-screen').classList.add('hidden');
             }, 2000);
         });
+
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+            } else {
+                pwd.type = 'password';
+            }
+        }
     </script>
 </body>
 </html>
