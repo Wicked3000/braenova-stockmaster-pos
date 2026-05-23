@@ -149,6 +149,47 @@
             .d-flex.gap-3 { flex-direction: column; width: 100%; max-width: 300px; margin: 0 auto; }
             .btn-glow, .btn-outline-glow { width: 100%; text-align: center; }
         }
+
+        /* Floating WhatsApp Chat Widget */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #25d366;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
+            z-index: 9999;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1) translateY(-5px);
+            background-color: #20ba5a;
+            color: #fff;
+            box-shadow: 0 15px 30px rgba(37, 211, 102, 0.6);
+        }
+        .whatsapp-float::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #25d366;
+            opacity: 0.6;
+            z-index: -1;
+            animation: pulse-ring 2.5s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.35); opacity: 0; }
+            100% { transform: scale(0.95); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -526,5 +567,12 @@
         .accordion-button::after { filter: invert(1) grayscale(100%) brightness(200%); }
         .accordion-button:not(.collapsed) { background-color: transparent !important; color: #fcc11e !important; box-shadow: none !important; }
     </style>
+
+    <!-- Floating WhatsApp Widget -->
+    <a href="https://wa.me/67570000000" target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.333 4.982L2 22l5.233-1.371a9.936 9.936 0 004.779 1.218h.004c5.505 0 9.988-4.478 9.989-9.984 0-2.669-1.037-5.176-2.922-7.062C17.199 3.037 14.691 2 12.012 2zm5.727 14.17c-.313.882-1.815 1.722-2.485 1.848-.602.112-1.373.197-3.99-1.02-3.14-1.464-5.114-4.836-5.27-5.048-.157-.212-1.282-1.705-1.282-3.253s.81-2.302 1.097-2.603c.288-.302.628-.377.838-.377h.575c.183 0 .445-.072.706.566.262.637.89 2.196.968 2.353.078.157.13.339.026.546-.104.207-.156.339-.313.521-.157.183-.327.409-.467.549-.157.157-.321.327-.138.64.183.314.815 1.346 1.748 2.176.932.83 1.72 1.087 2.034 1.244.314.157.497.13.68-.078.183-.209.785-.913.995-1.225.209-.313.418-.261.706-.157.288.104 1.83.864 2.144 1.02.314.157.523.235.6.366.078.13.078.756-.235 1.638z"/>
+        </svg>
+    </a>
 </body>
 </html>
