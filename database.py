@@ -47,6 +47,7 @@ def get_all_shops():
         s['cycle'] = cycle
 
         # Calculate countdown of days left
+        s['lifetime_revenue'] = 0.0
         if expiry == '991231':
             s['days_left'] = None
         else:
@@ -55,7 +56,25 @@ def get_all_shops():
                 expiry_dt = datetime.strptime(f"20{expiry}", "%Y%m%d").date()
                 today_dt = datetime.now().date()
                 s['days_left'] = (expiry_dt - today_dt).days
-            except Exception:
+                
+                # Calculate lifetime revenue contributed
+                if s.get('created_at'):
+                    created_dt = datetime.fromisoformat(s['created_at'].split('.')[0].replace('Z', '')).date()
+                    days_active = (expiry_dt - created_dt).days
+                    months_paid = max(1, round(days_active / 30.0))
+                    
+                    monthly_rate = 50
+                    if plan_name == 'pro': monthly_rate = 200
+                    elif plan_name == 'multi': monthly_rate = 450
+                    
+                    if cycle == 'yearly':
+                        if plan_name == 'starter': monthly_rate = 500 / 12.0
+                        elif plan_name == 'pro': monthly_rate = 2000 / 12.0
+                        elif plan_name == 'multi': monthly_rate = 4500 / 12.0
+                        
+                    s['lifetime_revenue'] = months_paid * monthly_rate
+            except Exception as e:
+                print(f"Error parsing dates for shop {s.get('id')}: {e}")
                 s['days_left'] = None
     return shops
 

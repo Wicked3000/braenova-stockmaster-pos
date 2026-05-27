@@ -324,18 +324,12 @@
         </div>
         <div class="col-6 col-lg-3">
             <div class="glass-card stat-glow-cyan text-center" style="border-bottom-color: var(--neon-cyan);">
-                <div class="stat-label">Estimated Monthly Revenue</div>
+                <div class="stat-label">Total Revenue Collected</div>
                 <div class="stat-value text-white">
                     {% set rev = namespace(val=0) %}
                     {% for shop in shops %}
                         {% if shop.payment_status in ['a', 'e', 'd'] %}
-                            {% if shop.plan_name == 'starter' %}
-                                {% set rev.val = rev.val + (41.67 if shop.cycle == 'yearly' else 50) %}
-                            {% elif shop.plan_name == 'pro' %}
-                                {% set rev.val = rev.val + (166.67 if shop.cycle == 'yearly' else 200) %}
-                            {% elif shop.plan_name == 'multi' %}
-                                {% set rev.val = rev.val + (375 if shop.cycle == 'yearly' else 450) %}
-                            {% endif %}
+                            {% set rev.val = rev.val + shop.lifetime_revenue %}
                         {% endif %}
                     {% endfor %}
                     K{{ "{:,.0f}".format(rev.val | round) }}
@@ -356,7 +350,7 @@
         </div>
         <div class="col-lg-7">
             <div class="glass-card h-100" style="border-top: 3px solid var(--neon-cyan); box-shadow: var(--glow-cyan);">
-                <div class="stat-label text-start mb-3">Estimated Monthly Revenue (MRR) Growth Trend</div>
+                <div class="stat-label text-start mb-3">Cumulative Revenue Growth Trend</div>
                 <div style="position: relative; height: 260px;">
                     <canvas id="mrrTrendChart" style="max-height: 240px; width: 100%;"></canvas>
                 </div>
@@ -855,9 +849,7 @@
             }
             
             if (['a', 'e', 'd'].includes(s.payment_status)) {
-                if (plan === 'starter') currentMrr += (cycle === 'yearly' ? 41.67 : 50);
-                else if (plan === 'pro') currentMrr += (cycle === 'yearly' ? 166.67 : 200);
-                else if (plan === 'multi') currentMrr += (cycle === 'yearly' ? 375 : 450);
+                currentMrr += parseFloat(s.lifetime_revenue) || 0;
             }
         });
         currentMrr = Math.round(currentMrr);
@@ -942,7 +934,7 @@
             data: {
                 labels: monthsLabels,
                 datasets: [{
-                    label: 'MRR (Kina)',
+                    label: 'Cumulative Revenue (Kina)',
                     data: mrrValues,
                     borderColor: 'rgba(2, 139, 217, 1)', // neon cyan
                     borderWidth: 3,
@@ -972,7 +964,7 @@
                         padding: 10,
                         callbacks: {
                             label: function(context) {
-                                return ' Estimated MRR: K' + context.raw.toLocaleString();
+                                return ' Revenue: K' + context.raw.toLocaleString();
                             }
                         }
                     }
