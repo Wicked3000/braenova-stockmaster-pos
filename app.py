@@ -34,8 +34,9 @@ def inject_notices():
     if 'user_id' in session:
         from database import get_notices
         role = session.get('role', 'cashier')
+        user_id = session.get('user_id')
         try:
-            notices = get_notices(role)
+            notices = get_notices(role, user_id=user_id)
         except Exception as e:
             print(f"Error fetching notices: {e}")
     return dict(notices=notices)
@@ -211,7 +212,9 @@ def pending_activation():
 @superadmin_required
 def superadmin_dashboard():
     shops = get_all_shops()
-    return render_template('superadmin.html', shops=shops)
+    from database import get_all_users_for_admin
+    users = get_all_users_for_admin()
+    return render_template('superadmin.html', shops=shops, users=users)
 
 @app.route('/superadmin/toggle', methods=['POST'])
 @login_required

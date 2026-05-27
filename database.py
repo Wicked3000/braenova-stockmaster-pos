@@ -142,6 +142,10 @@ def add_user(username, password_hash, role='cashier', shop_id=1):
     }
     supabase.table('users').insert(data).execute()
 
+def get_all_users_for_admin():
+    res = supabase.table('users').select('id, username, role, shop_id').neq('role', 'superadmin').eq('is_active', 1).execute()
+    return res.data
+
 def get_all_cashiers(shop_id):
     res = supabase.table('users').select('id, username, role').eq('role', 'cashier').eq('is_active', 1).eq('shop_id', shop_id).execute()
     return res.data
@@ -154,12 +158,15 @@ def reset_password(user_id, new_hash, shop_id):
 
 # --- NOTICES / MESSAGES ---
 
-def get_notices(role='all'):
+def get_notices(role='all', user_id=None):
     # Fetch notices that target 'all' or the specific user's role
     if role == 'superadmin':
         res = supabase.table('notices').select('*').order('created_at', desc=True).execute()
     else:
-        res = supabase.table('notices').select('*').in_('target_role', ['all', role]).order('created_at', desc=True).execute()
+        targets = ['all', role]
+        if user_id:
+            targets.append(f'user:{user_id}')
+        res = supabase.table('notices').select('*').in_('target_role', targets).order('created_at', desc=True).execute()
     return res.data
 
 def create_notice(title, content, target_role='all'):

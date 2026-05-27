@@ -636,9 +636,18 @@
                     <div class="mb-3">
                         <label class="form-label text-muted small">Target Audience</label>
                         <select name="target_role" class="form-select bg-dark text-white border-secondary">
-                            <option value="all">All Users</option>
-                            <option value="owner">Shop Owners Only</option>
-                            <option value="cashier">Cashiers Only</option>
+                            <optgroup label="Broad Roles">
+                                <option value="all">All Users</option>
+                                <option value="owner">Shop Owners Only</option>
+                                <option value="cashier">Cashiers Only</option>
+                            </optgroup>
+                            {% if users %}
+                            <optgroup label="Specific Users">
+                                {% for u in users %}
+                                <option value="user:{{ u.id }}">@{{ u.username }} ({{ u.role|title }} - Shop {{ u.shop_id }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
                         </select>
                     </div>
                     <div class="mb-3">
