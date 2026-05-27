@@ -29,8 +29,11 @@ def kina_filter(val):
     return f"K{float(val):.2f}"
 
 @app.context_processor
-def inject_notices():
+def inject_global_data():
     notices = []
+    days_left = None
+    expiry_date_str = None
+    
     if 'user_id' in session:
         from database import get_notices
         role = session.get('role', 'cashier')
@@ -39,7 +42,26 @@ def inject_notices():
             notices = get_notices(role, user_id=user_id)
         except Exception as e:
             print(f"Error fetching notices: {e}")
-    return dict(notices=notices)
+            
+        shop_id = session.get('shop_id')
+        if shop_id and role != 'superadmin':
+            try:
+                from database import supabase, parse_shop_plan
+                from datetime import datetime
+                shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
+                if shop_res.data:
+                    plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop_res.data[0].get('plan'))
+                    if expiry_yymmdd != '991231':
+                        expiry_dt = datetime.strptime(f"20{expiry_yymmdd}", "%Y%m%d").date()
+                        today_dt = datetime.now().date()
+                        days_left = (expiry_dt - today_dt).days
+                        expiry_date_str = f"20{expiry_yymmdd[0:2]}-{expiry_yymmdd[2:4]}-{expiry_yymmdd[4:6]}"
+                    else:
+                        expiry_date_str = "Lifetime"
+            except Exception as e:
+                print(f"Error fetching shop plan globally: {e}")
+                
+    return dict(notices=notices, days_left=days_left, expiry_date_str=expiry_date_str)
 
 @app.before_request
 def check_subscription_status():
@@ -429,26 +451,6 @@ def dashboard():
         
     initial_alert_msg = " | ".join(alert_parts) if alert_parts else ""
 
-    # Fetch shop subscription info
-    days_left = None
-    expiry_date_str = None
-    if shop_id:
-        try:
-            from database import supabase, parse_shop_plan
-            from datetime import datetime
-            shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
-            if shop_res.data:
-                plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop_res.data[0].get('plan'))
-                if expiry_yymmdd != '991231':
-                    expiry_dt = datetime.strptime(f"20{expiry_yymmdd}", "%Y%m%d").date()
-                    today_dt = datetime.now().date()
-                    days_left = (expiry_dt - today_dt).days
-                    expiry_date_str = f"20{expiry_yymmdd[0:2]}-{expiry_yymmdd[2:4]}-{expiry_yymmdd[4:6]}"
-                else:
-                    expiry_date_str = "Lifetime"
-        except Exception as e:
-            print(f"Error fetching shop plan for dashboard: {e}")
-    
     return render_template('dashboard.html', 
                            summary=summary, 
                            profit=profit,
@@ -460,9 +462,7 @@ def dashboard():
                            hourly_data=hourly_data,
                            cat_dist=cat_dist,
                            owned_shops=owned_shops,
-                           current_shop_id=shop_id,
-                           days_left=days_left,
-                           expiry_date_str=expiry_date_str)
+                           current_shop_id=shop_id)
 
 @app.route('/shops/switch/<int:target_shop_id>')
 @login_required
