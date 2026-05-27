@@ -116,6 +116,8 @@
             box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
         }
 
+        .modal { z-index: 2000 !important; }
+    .modal-backdrop { z-index: 1999 !important; }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
@@ -451,34 +453,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        new Chart(document.getElementById('dailySalesChart'), { type: 'line', data: { labels: [{% for d in chart_data %}'{{ d.date.strftime("%d %b") }}',{% endfor %}], datasets: [{ data: [{% for d in chart_data %}{{ d.total }},{% endfor %}], borderColor: '#f91a8e', tension: 0.4, fill: true, backgroundColor: 'rgba(249, 26, 142, 0.1)', pointRadius: 5, pointBackgroundColor: '#f91a8e' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#666' } } } } });
-        new Chart(document.getElementById('hourlySalesChart'), { type: 'bar', data: { labels: [{% for h in hourly_data %}'{{ h.hour }}:00',{% endfor %}], datasets: [{ data: [{% for h in hourly_data %}{{ h.total }},{% endfor %}], backgroundColor: '#ffb300', borderRadius: 8 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { color: '#666' } } } } });
-        new Chart(document.getElementById('categorySalesChart'), { type: 'doughnut', data: { labels: [{% for c in cat_dist %}'{{ c.category }}',{% endfor %}], datasets: [{ data: [{% for c in cat_dist %}{{ c.total }},{% endfor %}], backgroundColor: ['#00ffa3', '#f91a8e', '#0dcaf0', '#ffb300', '#6f42c1'], borderWidth: 0 }] }, options: { plugins: { legend: { position: 'right', labels: { color: '#ccc', font: { size: 10 } } } }, cutout: '75%' } });
-        async function syncAlerts() {
-            try {
-                const response = await fetch('/api/inventory');
-                const data = await response.json();
-                
-                // Count low stock items (quantity <= min_threshold)
-                const lowStockItems = data.filter(item => item.quantity <= item.min_threshold);
-                const lowStockCount = lowStockItems.length;
-                
-                const container = document.getElementById('alertContainer');
-                if (lowStockCount > 0) {
-                    const names = lowStockItems.slice(0, 3).map(item => item.item_name).join(', ');
-                    const restCount = lowStockCount - 3;
-                    const nameText = restCount > 0 ? `${names} and ${restCount} more` : names;
-                    container.innerHTML = `<div class="alert-banner" id="stockAlertBanner"><i class="bi bi-exclamation-triangle"></i> LOW STOCK: ${nameText}! Check Inventory.</div>`;
-                } else {
-                    container.innerHTML = '';
-                }
-            } catch (e) {
-                console.error("Sync error:", e);
-            }
-        }
-        setInterval(syncAlerts, 10000);
-    </script>
+    
 
     <script>
         // Format notice times to local timezone
@@ -501,24 +476,46 @@
         });
 
         // Handle notice dismissal via localStorage
-        function dismissNotice(id, btn) {
+                function dismissNotice(id, btn) {
             let dismissed = JSON.parse(localStorage.getItem('dismissed_notices') || '[]');
             if(!dismissed.includes(id)) {
                 dismissed.push(id);
                 localStorage.setItem('dismissed_notices', JSON.stringify(dismissed));
             }
             const item = btn.closest('.notice-item');
-            if(item) item.remove();
+            if(item) {
+                const container = item.closest('.list-group');
+                item.remove();
+                if (container && container.querySelectorAll('.notice-item, #sysSubAlert').length === 0) {
+                    container.innerHTML = `
+                        <div class="p-4 text-center text-muted">
+                            <span style="font-size: 2rem;"><i class="bi bi-envelope-open"></i></span>
+                            <p class="mt-2 mb-0">No new messages.</p>
+                        </div>
+                    `;
+                }
+            }
+            if (typeof checkUnread === 'function') checkUnread();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             let dismissed = JSON.parse(localStorage.getItem('dismissed_notices') || '[]');
             let viewed = JSON.parse(localStorage.getItem('viewed_notices') || '[]');
             
-            dismissed.forEach(id => {
+                        dismissed.forEach(id => {
                 const item = document.querySelector(`.notice-item[data-notice-id="${id}"]`);
                 if(item) item.remove();
             });
+            
+            const noticeContainer = document.querySelector('#messagesModal .list-group');
+            if (noticeContainer && noticeContainer.querySelectorAll('.notice-item, #sysSubAlert').length === 0) {
+                noticeContainer.innerHTML = `
+                    <div class="p-4 text-center text-muted">
+                        <span style="font-size: 2rem;"><i class="bi bi-envelope-open"></i></span>
+                        <p class="mt-2 mb-0">No new messages.</p>
+                    </div>
+                `;
+            }
 
             // Hide dot if all messages have been viewed
             const checkUnread = () => {
