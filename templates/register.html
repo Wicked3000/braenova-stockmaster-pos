@@ -30,7 +30,7 @@
         <h5 class="mb-2 fw-bold">Register Your Shop</h5>
         <div class="mb-4">
             <span class="badge text-uppercase px-3 py-2" style="background: rgba(249, 26, 142, 0.15); color: #f91a8e; font-size: 0.8rem; font-weight: 700; border: 1px solid rgba(249, 26, 142, 0.3);">
-                Selected Plan: {{ plan | upper }}
+                Selected Plan: {{ plan | upper }} {% if cycle == 'yearly' %}(YEARLY){% endif %}
             </span>
         </div>
 
@@ -44,6 +44,7 @@
 
         <form action="{{ url_for('register') }}" method="POST">
             <input type="hidden" name="plan" value="{{ plan }}">
+            <input type="hidden" name="cycle" value="{{ cycle }}">
             <div class="mb-3 text-start">
                 <label class="form-label" style="font-size: 0.8rem; color: #888;">Shop / Business Name</label>
                 <input type="text" name="shop_name" class="form-control" required placeholder="e.g. John's Tuck Shop">

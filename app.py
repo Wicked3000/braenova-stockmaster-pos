@@ -187,11 +187,13 @@ def landing():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     plan = request.args.get('plan', 'starter')
+    cycle = request.args.get('cycle', 'monthly')
     if request.method == 'POST':
         shop_name = request.form['shop_name']
         username = request.form['username']
         password = request.form['password']
         selected_plan = request.form.get('plan', 'starter')
+        cycle = request.form.get('cycle', 'monthly')
         
         from werkzeug.security import generate_password_hash
         from database import register_shop_and_owner
@@ -201,11 +203,11 @@ def register():
             user = register_shop_and_owner(shop_name, username, password_hash, selected_plan)
             
             flash("Shop registered successfully! Please complete payment to activate your account.", "success")
-            return redirect(url_for('pending_activation', username=username, plan=selected_plan))
+            return redirect(url_for('pending_activation', username=username, plan=selected_plan, cycle=cycle))
         except Exception as e:
             flash(f"Registration failed. That username may already be taken. Error: {e}", "error")
             
-    return render_template('register.html', plan=plan)
+    return render_template('register.html', plan=plan, cycle=cycle)
 
 @app.route('/terms')
 def terms():
@@ -223,9 +225,16 @@ def contact():
 def pending_activation():
     username = request.args.get('username')
     plan = request.args.get('plan', 'starter')
-    price = "K50" if plan == "starter" else "K200" if plan == "pro" else "K450"
-    plan_name = "Starter Plan" if plan == "starter" else "Pro Shop Plan" if plan == "pro" else "Multi-Shop Plan"
-    return render_template('pending_activation.html', username=username, plan=plan, price=price, plan_name=plan_name)
+    cycle = request.args.get('cycle', 'monthly')
+    
+    if cycle == 'yearly':
+        price = "K500" if plan == "starter" else "K2,000" if plan == "pro" else "K4,500"
+        plan_name = "Starter Plan (Yearly)" if plan == "starter" else "Pro Shop Plan (Yearly)" if plan == "pro" else "Multi-Shop Plan (Yearly)"
+    else:
+        price = "K50" if plan == "starter" else "K200" if plan == "pro" else "K450"
+        plan_name = "Starter Plan" if plan == "starter" else "Pro Shop Plan" if plan == "pro" else "Multi-Shop Plan"
+        
+    return render_template('pending_activation.html', username=username, plan=plan, price=price, plan_name=plan_name, cycle=cycle)
 
 # --- SUPERADMIN ROUTES ---
 

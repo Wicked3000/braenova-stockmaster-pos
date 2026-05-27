@@ -61,7 +61,7 @@
         </div>
         <div class="text-end">
             <h6 class="mb-1 text-muted">Amount Due</h6>
-            <h4 class="fw-bold mb-0 text-info">{{ price }} <span style="font-size: 0.8rem; color: #888;">/ month</span></h4>
+            <h4 class="fw-bold mb-0 text-info">{{ price }} <span style="font-size: 0.8rem; color: #888;">/ {% if cycle == 'yearly' %}year{% else %}month{% endif %}</span></h4>
         </div>
     </div>
 
@@ -71,7 +71,7 @@
     <div class="payment-box">
         <div class="d-flex align-items-center mb-3">
             <span class="step-num">1</span>
-            <h6 class="mb-0 fw-bold">Transfer the monthly fee using one of these options:</h6>
+            <h6 class="mb-0 fw-bold">Transfer the subscription fee using one of these options:</h6>
         </div>
         
         <ul class="nav nav-pills mb-3 d-flex gap-2" id="paymentTabs" role="tablist">
