@@ -14,7 +14,8 @@ from database import (
     get_all_shops, toggle_shop_status, update_shop_plan_db, get_owner_shops,
     create_additional_shop, get_centralized_inventory,
     reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan,
-    delete_shop_and_data, update_shop_name, request_shop_deletion
+    delete_shop_and_data, update_shop_name, request_shop_deletion,
+    get_shop_profile, upsert_shop_profile, get_all_shop_profiles
 )
 
 app = Flask(__name__)
@@ -245,7 +246,8 @@ def superadmin_dashboard():
     shops = get_all_shops()
     from database import get_all_users_for_admin
     users = get_all_users_for_admin()
-    return render_template('superadmin.html', shops=shops, users=users)
+    profiles = {p['shop_id']: p for p in get_all_shop_profiles()}
+    return render_template('superadmin.html', shops=shops, users=users, profiles=profiles)
 
 @app.route('/superadmin/toggle', methods=['POST'])
 @login_required
@@ -520,6 +522,45 @@ def add_shop_location():
 def sales_log():
     logs = get_sales_history(session.get('shop_id'))
     return render_template('sales_log.html', history=logs)
+
+@app.route('/shops/profile', methods=['GET', 'POST'])
+@login_required
+@owner_required
+def shop_profile():
+    shop_id = session.get('shop_id')
+    if request.method == 'POST':
+        data = {
+            'legal_name': request.form.get('legal_name'),
+            'structure': request.form.get('structure'),
+            'ipa_number': request.form.get('ipa_number'),
+            'irc_tin': request.form.get('irc_tin'),
+            'physical_address': request.form.get('physical_address'),
+            'postal_address': request.form.get('postal_address'),
+            'contact_phone': request.form.get('contact_phone'),
+            'contact_email': request.form.get('contact_email'),
+            'director_name': request.form.get('director_name'),
+            'activity': request.form.get('activity'),
+        }
+        
+        # Handle optional float conversion for lat/lng
+        lat = request.form.get('latitude')
+        lng = request.form.get('longitude')
+        if lat and lng:
+            try:
+                data['latitude'] = float(lat)
+                data['longitude'] = float(lng)
+            except ValueError:
+                pass
+                
+        try:
+            upsert_shop_profile(shop_id, data)
+            flash("Shop profile updated successfully!", "success")
+        except Exception as e:
+            flash(f"Error updating profile: {e}", "error")
+        return redirect(url_for('shop_profile'))
+        
+    profile = get_shop_profile(shop_id)
+    return render_template('shop_profile.html', profile=profile)
 
 @app.route('/reports')
 @login_required

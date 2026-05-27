@@ -570,6 +570,20 @@ def get_centralized_inventory(owner_id):
         
     return items
 
+def get_shop_profile(shop_id):
+    res = supabase.table('shop_profiles').select('*').eq('shop_id', shop_id).execute()
+    return res.data[0] if res.data else None
+
+def upsert_shop_profile(shop_id, data):
+    data['shop_id'] = shop_id
+    from datetime import datetime
+    data['updated_at'] = datetime.utcnow().isoformat()
+    supabase.table('shop_profiles').upsert(data, on_conflict='shop_id').execute()
+
+def get_all_shop_profiles():
+    res = supabase.table('shop_profiles').select('*').execute()
+    return res.data
+
 # --- SUPERADMIN ACTIONS ---
 def reset_password_by_admin(user_id, password_hash):
     supabase.table('users').update({"password_hash": password_hash}).eq('id', user_id).execute()
