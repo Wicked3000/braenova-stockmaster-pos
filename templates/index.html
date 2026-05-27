@@ -344,15 +344,15 @@
             const footer = document.getElementById('cartFooter');
             const total = cart.reduce((s, x) => s + (x.price * x.qty), 0);
             document.getElementById('cartCount').innerText = cart.length;
-            document.getElementById('cartTotal').innerText = `K${total.toFixed(2)}`;
-            document.getElementById('modalTotal').innerText = `K${total.toFixed(2)}`;
+            document.getElementById('cartTotal').innerText = `K${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('modalTotal').innerText = `K${total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             footer.style.display = cart.length > 0 ? 'block' : 'none';
             window.currentTotal = total;
         }
 
         function clearCart() { cart = []; updateCartUI(); }
         function showCheckoutModal() { document.getElementById('cashReceived').value = ''; calculateChange(); new bootstrap.Modal(document.getElementById('checkoutModal')).show(); }
-        function calculateChange() { const r = parseFloat(document.getElementById('cashReceived').value) || 0; const c = r - (window.currentTotal || 0); document.getElementById('changeOutput').innerText = c >= 0 ? `K${c.toFixed(2)}` : 'K0.00'; }
+        function calculateChange() { const r = parseFloat(document.getElementById('cashReceived').value) || 0; const c = r - (window.currentTotal || 0); document.getElementById('changeOutput').innerText = c >= 0 ? `K${c.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 'K0.00'; }
 
         let errorTimeout;
         function showError(msg, title = "ERROR") {

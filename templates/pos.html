@@ -607,7 +607,7 @@
             document.getElementById('cartFooter').style.display = count > 0 ? 'block' : 'none';
         }
 
-        function formatKina(val) { return 'K' + parseFloat(val).toFixed(2); }
+        function formatKina(val) { return 'K' + parseFloat(val).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
 
         function clearCart() { cart = []; updateCartUI(); }
 
