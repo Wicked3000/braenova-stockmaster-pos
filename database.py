@@ -177,12 +177,14 @@ def get_notices(role='all', user_id=None):
                 pass
     return res.data
 
-def create_notice(title, content, target_role='all'):
+def create_notice(title, content, target_role='all', attachment_url=None):
     data = {
         "title": title,
         "content": content,
         "target_role": target_role
     }
+    if attachment_url:
+        data["attachment_url"] = attachment_url
     supabase.table('notices').insert(data).execute()
 
 # --- INVENTORY MGMT ---

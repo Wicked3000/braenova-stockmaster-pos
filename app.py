@@ -834,9 +834,23 @@ def post_notice():
     title = request.form.get('title')
     content = request.form.get('content')
     target_role = request.form.get('target_role')
+    
+    attachment_url = None
+    if 'attachment' in request.files:
+        file = request.files['attachment']
+        if file and file.filename != '':
+            import time
+            filename = secure_filename(file.filename)
+            filename = f"{int(time.time())}_{filename}"
+            upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'notices')
+            os.makedirs(upload_dir, exist_ok=True)
+            filepath = os.path.join(upload_dir, filename)
+            file.save(filepath)
+            attachment_url = f"/static/uploads/notices/{filename}"
+            
     if title and content:
         from database import create_notice
-        create_notice(title, content, target_role)
+        create_notice(title, content, target_role, attachment_url=attachment_url)
         flash("Notice sent successfully.", "success")
     return redirect(url_for('superadmin_dashboard'))
 

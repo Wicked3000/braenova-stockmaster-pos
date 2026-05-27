@@ -632,7 +632,7 @@
                 <h5 class="modal-title fw-bold" style="color: var(--neon-cyan);"><i class="bi bi-megaphone"></i> Post New Notice</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="/superadmin/notice" method="POST">
+            <form action="/superadmin/notice" method="POST" enctype="multipart/form-data">
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label text-muted small">Target Audience</label>
@@ -656,6 +656,10 @@
                     <div class="mb-3">
                         <label class="form-label text-muted small">Message Content</label>
                         <textarea name="content" class="form-control bg-dark text-white border-secondary" rows="4" required placeholder="Enter message details here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Attachment (PDF)</label>
+                        <input type="file" name="attachment" class="form-control bg-dark text-white border-secondary" accept=".pdf">
                     </div>
                 </div>
                 <div class="modal-footer modal-footer-custom">
