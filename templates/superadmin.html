@@ -298,13 +298,13 @@
         <div class="col-6 col-lg-3">
             <div class="glass-card stat-glow-magenta text-center">
                 <div class="stat-label">Total Shops</div>
-                <div class="stat-value" id="count-total">{{ shops|length }}</div>
+                <div class="stat-value" id="count-total">{{ "{:,.0f}".format(shops|length) }}</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
             <div class="glass-card stat-glow-green text-center">
                 <div class="stat-label">Active Shops</div>
-                <div class="stat-value" id="count-active" style="color: var(--neon-green);">{{ shops|selectattr("is_active", "equalto", true)|list|length }}</div>
+                <div class="stat-value" id="count-active" style="color: var(--neon-green);">{{ "{:,.0f}".format(shops|selectattr("is_active", "equalto", true)|list|length) }}</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
@@ -317,7 +317,7 @@
                             {% set pending_count.val = pending_count.val + 1 %}
                         {% endif %}
                     {% endfor %}
-                    {{ pending_count.val }}
+                    {{ "{:,.0f}".format(pending_count.val) }}
                 </div>
             </div>
         </div>
@@ -337,7 +337,7 @@
                             {% endif %}
                         {% endif %}
                     {% endfor %}
-                    K{{ rev.val | round | int }}
+                    K{{ "{:,.0f}".format(rev.val | round) }}
                 </div>
             </div>
         </div>
@@ -967,7 +967,7 @@
                         padding: 10,
                         callbacks: {
                             label: function(context) {
-                                return ' Estimated MRR: K' + context.raw;
+                                return ' Estimated MRR: K' + context.raw.toLocaleString();
                             }
                         }
                     }
@@ -994,7 +994,7 @@
                                 family: "'Outfit', sans-serif"
                             },
                             callback: function(value) {
-                                return 'K' + value;
+                                return 'K' + value.toLocaleString();
                             }
                         }
                     }

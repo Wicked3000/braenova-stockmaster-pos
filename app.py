@@ -26,7 +26,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 @app.template_filter('kina')
 def kina_filter(val):
     if val is None: return "K0.00"
-    return f"K{float(val):.2f}"
+    return f"K{float(val):,.2f}"
 
 @app.context_processor
 def inject_global_data():
