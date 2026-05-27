@@ -352,7 +352,7 @@
                 <div class="modal-body p-0">
                     <div class="list-group list-group-flush rounded-bottom-4">
                         {% if days_left is not none and days_left <= 7 %}
-                        <div class="list-group-item bg-black border-bottom border-secondary p-3">
+                        <div class="list-group-item bg-black border-bottom border-secondary p-3" id="sysSubAlert">
                             <div class="d-flex w-100 justify-content-between mb-1">
                                 <h6 class="mb-1 text-danger fw-bold"><i class="bi bi-exclamation-triangle"></i> SYSTEM ALERT: Subscription</h6>
                                 <small class="text-muted">Now</small>
@@ -440,10 +440,54 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             let dismissed = JSON.parse(localStorage.getItem('dismissed_notices') || '[]');
+            let viewed = JSON.parse(localStorage.getItem('viewed_notices') || '[]');
+            
             dismissed.forEach(id => {
                 const item = document.querySelector(`.notice-item[data-notice-id="${id}"]`);
                 if(item) item.remove();
             });
+
+            // Hide dot if all messages have been viewed
+            const checkUnread = () => {
+                let hasUnread = false;
+                document.querySelectorAll('.notice-item').forEach(item => {
+                    const id = item.dataset.noticeId;
+                    if (!viewed.includes(id)) hasUnread = true;
+                });
+                
+                const sysAlert = document.getElementById('sysSubAlert');
+                if (sysAlert && !viewed.includes('sysSubAlert')) {
+                    hasUnread = true;
+                }
+
+                if (!hasUnread) {
+                    document.querySelectorAll('[data-bs-target="#messagesModal"] .bg-danger').forEach(dot => {
+                        dot.style.setProperty('display', 'none', 'important');
+                    });
+                }
+            };
+            
+            checkUnread();
+
+            // When modal opens, hide dot and mark visible messages as viewed
+            const modalEl = document.getElementById('messagesModal');
+            if (modalEl) {
+                modalEl.addEventListener('show.bs.modal', () => {
+                    document.querySelectorAll('[data-bs-target="#messagesModal"] .bg-danger').forEach(dot => {
+                        dot.style.setProperty('display', 'none', 'important');
+                    });
+                    
+                    document.querySelectorAll('.notice-item').forEach(item => {
+                        const id = item.dataset.noticeId;
+                        if (!viewed.includes(id)) viewed.push(id);
+                    });
+                    const sysAlert = document.getElementById('sysSubAlert');
+                    if (sysAlert && !viewed.includes('sysSubAlert')) {
+                        viewed.push('sysSubAlert');
+                    }
+                    localStorage.setItem('viewed_notices', JSON.stringify(viewed));
+                });
+            }
         });
     </script>
 
