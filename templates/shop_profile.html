@@ -369,38 +369,6 @@
     </div>
     {% endif %}
 
-    <div class="modal fade" id="closeShopModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-danger rounded-4 overflow-hidden">
-                <div class="modal-body p-4 text-center">
-                    <h5 class="mb-1 fw-bold text-white">Daily Reconciliation</h5>
-                    <p class="text-muted small mb-4">Finalize your sales for today</p>
-                    
-                    <div class="bg-black bg-opacity-50 p-3 rounded-4 mb-4 border border-secondary border-opacity-25">
-                        <span class="text-muted small text-uppercase fw-bold d-block mb-1">System Expected</span>
-                        <h4 class="fw-bold mb-0" style="color: #00ffa3;">{{ summary.expected_cash | kina }}</h4>
-                    </div>
-
-                    <form action="/reports/close" method="POST">
-                        <div class="mb-4">
-                            <label class="small text-muted mb-2 text-uppercase fw-bold">Actual Cash in Drawer</label>
-                            <input type="number" step="0.01" name="actual_cash" class="form-control form-control-lg text-center bg-black border-danger text-white py-3 fs-3 fw-bold" placeholder="K0.00" required>
-                        </div>
-
-                        <div class="mb-4 text-start">
-                            <label class="small text-muted mb-2 text-uppercase fw-bold">Restock Notes / Incidents</label>
-                            <textarea name="restock_notes" class="form-control bg-black text-white border-secondary small" rows="2" placeholder="e.g. Ran out of drinks, Power out for 1hr..."></textarea>
-                        </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger py-3 fw-bold rounded-4 shadow-lg" style="letter-spacing: 1px;">CONFIRM & CLOSE SHOP</button>
-                            <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 border-opacity-25 text-white opacity-75" data-bs-dismiss="modal">KEEP SHOP OPEN</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Messages Modal -->
     <div class="modal fade" id="messagesModal" tabindex="-1">
