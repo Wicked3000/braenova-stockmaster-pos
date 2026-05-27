@@ -708,21 +708,23 @@
                 cashiersVal.innerText = cashiers === 10 ? '10+ Cashiers' : `${cashiers} ${cashiers === 1 ? 'Cashier' : 'Cashiers'}`;
                 shopsVal.innerText = shops === 5 ? '5+ Shop Locations' : `${shops} ${shops === 1 ? 'Shop Location' : 'Shop Locations'}`;
 
+                const isYearly = document.getElementById('billingCycleToggle') ? document.getElementById('billingCycleToggle').checked : false;
+
                 // Calculate plan recommendation
                 let planKey = 'starter';
                 let planName = 'Starter Plan';
-                let planPrice = 'K50 / month';
+                let planPrice = isYearly ? 'K500 / year' : 'K50 / month';
                 let highlightCardId = 'card-starter';
 
                 if (shops > 1) {
                     planKey = 'multi';
                     planName = 'Multi-Shop Plan';
-                    planPrice = 'K450 / month';
+                    planPrice = isYearly ? 'K4,500 / year' : 'K450 / month';
                     highlightCardId = 'card-multi';
                 } else if (products > 100 || cashiers > 1) {
                     planKey = 'pro';
                     planName = 'Pro Shop Plan';
-                    planPrice = 'K200 / month';
+                    planPrice = isYearly ? 'K2,000 / year' : 'K200 / month';
                     highlightCardId = 'card-pro';
                 }
 
@@ -821,7 +823,8 @@
                 el.style.transform = 'scale(0.8)';
                 el.style.opacity = '0';
                 setTimeout(() => {
-                    el.innerText = isYearly ? el.getAttribute('data-yearly') : el.getAttribute('data-monthly');
+                    let val = isYearly ? el.getAttribute('data-yearly') : el.getAttribute('data-monthly');
+                    el.innerText = parseInt(val).toLocaleString('en-US');
                     el.style.transform = 'scale(1)';
                     el.style.opacity = '1';
                 }, 150);
@@ -838,6 +841,16 @@
                 const cycle = isYearly ? 'yearly' : 'monthly';
                 el.href = `/register?plan=${plan}&cycle=${cycle}`;
             });
+            
+            // Sync calculator text if it exists
+            const calcBtn = document.getElementById('calc-cta-btn');
+            if (calcBtn) {
+                // Re-trigger calculator to update recommendation text
+                const productsSlider = document.getElementById('calc-products');
+                if (productsSlider) {
+                    productsSlider.dispatchEvent(new Event('input'));
+                }
+            }
         }
         
         // Add CSS transition for smooth price popping
