@@ -16,7 +16,8 @@ def parse_shop_plan(plan_str):
         return ('starter', '991231', 'a', 'monthly')
     parts = plan_str.split(':')
     if len(parts) >= 3:
-        cycle = parts[3] if len(parts) > 3 else 'monthly'
+        cycle_raw = parts[3] if len(parts) > 3 else 'monthly'
+        cycle = 'yearly' if cycle_raw in ('yearly', 'y') else 'monthly'
         return (parts[0], parts[1], parts[2], cycle)
     elif len(parts) == 1:
         # Backward compatibility
@@ -24,7 +25,8 @@ def parse_shop_plan(plan_str):
     return ('starter', '991231', 'a', 'monthly')
 
 def make_shop_plan_str(plan_name, expiry_yymmdd, status_char, cycle='monthly'):
-    return f"{plan_name}:{expiry_yymmdd}:{status_char}:{cycle}"
+    cycle_abbr = 'y' if cycle == 'yearly' else 'm'
+    return f"{plan_name}:{expiry_yymmdd}:{status_char}:{cycle_abbr}"
 
 # --- SUPER ADMIN ---
 def get_all_shops():
