@@ -196,7 +196,6 @@
         </a>
         <div class="d-flex align-items-center gap-1">
             {% if session.role == 'owner' %}
-            <!-- Messages Dropdown -->
             <button class="btn btn-sm btn-outline-light rounded-circle position-relative d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
                 <span style="font-size: 0.9rem;">🔔</span>
                 {% if notices|length > 0 or (session.role == 'owner' and days_left is not none and days_left <= 7) %}
@@ -206,10 +205,28 @@
                 {% endif %}
             </button>
             {% endif %}
-            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-flex" style="width: 32px; height: 32px; padding: 0; font-size: 0.75rem; align-items: center; justify-content: center;">🔄</button>
-            <a href="/logout" class="btn btn-sm btn-outline-danger px-2 rounded-pill fw-bold" style="font-size: 0.65rem;">EXIT</a>
+            <button class="btn btn-sm btn-outline-light rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#rightMenu" aria-controls="rightMenu" style="width: 32px; height: 32px; border-color: rgba(255,255,255,0.15);">
+                <span style="font-size: 1rem;">☰</span>
+            </button>
         </div>
     </header>
+
+    <!-- Right Slide Menu -->
+    <div class="offcanvas offcanvas-end bg-dark text-white border-start border-secondary shadow-lg" tabindex="-1" id="rightMenu" aria-labelledby="rightMenuLabel" style="width: 300px;">
+        <div class="offcanvas-header border-bottom border-secondary">
+            <h5 class="offcanvas-title fw-bold" id="rightMenuLabel">⚙️ Options</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column gap-3">
+            <button onclick="window.location.reload()" class="btn btn-outline-secondary w-100 fw-bold d-flex align-items-center justify-content-center gap-2 py-3 rounded-4">
+                <span style="font-size: 1.2rem;">🔄</span> Refresh POS
+            </button>
+
+            <div class="mt-auto pt-3 border-top border-secondary">
+                <a href="/logout" class="btn btn-danger w-100 fw-bold rounded-pill py-3" style="font-size: 1.1rem;">🚪 EXIT POS</a>
+            </div>
+        </div>
+    </div>
 
     <div class="container py-3">
         <h4 class="fw-900 mb-4" style="color: #f91a8e;">Point of Sale</h4>

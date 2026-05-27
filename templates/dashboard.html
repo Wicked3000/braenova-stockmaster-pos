@@ -115,32 +115,6 @@
             <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
         </a>
         <div class="d-flex align-items-center gap-2">
-            {% if session.plan == 'multi' and owned_shops %}
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-info dropdown-toggle rounded-pill px-2 px-sm-3 fw-bold" type="button" id="shopSwitcher" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 0.8rem; border-color: rgba(13, 202, 240, 0.4);">
-                    <span class="d-none d-sm-inline">🏪 SWITCH SHOP</span>
-                    <span class="d-inline d-sm-none">🏪 SWITCH</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow" aria-labelledby="shopSwitcher">
-                    <li><h6 class="dropdown-header text-uppercase text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">My Locations</h6></li>
-                    {% for shop in owned_shops %}
-                    <li>
-                        <a class="dropdown-item d-flex justify-content-between align-items-center {% if shop.id == current_shop_id %}active fw-bold{% endif %}" href="/shops/switch/{{ shop.id }}" style="font-size: 0.9rem;">
-                            <span>{{ shop.name }}</span>
-                            {% if shop.id == current_shop_id %}<span class="badge bg-info text-dark rounded-pill">Active</span>{% endif %}
-                        </a>
-                    </li>
-                    {% endfor %}
-                    <li><hr class="dropdown-divider border-secondary"></li>
-                    <li>
-                        <button class="dropdown-item text-success fw-bold d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addShopModal" style="font-size: 0.9rem;">
-                            <span>➕ Add New Location</span>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-            {% endif %}
-            <!-- Messages Dropdown -->
             <button class="btn btn-sm btn-outline-light rounded-circle position-relative d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
                 <span style="font-size: 1.1rem;">🔔</span>
                 {% if notices|length > 0 or (days_left is not none and days_left <= 7) %}
@@ -149,10 +123,44 @@
                 </span>
                 {% endif %}
             </button>
-            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25" style="width: 40px; height: 40px; padding: 0;">🔄</button>
-            <a href="/logout" class="btn btn-sm btn-outline-danger px-2 px-sm-3 rounded-pill fw-bold" style="font-size: 0.75rem;">LOGOUT</a>
+            <button class="btn btn-sm btn-outline-light rounded-circle d-flex align-items-center justify-content-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#rightMenu" aria-controls="rightMenu" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.15);">
+                <span style="font-size: 1.2rem;">☰</span>
+            </button>
         </div>
     </header>
+
+    <!-- Right Slide Menu -->
+    <div class="offcanvas offcanvas-end bg-dark text-white border-start border-secondary shadow-lg" tabindex="-1" id="rightMenu" aria-labelledby="rightMenuLabel">
+        <div class="offcanvas-header border-bottom border-secondary">
+            <h5 class="offcanvas-title fw-bold" id="rightMenuLabel">⚙️ Menu Options</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column gap-3">
+            <button onclick="window.location.reload()" class="btn btn-outline-secondary w-100 fw-bold d-flex align-items-center justify-content-center gap-2 py-3 rounded-4">
+                <span style="font-size: 1.2rem;">🔄</span> Refresh Page
+            </button>
+            
+            {% if session.plan == 'multi' and owned_shops %}
+            <hr class="border-secondary my-1">
+            <h6 class="text-uppercase text-info small fw-bold mb-1">🏪 Switch Location</h6>
+            <div class="list-group list-group-flush rounded-3 border border-secondary mb-2 overflow-hidden">
+                {% for shop in owned_shops %}
+                <a href="/shops/switch/{{ shop.id }}" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center p-3 {% if shop.id == current_shop_id %}border-start border-info border-4{% endif %}">
+                    <span class="fw-bold">{{ shop.name }}</span>
+                    {% if shop.id == current_shop_id %}<span class="badge bg-info text-dark rounded-pill">Active</span>{% endif %}
+                </a>
+                {% endfor %}
+            </div>
+            <button class="btn btn-success w-100 fw-bold rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#addShopModal" data-bs-dismiss="offcanvas">
+                ➕ Add New Location
+            </button>
+            {% endif %}
+
+            <div class="mt-auto pt-3 border-top border-secondary">
+                <a href="/logout" class="btn btn-danger w-100 fw-bold rounded-pill py-3" style="font-size: 1.1rem;">🚪 LOGOUT</a>
+            </div>
+        </div>
+    </div>
 
     <div class="container py-3">
         {% if session.role == 'owner' and days_left is not none and days_left <= 7 %}
