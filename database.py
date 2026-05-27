@@ -143,7 +143,7 @@ def add_user(username, password_hash, role='cashier', shop_id=1):
     supabase.table('users').insert(data).execute()
 
 def get_all_users_for_admin():
-    res = supabase.table('users').select('id, username, role, shop_id').neq('role', 'superadmin').eq('is_active', 1).execute()
+    res = supabase.table('users').select('id, username, role, shop_id').eq('role', 'owner').eq('is_active', 1).execute()
     return res.data
 
 def get_all_cashiers(shop_id):

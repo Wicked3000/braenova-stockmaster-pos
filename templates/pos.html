@@ -195,6 +195,7 @@
             <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
         </a>
         <div class="d-flex align-items-center gap-1">
+            {% if session.role == 'owner' %}
             <!-- Messages Dropdown -->
             <button class="btn btn-sm btn-outline-light rounded-pill position-relative d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
                 <span style="font-size: 0.9rem;">🔔</span>
@@ -204,6 +205,7 @@
                 </span>
                 {% endif %}
             </button>
+            {% endif %}
             <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-flex" style="width: 32px; height: 32px; padding: 0; font-size: 0.75rem; align-items: center; justify-content: center;">🔄</button>
             <a href="/logout" class="btn btn-sm btn-outline-danger px-2 rounded-pill fw-bold" style="font-size: 0.65rem;">EXIT</a>
         </div>
