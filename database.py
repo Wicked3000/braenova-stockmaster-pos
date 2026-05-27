@@ -167,6 +167,14 @@ def get_notices(role='all', user_id=None):
         if user_id:
             targets.append(f'user:{user_id}')
         res = supabase.table('notices').select('*').in_('target_role', targets).order('created_at', desc=True).execute()
+        
+    from datetime import datetime
+    for notice in res.data:
+        if notice.get('created_at'):
+            try:
+                notice['created_at'] = datetime.fromisoformat(notice['created_at'].replace('Z', '+00:00'))
+            except Exception:
+                pass
     return res.data
 
 def create_notice(title, content, target_role='all'):
