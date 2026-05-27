@@ -298,7 +298,8 @@
         <div class="col-6 col-lg-3">
             <div class="glass-card stat-glow-magenta text-center">
                 <div class="stat-label">Total Shops</div>
-                <div class="stat-value" id="count-total">{{ "{:,.0f}".format(shops|length) }}</div>
+                {% set undeleted_shops = shops | rejectattr("payment_status", "equalto", "d") | list %}
+                <div class="stat-value" id="count-total">{{ "{:,.0f}".format(undeleted_shops|length) }}</div>
             </div>
         </div>
         <div class="col-6 col-lg-3">
@@ -327,7 +328,7 @@
                 <div class="stat-value text-white">
                     {% set rev = namespace(val=0) %}
                     {% for shop in shops %}
-                        {% if shop.is_active and shop.payment_status == 'a' %}
+                        {% if shop.payment_status in ['a', 'e', 'd'] %}
                             {% if shop.plan_name == 'starter' %}
                                 {% set rev.val = rev.val + (41.67 if shop.cycle == 'yearly' else 50) %}
                             {% elif shop.plan_name == 'pro' %}
@@ -448,6 +449,7 @@
                 </thead>
                 <tbody>
                     {% for shop in shops %}
+                        {% if shop.payment_status != 'd' %}
                     <tr class="shop-row-item">
                         <td>
                             <div class="shop-name search-target-name">{{ shop.name }}</div>
@@ -520,6 +522,7 @@
                             </div>
                         </td>
                     </tr>
+                        {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -844,15 +847,17 @@
         shopsData.forEach(s => {
             const plan = (s.plan_name || 'starter').toLowerCase();
             const cycle = (s.cycle || 'monthly').toLowerCase();
-            if (plan === 'starter') {
-                starterCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 41.67 : 50);
-            } else if (plan === 'pro') {
-                proCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 166.67 : 200);
-            } else if (plan === 'multi') {
-                multiCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 375 : 450);
+            
+            if (s.payment_status !== 'd') {
+                if (plan === 'starter') starterCount++;
+                else if (plan === 'pro') proCount++;
+                else if (plan === 'multi') multiCount++;
+            }
+            
+            if (['a', 'e', 'd'].includes(s.payment_status)) {
+                if (plan === 'starter') currentMrr += (cycle === 'yearly' ? 41.67 : 50);
+                else if (plan === 'pro') currentMrr += (cycle === 'yearly' ? 166.67 : 200);
+                else if (plan === 'multi') currentMrr += (cycle === 'yearly' ? 375 : 450);
             }
         });
         currentMrr = Math.round(currentMrr);

@@ -571,11 +571,15 @@ def delete_shop_and_data(shop_id):
     # 5. Delete categories
     supabase.table('categories').delete().eq('shop_id', shop_id).execute()
     
-    # 6. Nullify owner_id in shops to break circular dependency
-    supabase.table('shops').update({"owner_id": None}).eq('id', shop_id).execute()
-    
-    # 7. Delete users
+    # 6. Delete users
     supabase.table('users').delete().eq('shop_id', shop_id).execute()
     
-    # 8. Delete the shop itself
-    supabase.table('shops').delete().eq('id', shop_id).execute()
+    # 7. Soft-delete the shop to preserve revenue history
+    shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
+    if shop_res.data:
+        plan_str = shop_res.data[0].get('plan')
+        plan_name, expiry, _, cycle = parse_shop_plan(plan_str)
+        new_plan_str = make_shop_plan_str(plan_name, expiry, 'd', cycle)
+        supabase.table('shops').update({"is_active": False, "owner_id": None, "plan": new_plan_str}).eq('id', shop_id).execute()
+    else:
+        supabase.table('shops').update({"is_active": False, "owner_id": None}).eq('id', shop_id).execute()
