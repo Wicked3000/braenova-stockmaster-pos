@@ -152,6 +152,24 @@ def delete_user(user_id, shop_id):
 def reset_password(user_id, new_hash, shop_id):
     supabase.table('users').update({"password_hash": new_hash}).eq('id', user_id).eq('shop_id', shop_id).execute()
 
+# --- NOTICES / MESSAGES ---
+
+def get_notices(role='all'):
+    # Fetch notices that target 'all' or the specific user's role
+    if role == 'superadmin':
+        res = supabase.table('notices').select('*').order('created_at', desc=True).execute()
+    else:
+        res = supabase.table('notices').select('*').in_('target_role', ['all', role]).order('created_at', desc=True).execute()
+    return res.data
+
+def create_notice(title, content, target_role='all'):
+    data = {
+        "title": title,
+        "content": content,
+        "target_role": target_role
+    }
+    supabase.table('notices').insert(data).execute()
+
 # --- INVENTORY MGMT ---
 
 def get_all_inventory(shop_id):

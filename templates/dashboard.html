@@ -140,6 +140,15 @@
                 </ul>
             </div>
             {% endif %}
+            <!-- Messages Dropdown -->
+            <button class="btn btn-sm btn-outline-light rounded-pill position-relative d-flex align-items-center justify-content-center d-none d-sm-flex" style="width: 40px; height: 40px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
+                <span style="font-size: 1.1rem;">🔔</span>
+                {% if notices|length > 0 or (days_left is not none and days_left <= 7) %}
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-dark rounded-circle">
+                    <span class="visually-hidden">New alerts</span>
+                </span>
+                {% endif %}
+            </button>
             <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-inline-block" style="width: 40px; height: 40px; padding: 0;">🔄</button>
             <a href="/logout" class="btn btn-sm btn-outline-danger px-2 px-sm-3 rounded-pill fw-bold" style="font-size: 0.75rem;">LOGOUT</a>
         </div>
@@ -318,6 +327,48 @@
                             <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 border-opacity-25 text-white opacity-75" data-bs-dismiss="modal">KEEP SHOP OPEN</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div class="modal fade" id="messagesModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content bg-dark border-secondary rounded-4 text-white">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold">🔔 Messages & Notices</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="list-group list-group-flush rounded-bottom-4">
+                        {% if days_left is not none and days_left <= 7 %}
+                        <div class="list-group-item bg-black border-bottom border-secondary p-3">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1 text-danger fw-bold">⚠️ SYSTEM ALERT: Subscription</h6>
+                                <small class="text-muted">Now</small>
+                            </div>
+                            <p class="mb-1 small text-light">Your shop subscription has <strong>{{ days_left }} days remaining</strong>. Please contact administration to renew your plan to avoid service interruption.</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% for notice in notices %}
+                        <div class="list-group-item bg-black border-bottom border-secondary p-3">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1 text-info fw-bold">{{ notice.title }}</h6>
+                                <small class="text-muted">{{ notice.created_at.strftime('%d %b %H:%M') if notice.created_at else '' }}</small>
+                            </div>
+                            <p class="mb-1 small text-light" style="white-space: pre-wrap;">{{ notice.content }}</p>
+                        </div>
+                        {% else %}
+                            {% if not (days_left is not none and days_left <= 7) %}
+                            <div class="p-4 text-center text-muted">
+                                <span style="font-size: 2rem;">📭</span>
+                                <p class="mt-2 mb-0">No new messages.</p>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>

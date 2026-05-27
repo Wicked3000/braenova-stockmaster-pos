@@ -28,6 +28,18 @@ def kina_filter(val):
     if val is None: return "K0.00"
     return f"K{float(val):.2f}"
 
+@app.context_processor
+def inject_notices():
+    notices = []
+    if 'user_id' in session:
+        from database import get_notices
+        role = session.get('role', 'cashier')
+        try:
+            notices = get_notices(role)
+        except Exception as e:
+            print(f"Error fetching notices: {e}")
+    return dict(notices=notices)
+
 @app.before_request
 def check_subscription_status():
     # Ignore static files, billing pages, auth and landing routes to avoid infinite redirects
@@ -811,6 +823,19 @@ def purge_sales():
     except Exception as e:
         flash(f"Purge failed: {e}", "error")
     return redirect(url_for('sales_log'))
+
+@app.route('/superadmin/notice', methods=['POST'])
+@login_required
+@superadmin_required
+def post_notice():
+    title = request.form.get('title')
+    content = request.form.get('content')
+    target_role = request.form.get('target_role')
+    if title and content:
+        from database import create_notice
+        create_notice(title, content, target_role)
+        flash("Notice sent successfully.", "success")
+    return redirect(url_for('superadmin_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
