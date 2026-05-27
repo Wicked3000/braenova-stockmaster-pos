@@ -34,6 +34,7 @@
             color: white;
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body>
 
@@ -45,7 +46,7 @@
 
     <div class="mb-4">
         <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold" style="font-size: 0.9rem;">
-            ⏳ PENDING ACTIVATION
+            <i class="bi bi-hourglass-split"></i> PENDING ACTIVATION
         </span>
     </div>
 
@@ -135,10 +136,10 @@
     <!-- Action Buttons -->
     <div class="d-flex flex-column gap-2">
         <a href="https://wa.me/67571234567?text=Hi%20StockMaster,%20here%20is%20my%20payment%20receipt%20for%20username%20{{ username }}" target="_blank" class="btn-glow text-center">
-            💬 Send Receipt via WhatsApp (+675 7123 4567)
+            <i class="bi bi-chat-dots"></i> Send Receipt via WhatsApp (+675 7123 4567)
         </a>
         <a href="mailto:activation@braenova.com.pg?subject=StockMaster%20Activation%20-%20{{ username }}&body=Hi%20StockMaster,%20attached%20is%20the%20receipt%20for%20my%20account%20activation%20with%20username%20{{ username }}." class="btn btn-outline-secondary rounded-pill py-3 fw-bold" style="border: 1px solid #333;">
-            ✉️ Email Receipt (activation@braenova.com.pg)
+            <i class="bi bi-envelope"></i> Email Receipt (activation@braenova.com.pg)
         </a>
         <a href="/login" class="text-decoration-none mt-3" style="font-size: 0.9rem; color: #888;">
             Back to <span style="color: #fcc11e;">Login Screen</span>

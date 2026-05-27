@@ -103,11 +103,12 @@
         body { padding-top: 107px !important; }
         {% endif %}
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body>
     {% if session.get('impersonating') %}
     <div class="ghost-banner">
-        🕵️ You are viewing this shop in <strong>Admin Ghost Mode</strong>.
+        <i class="bi bi-incognito"></i> You are viewing this shop in <strong>Admin Ghost Mode</strong>.
         <a href="/superadmin/stop-impersonating">Return to Super Admin</a>
     </div>
     {% endif %}
@@ -117,7 +118,7 @@
             <div class="brand-text">BRAENOVA<span>STOCKMASTER</span></div>
         </a>
         <div class="d-flex align-items-center gap-2">
-            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-inline-block" style="width: 40px; height: 40px; padding: 0;">🔄</button>
+            <button onclick="window.location.reload()" class="btn btn-sm btn-outline-secondary rounded-pill border-opacity-25 d-none d-sm-inline-block" style="width: 40px; height: 40px; padding: 0;"><i class="bi bi-arrow-clockwise"></i></button>
             <a href="/logout" class="btn btn-sm btn-outline-danger px-2 px-sm-3 rounded-pill fw-bold" style="font-size: 0.75rem;">LOGOUT</a>
         </div>
     </header>
@@ -188,7 +189,7 @@
                             {{ item.quantity }} in stock
                         </div>
                         {% if item.quantity <= item.min_threshold %}
-                        <small class="text-danger fw-bold" style="font-size: 0.65rem; text-transform: uppercase;">⚠️ Low Stock</small>
+                        <small class="text-danger fw-bold" style="font-size: 0.65rem; text-transform: uppercase;"><i class="bi bi-exclamation-triangle"></i> Low Stock</small>
                         {% endif %}
                     </div>
                 </div>
@@ -202,21 +203,21 @@
     <!-- Navigation -->
     <div class="nav-bar">
         {% if session.role in ['owner', 'manager'] %}
-        <a href="/" class="nav-btn"><span class="nav-icon">📊</span>Dash</a>
+        <a href="/" class="nav-btn"><span class="nav-icon"><i class="bi bi-bar-chart"></i></span>Dash</a>
         {% endif %}
-        <a href="/pos" class="nav-btn"><span class="nav-icon">🛒</span>POS</a>
+        <a href="/pos" class="nav-btn"><span class="nav-icon"><i class="bi bi-cart"></i></span>POS</a>
         {% if session.plan != 'starter' %}
-        <a href="/dinau" class="nav-btn"><span class="nav-icon">📖</span>Dinau</a>
+        <a href="/dinau" class="nav-btn"><span class="nav-icon"><i class="bi bi-book"></i></span>Dinau</a>
         {% endif %}
-        <a href="/sales-log" class="nav-btn"><span class="nav-icon">📜</span>Log</a>
+        <a href="/sales-log" class="nav-btn"><span class="nav-icon"><i class="bi bi-receipt"></i></span>Log</a>
         {% if session.role in ['owner', 'manager'] %}
-        <a href="/inventory" class="nav-btn"><span class="nav-icon">📦</span>Stock</a>
+        <a href="/inventory" class="nav-btn"><span class="nav-icon"><i class="bi bi-box-seam"></i></span>Stock</a>
         {% endif %}
         {% if session.role == 'owner' %}
         {% if session.plan == 'multi' %}
-        <a href="/inventory/centralized" class="nav-btn active"><span class="nav-icon">🌐</span>Global</a>
+        <a href="/inventory/centralized" class="nav-btn active"><span class="nav-icon"><i class="bi bi-globe"></i></span>Global</a>
         {% endif %}
-        <a href="/reports" class="nav-btn"><span class="nav-icon">📉</span>Reports</a>
+        <a href="/reports" class="nav-btn"><span class="nav-icon"><i class="bi bi-graph-down"></i></span>Reports</a>
         {% endif %}
     </div>
 

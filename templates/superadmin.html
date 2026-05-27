@@ -260,6 +260,7 @@
             100% { transform: scale(0.95); opacity: 1; }
         }
     </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body>
 
@@ -273,7 +274,7 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <button class="btn btn-action btn-outline-custom rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newNoticeModal">📢 Post Notice</button>
+            <button class="btn btn-action btn-outline-custom rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newNoticeModal"><i class="bi bi-megaphone"></i> Post Notice</button>
             <span class="text-muted small d-none d-md-inline">Welcome, <strong>@{{ session.username }}</strong></span>
             <a href="/logout" class="btn btn-action btn-outline-custom rounded-pill px-4">Logout</a>
         </div>
@@ -487,19 +488,19 @@
                                     Manage
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-custom dropdown-menu-end">
-                                    <li><a class="dropdown-item dropdown-item-custom fw-bold text-info" href="/superadmin/impersonate/{{ shop.id }}">⚡ Ghost Login (Impersonate)</a></li>
-                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openExtendModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.plan_name }}', '20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}')">📅 Extend / Edit Subscription</a></li>
-                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openResetModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.users_list|tojson|forceescape }}')">🔑 Reset Passwords</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom fw-bold text-info" href="/superadmin/impersonate/{{ shop.id }}"><i class="bi bi-lightning"></i> Ghost Login (Impersonate)</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openExtendModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.plan_name }}', '20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}')"><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openResetModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.users_list|tojson|forceescape }}')"><i class="bi bi-key"></i> Reset Passwords</a></li>
                                     <li><hr class="dropdown-divider border-secondary"></li>
                                     <li>
                                         <form action="/superadmin/toggle" method="POST" class="m-0 confirm-submit-form" {% if shop.is_active %} data-message="Suspend shop access instantly? This will block owner and cashier logins." data-title="Suspend Shop Access" data-type="danger" {% else %} data-message="Are you sure you want to activate this shop location?" data-title="Activate Shop" data-type="info" {% endif %}>
                                             <input type="hidden" name="shop_id" value="{{ shop.id }}">
                                             {% if shop.is_active %}
                                                 <input type="hidden" name="status" value="false">
-                                                <button type="submit" class="dropdown-item dropdown-item-custom text-danger">🚫 Suspend Shop</button>
+                                                <button type="submit" class="dropdown-item dropdown-item-custom text-danger"><i class="bi bi-ban"></i> Suspend Shop</button>
                                             {% else %}
                                                 <input type="hidden" name="status" value="true">
-                                                <button type="submit" class="dropdown-item dropdown-item-custom text-success">✅ Activate Shop</button>
+                                                <button type="submit" class="dropdown-item dropdown-item-custom text-success"><i class="bi bi-check-circle"></i> Activate Shop</button>
                                             {% endif %}
                                         </form>
                                     </li>
@@ -507,7 +508,7 @@
                                     <li>
                                         <form action="/superadmin/delete-shop" method="POST" class="m-0 confirm-submit-form" data-message="DANGER: This will permanently delete this shop ({{ shop.name }}), all registered users, sales logs, dinau, and inventory data forever! Proceed?" data-title="PERMANENTLY DELETE SHOP" data-type="danger">
                                             <input type="hidden" name="shop_id" value="{{ shop.id }}">
-                                            <button type="submit" class="dropdown-item dropdown-item-custom text-danger fw-bold">🗑️ Delete Shop</button>
+                                            <button type="submit" class="dropdown-item dropdown-item-custom text-danger fw-bold"><i class="bi bi-trash"></i> Delete Shop</button>
                                         </form>
                                     </li>
                                 </ul>
@@ -608,7 +609,7 @@
         <div class="modal-content modal-content-custom" id="confirmModalContent" style="border: 1px solid var(--neon-magenta) !important; box-shadow: var(--glow-magenta);">
             <div class="modal-header modal-header-custom border-0 pb-0">
                 <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="confirmModalTitle">
-                    <span style="color: var(--neon-magenta);">⚠️</span> Security Confirmation
+                    <span style="color: var(--neon-magenta);"><i class="bi bi-exclamation-triangle"></i></span> Security Confirmation
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -628,7 +629,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-content-custom text-white">
             <div class="modal-header modal-header-custom">
-                <h5 class="modal-title fw-bold" style="color: var(--neon-cyan);">📢 Post New Notice</h5>
+                <h5 class="modal-title fw-bold" style="color: var(--neon-cyan);"><i class="bi bi-megaphone"></i> Post New Notice</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="/superadmin/notice" method="POST">
@@ -764,7 +765,7 @@
         document.getElementById('confirmModalMessage').textContent = message;
         document.getElementById('confirmModalTitle').innerHTML = `
             <span style="color: ${type === 'danger' ? 'var(--neon-magenta)' : 'var(--neon-cyan)'};">
-                ${type === 'danger' ? '🚫' : '⚡'}
+                ${type === 'danger' ? '<i class="bi bi-ban"></i>' : '<i class="bi bi-lightning"></i>'}
             </span> ${title}
         `;
         
