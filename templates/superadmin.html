@@ -313,9 +313,18 @@
                 <div class="stat-label">Pending Review</div>
                 <div class="stat-value" id="count-pending" style="color: var(--neon-yellow);">
                     {% set pending_count = namespace(val=0) %}
+                    {% set pending_delete_count = namespace(val=0) %}
+                    {% set active_shops = namespace(val=0) %}
+                    {% set deleted_shops = namespace(val=0) %}
                     {% for shop in shops %}
                         {% if shop.payment_status == 'p' %}
                             {% set pending_count.val = pending_count.val + 1 %}
+                        {% elif shop.payment_status == 'r' %}
+                            {% set pending_delete_count.val = pending_delete_count.val + 1 %}
+                        {% elif shop.payment_status == 'd' %}
+                            {% set deleted_shops.val = deleted_shops.val + 1 %}
+                        {% else %}
+                            {% set active_shops.val = active_shops.val + 1 %}
                         {% endif %}
                     {% endfor %}
                     {{ "{:,.0f}".format(pending_count.val) }}
@@ -328,7 +337,7 @@
                 <div class="stat-value text-white">
                     {% set rev = namespace(val=0) %}
                     {% for shop in shops %}
-                        {% if shop.payment_status in ['a', 'e', 'd'] %}
+                        {% if shop.payment_status in ['a', 'e', 'd', 'r'] %}
                             {% set rev.val = rev.val + shop.lifetime_revenue %}
                         {% endif %}
                     {% endfor %}
@@ -404,6 +413,47 @@
                                         </select>
                                         <button type="submit" class="btn btn-action btn-primary-glow btn-sm">Approve & Activate</button>
                                     </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Deletion Queue -->
+    {% if pending_delete_count.val > 0 %}
+    <div class="glass-card mb-4" style="border-left: 3px solid #ff5252;">
+        <h5 class="fw-bold mb-3 d-flex align-items-center text-danger">
+            <i class="bi bi-trash-fill me-2"></i> Pending Deletion Requests
+        </h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-borderless table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Shop Information</th>
+                        <th>Owner Username</th>
+                        <th>Action Queue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shop in shops %}
+                        {% if shop.payment_status == 'r' %}
+                        <tr>
+                            <td>
+                                <div class="shop-name text-danger text-decoration-line-through">{{ shop.name }}</div>
+                                <div class="shop-subtext">Registered Shop ID: {{ shop.id }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary px-3 py-2 fw-semibold">@{{ shop.owner_username }}</span>
+                            </td>
+                            <td>
+                                <form action="/superadmin/delete-shop" method="POST" class="d-inline confirm-submit-form" data-message="WARNING: This will permanently wipe all inventory and sales data for '{{ shop.name }}'. The lifetime revenue history will be preserved. Proceed?" data-title="Confirm Data Purge" data-type="danger">
+                                    <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                    <button type="submit" class="btn btn-action btn-danger btn-sm">Confirm & Purge Data</button>
                                 </form>
                             </td>
                         </tr>
@@ -848,7 +898,7 @@
                 else if (plan === 'multi') multiCount++;
             }
             
-            if (['a', 'e', 'd'].includes(s.payment_status)) {
+            if (['a', 'e', 'd', 'r'].includes(s.payment_status)) {
                 currentMrr += parseFloat(s.lifetime_revenue) || 0;
             }
         });

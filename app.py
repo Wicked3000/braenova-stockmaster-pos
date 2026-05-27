@@ -14,7 +14,7 @@ from database import (
     get_all_shops, toggle_shop_status, update_shop_plan_db, get_owner_shops,
     create_additional_shop, get_centralized_inventory,
     reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan,
-    delete_shop_and_data
+    delete_shop_and_data, update_shop_name, request_shop_deletion
 )
 
 app = Flask(__name__)

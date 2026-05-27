@@ -162,10 +162,19 @@
             <h6 class="text-uppercase text-info small fw-bold mb-1"><i class="bi bi-shop"></i> Switch Location</h6>
             <div class="list-group list-group-flush rounded-3 border border-secondary mb-2 overflow-hidden">
                 {% for shop in owned_shops %}
-                <a href="/shops/switch/{{ shop.id }}" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center p-3 {% if shop.id == current_shop_id %}border-start border-info border-4{% endif %}">
-                    <span class="fw-bold">{{ shop.name }}</span>
-                    {% if shop.id == current_shop_id %}<span class="badge bg-info text-dark rounded-pill">Active</span>{% endif %}
-                </a>
+                <div class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center p-0 {% if shop.id == current_shop_id %}border-start border-info border-4{% endif %} hover-bg-darker">
+                    <a href="/shops/switch/{{ shop.id }}" class="text-white text-decoration-none p-3 flex-grow-1 d-block">
+                        <span class="fw-bold">{{ shop.name }}</span>
+                    </a>
+                    {% if shop.id == current_shop_id %}
+                        <div class="p-3 pe-4"><span class="badge bg-info text-dark rounded-pill">Active</span></div>
+                    {% else %}
+                        <div class="p-3 pe-4 d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-info border-0 rounded-circle" title="Edit Shop Name" data-bs-toggle="modal" data-bs-target="#editShopModal" data-bs-dismiss="offcanvas" onclick="document.getElementById('edit_shop_id').value='{{ shop.id }}'; document.getElementById('edit_shop_name').value='{{ shop.name }}';"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Request Deletion" data-bs-toggle="modal" data-bs-target="#deleteShopModal" data-bs-dismiss="offcanvas" onclick="document.getElementById('delete_shop_id').value='{{ shop.id }}'; document.getElementById('delete_shop_name').textContent='{{ shop.name }}';"><i class="bi bi-trash"></i></button>
+                        </div>
+                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
             <button class="btn btn-success w-100 fw-bold rounded-pill py-2" data-bs-toggle="modal" data-bs-target="#addShopModal" data-bs-dismiss="offcanvas">
@@ -316,6 +325,48 @@
                         </div>
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-success py-3 fw-bold rounded-4 shadow-lg">CREATE SHOP</button>
+                            <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 text-white opacity-75" data-bs-dismiss="modal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+    </div>
+    
+    <!-- Edit Shop Modal -->
+    <div class="modal fade" id="editShopModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary rounded-4 shadow-lg">
+                <div class="modal-body p-4 text-center">
+                    <h5 class="mb-1 fw-bold text-white">Edit Shop Name</h5>
+                    <p class="text-muted small mb-4">Update the name of this location</p>
+                    <form action="/shops/edit" method="POST">
+                        <input type="hidden" name="shop_id" id="edit_shop_id">
+                        <div class="mb-4 text-start">
+                            <label class="small text-muted mb-2 text-uppercase fw-bold">Shop Name</label>
+                            <input type="text" name="shop_name" id="edit_shop_name" class="form-control bg-black text-white border-secondary" required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-info py-3 fw-bold rounded-4 shadow-lg text-dark">SAVE CHANGES</button>
+                            <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 text-white opacity-75" data-bs-dismiss="modal">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Shop Modal -->
+    <div class="modal fade" id="deleteShopModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-danger rounded-4 shadow-lg">
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3 text-danger" style="font-size: 3rem;"><i class="bi bi-exclamation-triangle"></i></div>
+                    <h5 class="mb-1 fw-bold text-white">Request Deletion</h5>
+                    <p class="text-muted small mb-4">Are you sure you want to delete <strong id="delete_shop_name" class="text-white"></strong>?<br>The shop will become immediately inactive and a Super Admin will review and permanently wipe all data.</p>
+                    <form action="/shops/request-delete" method="POST">
+                        <input type="hidden" name="shop_id" id="delete_shop_id">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger py-3 fw-bold rounded-4 shadow-lg">YES, DELETE SHOP</button>
                             <button type="button" class="btn btn-outline-secondary py-3 fw-bold rounded-4 text-white opacity-75" data-bs-dismiss="modal">CANCEL</button>
                         </div>
                     </form>

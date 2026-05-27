@@ -543,6 +543,18 @@ def create_additional_shop(shop_name, owner_id, plan):
     }).execute()
     return shop_res.data[0]
 
+def update_shop_name(shop_id, new_name):
+    supabase.table('shops').update({"name": new_name}).eq('id', shop_id).execute()
+
+def request_shop_deletion(shop_id):
+    shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
+    if shop_res.data:
+        plan_str = shop_res.data[0].get('plan')
+        plan_name, expiry, _, cycle = parse_shop_plan(plan_str)
+        # Status 'r' means Requested Deletion by owner
+        new_plan_str = make_shop_plan_str(plan_name, expiry, 'r', cycle)
+        supabase.table('shops').update({"is_active": False, "plan": new_plan_str}).eq('id', shop_id).execute()
+
 def get_centralized_inventory(owner_id):
     shops = get_owner_shops(owner_id)
     shop_ids = [s['id'] for s in shops]
