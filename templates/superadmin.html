@@ -388,19 +388,20 @@
                             </td>
                             <td>
                                 <span class="badge text-uppercase px-3 py-2 fw-bold" style="background: rgba(2, 139, 217, 0.1); border: 1px solid rgba(2, 139, 217, 0.2); color: var(--neon-cyan);">
-                                    {{ shop.plan_name or 'starter' }}
+                                    {{ shop.plan_name or 'starter' }} {% if shop.cycle == 'yearly' %}(YEARLY){% endif %}
                                 </span>
                             </td>
                             <td>
                                 <form action="/superadmin/approve-payment" method="POST" class="d-inline confirm-submit-form" data-message="Are you sure you want to approve payment and activate this shop?" data-title="Approve Shop Payment" data-type="info">
                                     <input type="hidden" name="shop_id" value="{{ shop.id }}">
                                     <input type="hidden" name="plan" value="{{ shop.plan_name or 'starter' }}">
+                                    <input type="hidden" name="cycle" value="{{ shop.cycle or 'monthly' }}">
                                     <div class="input-group input-group-sm d-inline-flex align-items-center" style="width: auto;">
                                         <select name="months" class="form-select form-select-sm form-control-custom me-2" style="width: auto;">
-                                            <option value="1">1 Month Activation</option>
+                                            <option value="1" {% if shop.cycle != 'yearly' %}selected{% endif %}>1 Month Activation</option>
                                             <option value="3">3 Months</option>
                                             <option value="6">6 Months</option>
-                                            <option value="12">12 Months (Annual)</option>
+                                            <option value="12" {% if shop.cycle == 'yearly' %}selected{% endif %}>12 Months (Annual)</option>
                                         </select>
                                         <button type="submit" class="btn btn-action btn-primary-glow btn-sm">Approve & Activate</button>
                                     </div>
@@ -459,7 +460,7 @@
                         </td>
                         <td>
                             <span class="badge text-uppercase px-3 py-2 fw-bold text-white bg-dark border border-secondary">
-                                {{ shop.plan_name or 'starter' }}
+                                {{ shop.plan_name or 'starter' }} {% if shop.cycle == 'yearly' %}(YEARLY){% endif %}
                             </span>
                         </td>
                         <td>
@@ -489,7 +490,7 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-custom dropdown-menu-end">
                                     <li><a class="dropdown-item dropdown-item-custom fw-bold text-info" href="/superadmin/impersonate/{{ shop.id }}"><i class="bi bi-lightning"></i> Ghost Login (Impersonate)</a></li>
-                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openExtendModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.plan_name }}', '20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}')"><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openExtendModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.plan_name }}', '{{ shop.cycle }}', '20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}')"><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
                                     <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openResetModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.users_list|tojson|forceescape }}')"><i class="bi bi-key"></i> Reset Passwords</a></li>
                                     <li><hr class="dropdown-divider border-secondary"></li>
                                     <li>
@@ -540,9 +541,16 @@
                     <div class="mb-3">
                         <label class="form-label small text-muted">Select Plan Tier</label>
                         <select name="plan" id="extend-plan" class="form-select form-control-custom">
-                            <option value="starter">Starter Plan (K50/mo)</option>
-                            <option value="pro">Pro Shop Plan (K200/mo)</option>
-                            <option value="multi">Multi-Shop Plan (K450/mo)</option>
+                            <option value="starter">Starter Plan</option>
+                            <option value="pro">Pro Shop Plan</option>
+                            <option value="multi">Multi-Shop Plan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Billing Cycle</label>
+                        <select name="cycle" id="extend-cycle" class="form-select form-control-custom">
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -687,10 +695,11 @@
         });
     }
 
-    function openExtendModal(shopId, shopName, currentPlan, expiryDate) {
+    function openExtendModal(shopId, shopName, currentPlan, currentCycle, expiryDate) {
         document.getElementById('extend-shop-id').value = shopId;
         document.getElementById('extend-shop-name').value = shopName;
         document.getElementById('extend-plan').value = currentPlan || 'starter';
+        document.getElementById('extend-cycle').value = currentCycle || 'monthly';
         if (expiryDate && expiryDate.length > 5) {
             document.getElementById('extend-expiry-date').value = expiryDate;
         }

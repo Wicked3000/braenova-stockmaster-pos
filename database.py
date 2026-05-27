@@ -13,17 +13,18 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY, options=opts)
 # --- PLAN PARSING HELPERS ---
 def parse_shop_plan(plan_str):
     if not plan_str:
-        return ('starter', '991231', 'a')
+        return ('starter', '991231', 'a', 'monthly')
     parts = plan_str.split(':')
-    if len(parts) == 3:
-        return (parts[0], parts[1], parts[2])
+    if len(parts) >= 3:
+        cycle = parts[3] if len(parts) > 3 else 'monthly'
+        return (parts[0], parts[1], parts[2], cycle)
     elif len(parts) == 1:
         # Backward compatibility
-        return (plan_str, '991231', 'a')
-    return ('starter', '991231', 'a')
+        return (plan_str, '991231', 'a', 'monthly')
+    return ('starter', '991231', 'a', 'monthly')
 
-def make_shop_plan_str(plan_name, expiry_yymmdd, status_char):
-    return f"{plan_name}:{expiry_yymmdd}:{status_char}"
+def make_shop_plan_str(plan_name, expiry_yymmdd, status_char, cycle='monthly'):
+    return f"{plan_name}:{expiry_yymmdd}:{status_char}:{cycle}"
 
 # --- SUPER ADMIN ---
 def get_all_shops():
@@ -37,10 +38,11 @@ def get_all_shops():
         s['users_list'] = [{'id': u['id'], 'username': u['username'], 'role': u['role']} for u in users_list]
         
         # Parse custom subscription metadata
-        plan_name, expiry, status = parse_shop_plan(s.get('plan'))
+        plan_name, expiry, status, cycle = parse_shop_plan(s.get('plan'))
         s['plan_name'] = plan_name
         s['expiry_date'] = expiry
         s['payment_status'] = status
+        s['cycle'] = cycle
 
         # Calculate countdown of days left
         if expiry == '991231':
@@ -60,9 +62,9 @@ def toggle_shop_status(shop_id, is_active):
     shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
     if shop_res.data:
         plan_str = shop_res.data[0].get('plan')
-        plan_name, expiry, _ = parse_shop_plan(plan_str)
+        plan_name, expiry, _, cycle = parse_shop_plan(plan_str)
         status_char = 'a' if is_active else 'e'
-        new_plan_str = make_shop_plan_str(plan_name, expiry, status_char)
+        new_plan_str = make_shop_plan_str(plan_name, expiry, status_char, cycle)
         supabase.table('shops').update({"is_active": is_active, "plan": new_plan_str}).eq('id', shop_id).execute()
     else:
         supabase.table('shops').update({"is_active": is_active}).eq('id', shop_id).execute()
@@ -84,7 +86,7 @@ def verify_user(username, password):
             shop_res = supabase.table('shops').select('is_active, plan').eq('id', user['shop_id']).execute()
             if shop_res.data:
                 shop = shop_res.data[0]
-                plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop.get('plan'))
+                plan_name, expiry_yymmdd, status_char, cycle = parse_shop_plan(shop.get('plan'))
                 
                 # Check for subscription expiration
                 from datetime import datetime
@@ -104,11 +106,11 @@ def verify_user(username, password):
                     return "suspended"
     return None
 
-def register_shop_and_owner(shop_name, owner_username, owner_password_hash, plan='starter'):
+def register_shop_and_owner(shop_name, owner_username, owner_password_hash, plan='starter', cycle='monthly'):
     # Set expiration to 30 days from now, initially pending approval ('p')
     from datetime import datetime, timedelta
     expiry = (datetime.now() + timedelta(days=30)).strftime('%y%m%d')
-    plan_str = make_shop_plan_str(plan, expiry, 'p')
+    plan_str = make_shop_plan_str(plan, expiry, 'p', cycle)
     
     # 1. Insert new shop (is_active = False by default, pending approval)
     shop_res = supabase.table('shops').insert({"name": shop_name, "is_active": False, "plan": plan_str}).execute()
@@ -539,14 +541,14 @@ def get_centralized_inventory(owner_id):
 def reset_password_by_admin(user_id, password_hash):
     supabase.table('users').update({"password_hash": password_hash}).eq('id', user_id).execute()
 
-def approve_shop_payment(shop_id, plan_name, months=1):
+def approve_shop_payment(shop_id, plan_name, months=1, cycle='monthly'):
     from datetime import datetime, timedelta
     expiry = (datetime.now() + timedelta(days=30 * months)).strftime('%y%m%d')
-    plan_str = make_shop_plan_str(plan_name, expiry, 'a')
+    plan_str = make_shop_plan_str(plan_name, expiry, 'a', cycle)
     supabase.table('shops').update({"is_active": True, "plan": plan_str}).eq('id', shop_id).execute()
 
-def extend_shop_subscription(shop_id, plan_name, expiry_yymmdd, status_char='a'):
-    plan_str = make_shop_plan_str(plan_name, expiry_yymmdd, status_char)
+def extend_shop_subscription(shop_id, plan_name, expiry_yymmdd, status_char='a', cycle='monthly'):
+    plan_str = make_shop_plan_str(plan_name, expiry_yymmdd, status_char, cycle)
     is_active = (status_char == 'a')
     supabase.table('shops').update({"is_active": is_active, "plan": plan_str}).eq('id', shop_id).execute()
 

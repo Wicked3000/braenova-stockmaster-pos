@@ -50,7 +50,7 @@ def inject_global_data():
                 from datetime import datetime
                 shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
                 if shop_res.data:
-                    plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop_res.data[0].get('plan'))
+                    plan_name, expiry_yymmdd, status_char, _ = parse_shop_plan(shop_res.data[0].get('plan'))
                     if expiry_yymmdd != '991231':
                         expiry_dt = datetime.strptime(f"20{expiry_yymmdd}", "%Y%m%d").date()
                         today_dt = datetime.now().date()
@@ -78,7 +78,7 @@ def check_subscription_status():
                 shop_res = supabase.table('shops').select('is_active, plan').eq('id', shop_id).execute()
                 if shop_res.data:
                     shop = shop_res.data[0]
-                    plan_name, expiry_yymmdd, status_char = parse_shop_plan(shop.get('plan'))
+                    plan_name, expiry_yymmdd, status_char, _ = parse_shop_plan(shop.get('plan'))
                     
                     from datetime import datetime
                     today_yymmdd = datetime.now().strftime('%y%m%d')
@@ -200,7 +200,7 @@ def register():
         
         try:
             password_hash = generate_password_hash(password)
-            user = register_shop_and_owner(shop_name, username, password_hash, selected_plan)
+            user = register_shop_and_owner(shop_name, username, password_hash, selected_plan, cycle)
             
             flash("Shop registered successfully! Please complete payment to activate your account.", "success")
             return redirect(url_for('pending_activation', username=username, plan=selected_plan, cycle=cycle))
@@ -280,8 +280,9 @@ def approve_payment():
     try:
         shop_id = request.form.get('shop_id')
         plan = request.form.get('plan', 'starter')
+        cycle = request.form.get('cycle', 'monthly')
         months = int(request.form.get('months', 1))
-        approve_shop_payment(shop_id, plan, months)
+        approve_shop_payment(shop_id, plan, months, cycle)
         flash(f"Payment approved and shop activated on {plan.upper()} plan.", "success")
     except Exception as e:
         flash(f"Error approving payment: {str(e)}", "error")
@@ -294,6 +295,7 @@ def extend_subscription():
     try:
         shop_id = request.form.get('shop_id')
         plan = request.form.get('plan')
+        cycle = request.form.get('cycle', 'monthly')
         expiry_yymmdd = request.form.get('expiry_date')
         status_char = request.form.get('status', 'a')
         
@@ -305,7 +307,7 @@ def extend_subscription():
             except Exception as e:
                 print(f"Error parsing date format: {e}")
                 
-        extend_shop_subscription(shop_id, plan, expiry_yymmdd, status_char)
+        extend_shop_subscription(shop_id, plan, expiry_yymmdd, status_char, cycle)
         flash("Subscription details updated successfully.", "success")
     except Exception as e:
         flash(f"Error extending subscription: {str(e)}", "error")
@@ -375,7 +377,7 @@ def impersonate_shop(shop_id):
         shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
         if shop_res.data:
             from database import parse_shop_plan
-            plan_name, _, _ = parse_shop_plan(shop_res.data[0].get('plan'))
+            plan_name, _, _, _ = parse_shop_plan(shop_res.data[0].get('plan'))
             session['plan'] = plan_name
         else:
             session['plan'] = 'starter'
