@@ -508,43 +508,6 @@
             <p style="color: #888; font-size: 1.1rem;">Choose the perfect plan for your business size. No free trial. Upfront payment required.</p>
         </div>
 
-        <!-- Plan Recommendation Calculator -->
-        <div class="calculator-container mb-5 mx-auto" style="max-width: 820px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; padding: 35px 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); backdrop-filter: blur(10px); position: relative; z-index: 5;">
-            <h4 class="text-center fw-bold text-white mb-4" style="font-size: 1.3rem;"><i class="bi bi-calculator"></i> Plan Recommendation Calculator</h4>
-            <div class="row g-4 text-start">
-                <div class="col-12 col-md-6 d-flex flex-column gap-3">
-                    <div>
-                        <label class="form-label d-flex justify-content-between text-muted small fw-bold mb-2">
-                            <span>PRODUCTS LIMIT</span>
-                            <span id="calc-products-val" class="text-white fw-bold">100 Products</span>
-                        </label>
-                        <input type="range" class="form-range custom-slider" id="calc-products" min="0" max="500" step="10" value="100">
-                    </div>
-                    <div>
-                        <label class="form-label d-flex justify-content-between text-muted small fw-bold mb-2">
-                            <span>CASHIER ACCOUNTS</span>
-                            <span id="calc-cashiers-val" class="text-white fw-bold">1 Cashier</span>
-                        </label>
-                        <input type="range" class="form-range custom-slider" id="calc-cashiers" min="1" max="10" step="1" value="1">
-                    </div>
-                    <div>
-                        <label class="form-label d-flex justify-content-between text-muted small fw-bold mb-2">
-                            <span>SHOP LOCATIONS</span>
-                            <span id="calc-shops-val" class="text-white fw-bold">1 Shop</span>
-                        </label>
-                        <input type="range" class="form-range custom-slider" id="calc-shops" min="1" max="5" step="1" value="1">
-                    </div>
-                </div>
-                <div class="col-12 col-md-6 d-flex align-items-center justify-content-center">
-                    <div class="text-center p-4 rounded-4 w-100" style="background: rgba(2, 139, 217, 0.05); border: 1px dashed rgba(2, 139, 217, 0.2);">
-                        <p class="text-muted small text-uppercase mb-2 fw-bold" style="letter-spacing: 1px; font-size: 0.75rem;">Recommended Plan</p>
-                        <h3 id="calc-recommended-name" class="fw-bold text-white mb-1" style="font-size: 1.8rem;">Starter Plan</h3>
-                        <p id="calc-recommended-price" class="text-info fw-bold mb-3" style="font-size: 1.2rem;">K50 / month</p>
-                        <a id="calc-cta-btn" href="/register?plan=starter" class="btn btn-glow rounded-pill py-2 px-4 w-100" style="font-size: 0.95rem; background: linear-gradient(135deg, #028bd9 0%, #03aaec 100%); text-decoration: none; text-align: center;">Choose This Plan</a>
-                    </div>
-                </div>
-            </div>
-        </div>
         
         <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; align-items: stretch; padding-top: 20px;">
             
