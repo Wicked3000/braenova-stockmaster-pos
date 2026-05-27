@@ -839,14 +839,13 @@ def post_notice():
     if 'attachment' in request.files:
         file = request.files['attachment']
         if file and file.filename != '':
-            import time
             filename = secure_filename(file.filename)
-            filename = f"{int(time.time())}_{filename}"
             upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'notices')
             os.makedirs(upload_dir, exist_ok=True)
             filepath = os.path.join(upload_dir, filename)
             file.save(filepath)
-            attachment_url = f"/static/uploads/notices/{filename}"
+            # The user wants URL to look like /admission-form.pdf
+            attachment_url = f"/{filename}"
             
     if title and content:
         from database import create_notice
@@ -856,3 +855,13 @@ def post_notice():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+
+@app.route('/<filename>')
+def serve_notice_attachment(filename):
+    if filename.lower().endswith('.pdf'):
+        from flask import send_from_directory
+        import os
+        upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'notices')
+        return send_from_directory(upload_dir, filename)
+    from flask import abort
+    abort(404)
