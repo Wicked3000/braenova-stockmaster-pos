@@ -328,12 +328,16 @@
                     {% set rev = namespace(val=0) %}
                     {% for shop in shops %}
                         {% if shop.is_active and shop.payment_status == 'a' %}
-                            {% if shop.plan_name == 'starter' %}{% set rev.val = rev.val + 50 %}{% endif %}
-                            {% if shop.plan_name == 'pro' %}{% set rev.val = rev.val + 200 %}{% endif %}
-                            {% if shop.plan_name == 'multi' %}{% set rev.val = rev.val + 450 %}{% endif %}
+                            {% if shop.plan_name == 'starter' %}
+                                {% set rev.val = rev.val + (41.67 if shop.cycle == 'yearly' else 50) %}
+                            {% elif shop.plan_name == 'pro' %}
+                                {% set rev.val = rev.val + (166.67 if shop.cycle == 'yearly' else 200) %}
+                            {% elif shop.plan_name == 'multi' %}
+                                {% set rev.val = rev.val + (375 if shop.cycle == 'yearly' else 450) %}
+                            {% endif %}
                         {% endif %}
                     {% endfor %}
-                    K{{ rev.val }}
+                    K{{ rev.val | round | int }}
                 </div>
             </div>
         </div>
@@ -839,17 +843,19 @@
 
         shopsData.forEach(s => {
             const plan = (s.plan_name || 'starter').toLowerCase();
+            const cycle = (s.cycle || 'monthly').toLowerCase();
             if (plan === 'starter') {
                 starterCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += 50;
+                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 41.67 : 50);
             } else if (plan === 'pro') {
                 proCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += 200;
+                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 166.67 : 200);
             } else if (plan === 'multi') {
                 multiCount++;
-                if (s.is_active && s.payment_status === 'a') currentMrr += 450;
+                if (s.is_active && s.payment_status === 'a') currentMrr += (cycle === 'yearly' ? 375 : 450);
             }
         });
+        currentMrr = Math.round(currentMrr);
 
         // 1. Plan Distribution Doughnut Chart
         const planCtx = document.getElementById('planChart').getContext('2d');
