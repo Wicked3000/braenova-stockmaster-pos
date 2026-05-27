@@ -197,10 +197,10 @@
         <div class="d-flex align-items-center gap-1">
             {% if session.role == 'owner' %}
             <!-- Messages Dropdown -->
-            <button class="btn btn-sm btn-outline-light rounded-pill position-relative d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
+            <button class="btn btn-sm btn-outline-light rounded-circle position-relative d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border-color: rgba(255,255,255,0.15);" data-bs-toggle="modal" data-bs-target="#messagesModal">
                 <span style="font-size: 0.9rem;">🔔</span>
                 {% if notices|length > 0 or (session.role == 'owner' and days_left is not none and days_left <= 7) %}
-                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-dark rounded-circle" style="width: 8px; height: 8px;">
+                <span class="position-absolute bg-danger border border-dark rounded-circle" style="width: 8px; height: 8px; top: -1px; right: 2px;">
                     <span class="visually-hidden">New alerts</span>
                 </span>
                 {% endif %}
