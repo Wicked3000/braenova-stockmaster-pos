@@ -468,6 +468,17 @@
                                     20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}
                                 {% endif %}
                             </strong>
+                            {% if shop.expiry_date != '991231' and shop.days_left is not none %}
+                                <div style="font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
+                                    {% if shop.days_left > 0 %}
+                                        <span style="color: var(--neon-green);">{{ shop.days_left }} days left</span>
+                                    {% elif shop.days_left == 0 %}
+                                        <span style="color: var(--neon-yellow);">Expires today</span>
+                                    {% else %}
+                                        <span style="color: hsl(354, 100%, 64%);">Expired {{ shop.days_left|abs }} days ago</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </td>
                         <td class="text-end">
                             <div class="dropdown d-inline-block">

@@ -41,6 +41,18 @@ def get_all_shops():
         s['plan_name'] = plan_name
         s['expiry_date'] = expiry
         s['payment_status'] = status
+
+        # Calculate countdown of days left
+        if expiry == '991231':
+            s['days_left'] = None
+        else:
+            try:
+                from datetime import datetime
+                expiry_dt = datetime.strptime(f"20{expiry}", "%Y%m%d").date()
+                today_dt = datetime.now().date()
+                s['days_left'] = (expiry_dt - today_dt).days
+            except Exception:
+                s['days_left'] = None
     return shops
 
 def toggle_shop_status(shop_id, is_active):

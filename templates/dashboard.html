@@ -146,6 +146,32 @@
     </header>
 
     <div class="container py-3">
+        {% if session.role == 'owner' and days_left is not none %}
+        <div class="alert border-0 rounded-3 mb-4 p-3 d-flex flex-wrap justify-content-between align-items-center gap-2" 
+             style="font-size: 0.85rem; 
+                    {% if days_left <= 7 %}
+                    background: rgba(255, 82, 82, 0.15); border: 1px solid rgba(255, 82, 82, 0.25) !important; color: #ff5252;
+                    {% else %}
+                    background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05) !important; color: #cbd5e1;
+                    {% endif %}">
+            <div class="d-flex align-items-center gap-2">
+                <span style="font-size: 1.1rem;">📅</span>
+                <span>
+                    Your <strong>{{ session.plan|upper }} Plan</strong> has 
+                    <strong {% if days_left <= 7 %}style="color: #ff5252;"{% else %}style="color: #00ffa3;"{% endif %}>{{ days_left }} days remaining</strong> 
+                    (Expires: {{ expiry_date_str }}).
+                </span>
+            </div>
+            <div>
+                {% if days_left <= 7 %}
+                <a href="/contact" class="btn btn-sm btn-danger rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem; background-color: #ff5252; border: none; box-shadow: 0 0 10px rgba(255, 82, 82, 0.4);">Renew Now</a>
+                {% else %}
+                <a href="/contact" class="btn btn-sm btn-outline-secondary text-white rounded-pill px-3 py-1 fw-bold" style="font-size: 0.75rem; border-color: rgba(255, 255, 255, 0.15);">Manage Subscription</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
         {% if session.plan == 'starter' %}
         <div class="alert alert-info py-2 px-3 border-0 rounded-3 mb-4 d-flex justify-content-between align-items-center" style="font-size: 0.85rem; background-color: rgba(13, 110, 253, 0.15); color: #0d6efd;">
             <span>ℹ️ You are on the <strong>Starter Plan</strong>. Store credit (Dinau) and profit metrics are disabled.</span>

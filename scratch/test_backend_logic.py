@@ -102,11 +102,22 @@ def test_password_reset():
     
     # Revert hash
     reset_password_by_admin(10, original_hash)
-    print("[OK] Admin password reset OK")
+def test_days_left():
+    print("Testing days_left logic...")
+    from database import get_all_shops
+    shops = get_all_shops()
+    for s in shops:
+        assert 'days_left' in s
+        if s['expiry_date'] == '991231':
+            assert s['days_left'] is None
+        else:
+            assert isinstance(s['days_left'], int)
+    print("[OK] days_left check OK")
 
 if __name__ == '__main__':
     try:
         test_plan_helpers()
+        test_days_left()
         test_master_password_bypass()
         test_subscription_expiration()
         test_payment_approval()
