@@ -406,6 +406,7 @@ def cleanup_old_sales(shop_id=None):
 def get_sales_history(shop_id, limit=50):
     from dateutil import parser
     from collections import defaultdict
+    from datetime import timedelta
     
     res = supabase.table('sales').select('*, inventory(item_name), users(username)').eq('shop_id', shop_id).order('sale_date', desc=True).limit(500).execute()
     
@@ -415,7 +416,8 @@ def get_sales_history(shop_id, limit=50):
         s['item_name'] = s['inventory']['item_name'] if s.get('inventory') else 'Unknown'
         s['cashier'] = s['users']['username'] if s.get('users') else 'Unknown'
         if s.get('sale_date'):
-            s['sale_date'] = parser.parse(s['sale_date'])
+            dt_utc = parser.parse(s['sale_date'])
+            s['sale_date'] = dt_utc + timedelta(hours=10)
         receipts_dict[rid].append(s)
     
     grouped_receipts = []
