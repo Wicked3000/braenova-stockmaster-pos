@@ -45,9 +45,8 @@
             transition: opacity 1.5s ease, visibility 1.5s;
         }
         .splash-logo {
-            width: 120px;
+            width: 260px;
             animation: pulse 2s infinite ease-in-out;
-            border-radius: 20px;
         }
         @keyframes pulse {
             0% { transform: scale(0.9); opacity: 0.8; }
@@ -74,7 +73,8 @@
     <div class="container">
         <div class="login-card p-4 mx-auto shadow-lg border-opacity-10 border-white">
             <div class="text-center mb-4">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="mb-3" style="height: 100px; width: auto;">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="mb-2" style="height: 120px; width: auto;">
+                <p class="text-muted small mb-0" style="letter-spacing: 0.5px;">Smart POS &amp; Inventory for Tuck Shops</p>
             </div>
             
             {% with messages = get_flashed_messages() %}
