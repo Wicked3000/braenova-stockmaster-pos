@@ -295,11 +295,15 @@ def get_sales_summary(shop_id):
     total_cost = sum(float(s['cost_at_sale']) for s in sales)
     dinau_today = sum(float(s['total_price']) for s in sales if s['is_dinau'] == 1)
     
-    # Calculate daily expenses
-    from datetime import datetime
-    today = datetime.now().date().isoformat()
-    exp_res = supabase.table('expenses').select('amount').gte('expense_date', today).eq('shop_id', shop_id).execute()
-    total_expenses = sum(float(e['amount']) for e in exp_res.data) if exp_res.data else 0.0
+    # Calculate daily expenses (gracefully skip if table not yet migrated)
+    total_expenses = 0.0
+    try:
+        from datetime import datetime
+        today = datetime.now().date().isoformat()
+        exp_res = supabase.table('expenses').select('amount').gte('expense_date', today).eq('shop_id', shop_id).execute()
+        total_expenses = sum(float(e['amount']) for e in exp_res.data) if exp_res.data else 0.0
+    except Exception as e:
+        print(f"Expenses table not available yet: {e}")
     
     return {
         'total_sales': total_sales,

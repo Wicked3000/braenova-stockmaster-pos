@@ -433,7 +433,11 @@ def dashboard():
     # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
     profit = summary['total_profit'] if plan != 'starter' else None
     
-    daily_expenses = get_daily_expenses(shop_id) if plan != 'starter' else []
+    try:
+        daily_expenses = get_daily_expenses(shop_id) if plan != 'starter' else []
+    except Exception as e:
+        print(f"Expenses lookup failed (table may not exist yet): {e}")
+        daily_expenses = []
         
     expiry_alerts = get_expired_items(shop_id)
     inventory_status = get_inventory_status(shop_id)
@@ -581,7 +585,11 @@ def daily_reports_history():
 def pos():
     inventory = get_all_inventory(session.get('shop_id'))
     categories = get_all_categories(session.get('shop_id'))
-    active_shift = get_active_shift(session.get('shop_id'), session.get('user_id'))
+    try:
+        active_shift = get_active_shift(session.get('shop_id'), session.get('user_id'))
+    except Exception as e:
+        print(f"Shift lookup failed (table may not exist yet): {e}")
+        active_shift = None
     return render_template('pos.html', inventory=inventory, categories=categories, active_shift=active_shift)
 
 @app.route('/inventory')
