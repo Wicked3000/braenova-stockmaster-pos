@@ -830,6 +830,123 @@ def delete_item(item_id):
         flash(f"Error deleting item: {str(e)}", "error")
     return redirect(url_for('inventory_mgmt'))
 
+# --- WAREHOUSE ROUTES ---
+
+@app.route('/warehouse')
+@login_required
+@owner_required
+def warehouse():
+    if session.get('plan') == 'starter':
+        flash('Warehouse storage is a Pro feature. Please upgrade.', 'warning')
+        return redirect(url_for('dashboard'))
+    
+    from database import get_warehouse_inventory, get_warehouse_logs
+    inventory = get_warehouse_inventory(session.get('shop_id'))
+    logs = get_warehouse_logs(session.get('shop_id'))
+    return render_template('warehouse.html', inventory=inventory, logs=logs)
+
+@app.route('/warehouse/add', methods=['POST'])
+@login_required
+@owner_required
+def warehouse_add():
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+    
+    name = request.form.get('item_name')
+    qty = int(request.form.get('quantity', 0))
+    cost = float(request.form.get('cost_price', 0))
+    supplier = request.form.get('supplier_name', '')
+    
+    from database import add_warehouse_item
+    add_warehouse_item(name, qty, cost, supplier, session.get('shop_id'))
+    flash('Bulk stock added to warehouse.', 'success')
+    return redirect(url_for('warehouse'))
+
+@app.route('/warehouse/restock', methods=['POST'])
+@login_required
+@owner_required
+def warehouse_restock():
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+        
+    item_id = int(request.form.get('item_id'))
+    item_name = request.form.get('item_name')
+    added_qty = int(request.form.get('added_qty', 0))
+    
+    if added_qty > 0:
+        from database import add_warehouse_stock
+        add_warehouse_stock(item_id, session.get('shop_id'), item_name, added_qty)
+        flash(f'Added {added_qty} units to warehouse stock.', 'success')
+        
+    return redirect(url_for('warehouse'))
+
+@app.route('/warehouse/transfer', methods=['POST'])
+@login_required
+@owner_required
+def warehouse_transfer():
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+        
+    w_item_id = int(request.form.get('warehouse_item_id'))
+    w_item_name = request.form.get('item_name')
+    qty_to_transfer = int(request.form.get('transfer_qty', 0))
+    
+    from database import supabase, log_warehouse_movement
+    shop_id = session.get('shop_id')
+    
+    # Check if we have enough stock in warehouse
+    w_res = supabase.table('warehouse_inventory').select('*').eq('id', w_item_id).eq('shop_id', shop_id).execute()
+    if not w_res.data or w_res.data[0]['quantity'] < qty_to_transfer:
+        flash('Not enough stock in warehouse to transfer!', 'error')
+        return redirect(url_for('warehouse'))
+        
+    w_item = w_res.data[0]
+    
+    # 1. Deduct from warehouse
+    new_w_qty = w_item['quantity'] - qty_to_transfer
+    supabase.table('warehouse_inventory').update({'quantity': new_w_qty}).eq('id', w_item_id).eq('shop_id', shop_id).execute()
+    
+    # 2. Add to Shop Inventory (check if item exists)
+    shop_inv_res = supabase.table('inventory').select('*').eq('item_name', w_item_name).eq('shop_id', shop_id).execute()
+    if shop_inv_res.data:
+        # Update existing
+        s_item = shop_inv_res.data[0]
+        new_s_qty = s_item['quantity'] + qty_to_transfer
+        supabase.table('inventory').update({'quantity': new_s_qty}).eq('id', s_item['id']).eq('shop_id', shop_id).execute()
+    else:
+        # Create new in shop
+        data = {
+            "item_name": w_item_name,
+            "quantity": qty_to_transfer,
+            "min_threshold": 10,
+            "unit_price": 0, # User must set this later
+            "cost_price": w_item['cost_price'],
+            "category": "General",
+            "is_active": 1,
+            "shop_id": shop_id
+        }
+        supabase.table('inventory').insert(data).execute()
+        flash(f'{qty_to_transfer} units transferred. PLEASE UPDATE THE UNIT PRICE IN INVENTORY!', 'warning')
+        
+    # 3. Log Movement
+    log_warehouse_movement(shop_id, w_item_name, "STOCK OUT (To Shop)", qty_to_transfer)
+    
+    if 'warning' not in session.get('_flashes', str(session.get('_flashes', ''))):
+        flash(f'Successfully transferred {qty_to_transfer} units of {w_item_name} to the shop floor.', 'success')
+        
+    return redirect(url_for('warehouse'))
+
+@app.route('/warehouse/delete/<int:item_id>', methods=['POST'])
+@login_required
+@owner_required
+def warehouse_delete(item_id):
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+    from database import delete_warehouse_item
+    delete_warehouse_item(item_id, session.get('shop_id'))
+    flash('Item removed from warehouse.', 'success')
+    return redirect(url_for('warehouse'))
+
 @app.route('/expenses/add', methods=['POST'])
 @login_required
 @manager_or_owner_required

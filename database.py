@@ -689,3 +689,68 @@ def get_active_shift(shop_id):
     except Exception as e:
         print(f"Shift query error: {e}")
         return None
+
+# --- WAREHOUSE ---
+
+def get_warehouse_inventory(shop_id):
+    res = supabase.table('warehouse_inventory').select('*').eq('shop_id', shop_id).order('item_name').execute()
+    return res.data
+
+def add_warehouse_item(name, qty, cost, supplier, shop_id):
+    data = {
+        "item_name": name,
+        "quantity": qty,
+        "cost_price": cost,
+        "supplier_name": supplier,
+        "shop_id": shop_id
+    }
+    res = supabase.table('warehouse_inventory').insert(data).execute()
+    supabase.table('warehouse_logs').insert({
+        "shop_id": shop_id,
+        "item_name": name,
+        "movement_type": "STOCK IN (NEW)",
+        "quantity_moved": qty
+    }).execute()
+    return res.data
+
+def update_warehouse_item(item_id, shop_id, name=None, qty=None, cost=None, supplier=None):
+    updates = {}
+    if name is not None: updates["item_name"] = name
+    if qty is not None: updates["quantity"] = qty
+    if cost is not None: updates["cost_price"] = cost
+    if supplier is not None: updates["supplier_name"] = supplier
+    if updates:
+        supabase.table('warehouse_inventory').update(updates).eq('id', item_id).eq('shop_id', shop_id).execute()
+
+def add_warehouse_stock(item_id, shop_id, item_name, added_qty):
+    res = supabase.table('warehouse_inventory').select('quantity').eq('id', item_id).eq('shop_id', shop_id).execute()
+    if res.data:
+        new_qty = res.data[0]['quantity'] + added_qty
+        supabase.table('warehouse_inventory').update({'quantity': new_qty}).eq('id', item_id).eq('shop_id', shop_id).execute()
+        supabase.table('warehouse_logs').insert({
+            "shop_id": shop_id,
+            "item_name": item_name,
+            "movement_type": "STOCK IN",
+            "quantity_moved": added_qty
+        }).execute()
+
+def delete_warehouse_item(item_id, shop_id):
+    supabase.table('warehouse_inventory').delete().eq('id', item_id).eq('shop_id', shop_id).execute()
+
+def log_warehouse_movement(shop_id, item_name, movement_type, quantity):
+    supabase.table('warehouse_logs').insert({
+        "shop_id": shop_id,
+        "item_name": item_name,
+        "movement_type": movement_type,
+        "quantity_moved": quantity
+    }).execute()
+
+def get_warehouse_logs(shop_id):
+    from datetime import timedelta
+    from dateutil import parser
+    res = supabase.table('warehouse_logs').select('*').eq('shop_id', shop_id).order('date_moved', desc=True).limit(200).execute()
+    for log in res.data:
+        if log.get('date_moved'):
+            dt_utc = parser.parse(log['date_moved'])
+            log['date_moved'] = dt_utc + timedelta(hours=10)
+    return res.data

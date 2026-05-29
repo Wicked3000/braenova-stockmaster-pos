@@ -294,8 +294,11 @@
         <a href="/dinau" class="nav-btn"><span class="nav-icon"><i class="bi bi-book"></i></span>Dinau</a>
         {% endif %}
         <a href="/sales-log" class="nav-btn active"><span class="nav-icon"><i class="bi bi-receipt"></i></span>Log</a>
-        {% if session.role in ['owner', 'manager'] %}
+                {% if session.role in ['owner', 'manager'] %}
         <a href="/inventory" class="nav-btn"><span class="nav-icon"><i class="bi bi-box-seam"></i></span>Stock</a>
+        {% if session.plan != 'starter' %}
+        <a href="/warehouse" class="nav-btn"><span class="nav-icon"><i class="bi bi-boxes"></i></span>Bulk</a>
+        {% endif %}
         {% endif %}
         {% if session.role == 'owner' %}
         {% if session.plan == 'multi' %}
