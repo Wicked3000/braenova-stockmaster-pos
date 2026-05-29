@@ -116,10 +116,20 @@
         @media print {
             body * { visibility: hidden; }
             #receiptModalContent, #receiptModalContent * { visibility: visible; }
-            #receiptModalContent { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 10px; background: white !important; color: black !important; }
-            .modal-content { border: none !important; box-shadow: none !important; }
+            #receiptModalContent { 
+                position: absolute; left: 0; top: 0; width: 100%; max-width: 100%;
+                margin: 0; padding: 0; background: white !important; color: black !important; 
+            }
+            .modal-content, .receipt-card { border: none !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
             .modal-backdrop { display: none !important; }
-            .text-kina { color: black !important; }
+            .receipt-inner { padding: 5px !important; } /* Minimal padding for narrow rolls */
+            @page { margin: 0; } /* Removes default browser headers/footers */
+            
+            /* Responsive table for 58mm/80mm */
+            .receipt-table { width: 100%; table-layout: fixed; }
+            .receipt-table th:nth-child(1), .receipt-table td:nth-child(1) { width: 55%; overflow: hidden; text-overflow: ellipsis; }
+            .receipt-table th:nth-child(2), .receipt-table td:nth-child(2) { width: 15%; text-align: center; }
+            .receipt-table th:nth-child(3), .receipt-table td:nth-child(3) { width: 30%; text-align: right; }
         }
         .border-dashed { border-style: dashed !important; }
 
