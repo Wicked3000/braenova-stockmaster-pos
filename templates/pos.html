@@ -422,9 +422,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer p-2 border-0 bg-light d-flex gap-2">
-                    <button class="btn btn-outline-dark flex-grow-1 fw-bold" onclick="printReceipt()">PRINT RECEIPT</button>
-                    <button class="btn btn-primary flex-grow-1 fw-bold" onclick="closeReceipt()">DONE (NEXT SALE)</button>
+                <div class="modal-footer p-2 border-0 bg-light d-flex flex-column gap-2">
+                    <div class="d-flex w-100 gap-2">
+                        <button class="btn btn-outline-dark flex-grow-1 fw-bold" onclick="printReceipt()"><i class="bi bi-printer"></i> PRINT</button>
+                        <button class="btn btn-success flex-grow-1 fw-bold" onclick="sendWhatsAppReceipt()"><i class="bi bi-whatsapp"></i> WHATSAPP</button>
+                    </div>
+                    <button class="btn btn-primary w-100 fw-bold py-3" onclick="closeReceipt()">DONE (NEXT SALE)</button>
                 </div>
             </div>
         </div>
@@ -885,6 +888,7 @@
 
             if (success) {
                 checkoutModal.hide();
+                window.currentReceiptId = result.receipt_id || "OFFLINE";
                 
                 // Populate Receipt
                 const d = new Date();
@@ -935,6 +939,25 @@
         
         function printReceipt() {
             window.print();
+        }
+        
+        function sendWhatsAppReceipt() {
+            let phone = prompt("Enter customer WhatsApp number (e.g. 67570000000):");
+            if (!phone) return;
+            
+            // Format phone (strip non-digits)
+            phone = phone.replace(/\D/g, '');
+            if (phone.length === 8) phone = "675" + phone; // Auto-append PNG code if 8 digits
+            
+            let text = `*STOCKMASTA RECEIPT*\nReceipt #: ${window.currentReceiptId || 'N/A'}\n----------------------\n`;
+            cart.forEach(i => {
+                text += `${i.qty}x ${i.name} - K${(i.qty * i.price).toFixed(2)}\n`;
+            });
+            text += `----------------------\n*TOTAL: K${currentTotal.toFixed(2)}*\n`;
+            text += `Thank you for shopping with us!`;
+            
+            let url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
         }
         
         function resetPOS() {

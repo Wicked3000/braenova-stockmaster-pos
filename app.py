@@ -671,7 +671,10 @@ def checkout():
         if payment_method == 'dinau' and customer_name:
             add_dinau_record(customer_name, total_transaction_amount, session.get('shop_id'))
         
-        return jsonify({'success': True})
+        return jsonify({
+            'success': True,
+            'receipt_id': receipt_id
+        })
             
     except Exception as e:
         print(f"Checkout error: {str(e)}")
