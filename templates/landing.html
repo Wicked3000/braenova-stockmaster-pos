@@ -315,43 +315,92 @@
     </section>
 
     <!-- SCREENSHOTS/MOCKUPS SHOWCASE -->
-    <section class="showcase-section" style="background: #0c0c0c; padding: 60px 20px 20px; border-top: 1px solid rgba(255,255,255,0.02);">
-        <div style="text-align: center; margin-bottom: 50px;">
+    <section class="showcase-section" id="features" style="background: #0c0c0c; padding: 80px 20px 40px; border-top: 1px solid rgba(255,255,255,0.02);">
+        <div style="text-align: center; margin-bottom: 60px;">
             <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Experience the <span style="color: #fcc11e;">Premium UI</span></h2>
             <p style="color: #888; max-width: 600px; margin: 0 auto; font-size: 1.1rem;">Clean, modern, and high-performance screens designed for PNG businesses.</p>
         </div>
         
-        <div class="container">
-            <div class="row g-4 justify-content-center" style="max-width: 1200px; margin: 0 auto;">
-                <div class="col-12 col-md-4">
-                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
-                        <img src="{{ url_for('static', filename='mock/Mockup-2.png') }}" alt="POS Sales Screen" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="padding: 20px; text-align: center;">
-                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">1. POS Sales Screen</h4>
-                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Clean checkout layout for quick transactions.</p>
-                        </div>
+        <div class="container" style="max-width: 1000px;">
+            <div class="row align-items-center g-5">
+                <div class="col-12 col-md-6 order-2 order-md-1">
+                    <div class="mockup-feature active" data-index="0" style="padding: 20px; border-left: 3px solid #f91a8e; margin-bottom: 20px; cursor: pointer; transition: all 0.3s; background: rgba(249, 26, 142, 0.05); border-radius: 0 12px 12px 0;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">1. POS Sales Screen</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Lightning-fast transactions, barcode ready, and built for touchscreens. Never hold up a line again.</p>
+                    </div>
+                    <div class="mockup-feature" data-index="1" style="padding: 20px; border-left: 3px solid transparent; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">2. Store Credit (Dinau) Manager</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Track who owes what, settle debts with a single tap, and automatically pause credit limits when customers fall behind.</p>
+                    </div>
+                    <div class="mockup-feature" data-index="2" style="padding: 20px; border-left: 3px solid transparent; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">3. Geographic Shop Map</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Super Admins can see the exact physical location of every active branch plotted seamlessly on a neon CartoDB map.</p>
                     </div>
                 </div>
-                <div class="col-12 col-md-4">
-                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
-                        <img src="{{ url_for('static', filename='mock/Mockup-3.png') }}" alt="Inventory Management" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="padding: 20px; text-align: center;">
-                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">2. Stock Control</h4>
-                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Real-time levels and stock thresholds.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-md-4">
-                    <div class="showcase-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 15px 35px rgba(0,0,0,0.5);">
-                        <img src="{{ url_for('static', filename='mock/mock-1.png') }}" alt="Analytics Dashboard" style="width: 100%; height: auto; display: block; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="padding: 20px; text-align: center;">
-                            <h4 style="font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; color: #fff;">3. Owner Analytics Dashboard</h4>
-                            <p style="margin: 0; color: #888; font-size: 0.9rem;">Sales summary, Dinau status, and profit tracker.</p>
+                
+                <div class="col-12 col-md-6 order-1 order-md-2 d-flex justify-content-center">
+                    <!-- CSS Phone Mockup -->
+                    <div style="position: relative; width: 280px; height: 580px; background: #000; border-radius: 40px; border: 12px solid #1a1a1a; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px #333, inset 0 0 10px rgba(0,0,0,0.5); overflow: hidden;">
+                        <!-- iPhone Notch -->
+                        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 25px; background: #1a1a1a; border-radius: 0 0 15px 15px; z-index: 10;"></div>
+                        
+                        <!-- Images Container -->
+                        <div style="position: relative; width: 100%; height: 100%; background: #111;">
+                            <img class="mockup-img active" src="{{ url_for('static', filename='mock/Mockup-2.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity 0.5s ease; z-index: 2;">
+                            <img class="mockup-img" src="{{ url_for('static', filename='mock/dinau_tracking_ui.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; z-index: 1;">
+                            <img class="mockup-img" src="{{ url_for('static', filename='mock/geographic_distribution_map.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; z-index: 1;">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const features = document.querySelectorAll('.mockup-feature');
+                const images = document.querySelectorAll('.mockup-img');
+                let currentIndex = 0;
+                let interval;
+
+                function activateSlide(index) {
+                    features.forEach((f, i) => {
+                        if (i === index) {
+                            f.style.borderLeftColor = '#f91a8e';
+                            f.style.background = 'rgba(249, 26, 142, 0.05)';
+                        } else {
+                            f.style.borderLeftColor = 'transparent';
+                            f.style.background = 'transparent';
+                        }
+                    });
+                    
+                    images.forEach((img, i) => {
+                        if (i === index) {
+                            img.style.opacity = '1';
+                            img.style.zIndex = '2';
+                        } else {
+                            img.style.opacity = '0';
+                            img.style.zIndex = '1';
+                        }
+                    });
+                    currentIndex = index;
+                }
+
+                function nextSlide() {
+                    let next = (currentIndex + 1) % features.length;
+                    activateSlide(next);
+                }
+
+                interval = setInterval(nextSlide, 4000);
+
+                features.forEach((feature, idx) => {
+                    feature.addEventListener('click', () => {
+                        clearInterval(interval);
+                        activateSlide(idx);
+                        interval = setInterval(nextSlide, 4000);
+                    });
+                });
+            });
+        </script>
     </section>
 
     <section class="features-section" style="background: linear-gradient(180deg, #0c0c0c 0%, #061121 100%); padding: 80px 20px;">
