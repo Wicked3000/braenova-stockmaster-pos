@@ -770,9 +770,42 @@
             const q = document.getElementById('itemSearch').value.toLowerCase();
             document.querySelectorAll('.item-card').forEach(card => {
                 const name = card.getAttribute('data-name');
-                card.style.display = name.includes(q) ? 'block' : 'none';
+                const barcode = card.getAttribute('data-barcode') || "";
+                card.style.display = (name.includes(q) || barcode.includes(q)) ? 'block' : 'none';
             });
         }
+        
+        // Listen for "Enter" key on search bar for Physical Barcode Scanners
+        document.getElementById('itemSearch').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const q = this.value.trim();
+                if (!q) return;
+                
+                let foundItem = null;
+                document.querySelectorAll('.item-card').forEach(card => {
+                    if (card.getAttribute('data-barcode') === q) {
+                        foundItem = card;
+                    }
+                });
+                
+                if (foundItem) {
+                    const itemId = parseInt(foundItem.dataset.id);
+                    if (!foundItem.classList.contains('out-of-stock')) {
+                        addToCart(itemId);
+                        const pop = document.getElementById('successPop');
+                        pop.querySelector('h2').innerText = "ADDED";
+                        pop.querySelector('p').innerText = foundItem.dataset.name.toUpperCase();
+                        pop.classList.add('show');
+                        setTimeout(() => pop.classList.remove('show'), 1500);
+                        this.value = ''; // Clear for next scan
+                        filterPOS(); // Reset filter
+                    } else {
+                        showError("Item is out of stock!", "Error");
+                    }
+                }
+            }
+        });
 
         function setCategory(cat) {
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
