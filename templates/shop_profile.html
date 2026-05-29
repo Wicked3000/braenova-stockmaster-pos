@@ -172,8 +172,8 @@
                         <div class="p-3 pe-4"><span class="badge bg-info text-dark rounded-pill">Active</span></div>
                     {% else %}
                         <div class="p-3 pe-4 d-flex gap-1">
-                            <button class="btn btn-sm btn-outline-info border-0 rounded-circle" title="Edit Shop Name" data-bs-toggle="modal" data-bs-target="#editShopModal" data-bs-dismiss="offcanvas" onclick="document.getElementById('edit_shop_id').value='{{ shop.id }}'; document.getElementById('edit_shop_name').value='{{ shop.name }}';"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Request Deletion" data-bs-toggle="modal" data-bs-target="#deleteShopModal" data-bs-dismiss="offcanvas" onclick="document.getElementById('delete_shop_id').value='{{ shop.id }}'; document.getElementById('delete_shop_name').textContent='{{ shop.name }}';"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-info border-0 rounded-circle" title="Edit Shop Name" data-bs-toggle="modal" data-bs-target="#editShopModal" data-bs-dismiss="offcanvas" onclick='document.getElementById("edit_shop_id").value="{{ shop.id }}"; document.getElementById("edit_shop_name").value={{ shop.name|tojson|forceescape }};'><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" title="Request Deletion" data-bs-toggle="modal" data-bs-target="#deleteShopModal" data-bs-dismiss="offcanvas" onclick='document.getElementById("delete_shop_id").value="{{ shop.id }}"; document.getElementById("delete_shop_name").textContent={{ shop.name|tojson|forceescape }};'><i class="bi bi-trash"></i></button>
                         </div>
                     {% endif %}
                 </div>

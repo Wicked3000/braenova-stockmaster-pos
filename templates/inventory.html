@@ -192,7 +192,7 @@
                         <span class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.6rem;">CASHIER</span>
                     </div>
                         <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-secondary flex-grow-1 border-secondary border-opacity-25" style="font-size: 0.7rem; font-weight: 700;" onclick="openResetModal({{ c.id }}, '{{ c.username }}')">RESET PASSWORD</button>
+                            <button class="btn btn-sm btn-outline-secondary flex-grow-1 border-secondary border-opacity-25" style="font-size: 0.7rem; font-weight: 700;" onclick='openResetModal({{ c.id }}, {{ c.username | tojson | forceescape }})'>RESET PASSWORD</button>
                             <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1 border-danger border-opacity-25" style="font-size: 0.7rem; font-weight: 700;" onclick="confirmUserDelete('/users/delete', {{ c.id }})">DELETE</button>
                         </div>
                 </div>
@@ -223,9 +223,9 @@
                         <small class="text-muted"><span class="stock-count">{{ item.quantity }} in stock</span> • <span class="text-info">{{ item.category }}</span></small>
                     </div>
                     <div>
-                        <button class="btn btn-quick" onclick='openQuickEdit({{ item.id }}, {{ item.item_name | tojson }}, {{ item.unit_price }}, {{ item.cost_price }})'>RESTOCK</button>
+                        <button class="btn btn-quick" onclick='openQuickEdit({{ item.id }}, {{ item.item_name | tojson | forceescape }}, {{ item.unit_price }}, {{ item.cost_price }})'>RESTOCK</button>
                         {% if session.role == 'owner' %}
-                        <button class="btn btn-edit" onclick='openFullEdit({{ item | tojson }})'>EDIT</button>
+                        <button class="btn btn-edit" onclick='openFullEdit({{ item | tojson | forceescape }})'>EDIT</button>
                         {% endif %}
                     </div>
                 </div>
@@ -241,7 +241,7 @@
                 {% for c in categories %}
                 <span class="badge bg-dark border border-secondary text-white d-flex align-items-center gap-2">
                     {{ c.name }}
-                    <a href="/category/delete/{{ c.id }}" class="text-danger text-decoration-none fw-bold" onclick="return confirm('Delete category {{ c.name | tojson }}?')" style="font-size: 1.1em;">&times;</a>
+                    <a href="/category/delete/{{ c.id }}" class="text-danger text-decoration-none fw-bold" onclick='return confirm("Delete category " + {{ c.name | tojson | forceescape }} + "?")' style="font-size: 1.1em;">&times;</a>
                 </span>
                 {% endfor %}
             </div>

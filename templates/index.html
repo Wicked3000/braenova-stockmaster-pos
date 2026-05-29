@@ -139,7 +139,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-cart-add py-3" onclick="addToCart({{ item.id }}, '{{ item.item_name }}', {{ item.unit_price }}, {{ item.quantity }})" {% if item.quantity == 0 %}disabled{% endif %}>
+                            <button class="btn btn-cart-add py-3" onclick='addToCart({{ item.id }}, {{ item.item_name | tojson | forceescape }}, {{ item.unit_price }}, {{ item.quantity }})' {% if item.quantity == 0 %}disabled{% endif %}>
                                 {% if item.quantity == 0 %}OUT OF STOCK{% else %}+ ADD TO CART{% endif %}
                             </button>
                         </div>

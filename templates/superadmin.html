@@ -551,8 +551,8 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-custom dropdown-menu-end">
                                     <li><a class="dropdown-item dropdown-item-custom fw-bold text-info" href="/superadmin/impersonate/{{ shop.id }}"><i class="bi bi-lightning"></i> Ghost Login (Impersonate)</a></li>
-                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openExtendModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.plan_name }}', '{{ shop.cycle }}', '20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}')"><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
-                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick="openResetModal('{{ shop.id }}', '{{ shop.name }}', '{{ shop.users_list|tojson|forceescape }}')"><i class="bi bi-key"></i> Reset Passwords</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick='openExtendModal("{{ shop.id }}", {{ shop.name|tojson|forceescape }}, "{{ shop.plan_name }}", "{{ shop.cycle }}", "20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}")'><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick='openResetModal("{{ shop.id }}", {{ shop.name|tojson|forceescape }}, {{ shop.users_list|tojson|forceescape }})'><i class="bi bi-key"></i> Reset Passwords</a></li>
                                     <li><hr class="dropdown-divider border-secondary"></li>
                                     <li>
                                         <form action="/superadmin/toggle" method="POST" class="m-0 confirm-submit-form" {% if shop.is_active %} data-message="Suspend shop access instantly? This will block owner and cashier logins." data-title="Suspend Shop Access" data-type="danger" {% else %} data-message="Are you sure you want to activate this shop location?" data-title="Activate Shop" data-type="info" {% endif %}>
@@ -769,13 +769,16 @@
         modal.show();
     }
 
-    function openResetModal(shopId, shopName, usersJson) {
+    function openResetModal(shopId, shopName, usersData) {
         document.getElementById('reset-shop-name').value = shopName;
         const select = document.getElementById('reset-user-select');
         select.innerHTML = '';
         
         try {
-            const users = JSON.parse(usersJson);
+            let users = usersData;
+            if (typeof usersData === 'string') {
+                users = JSON.parse(usersData);
+            }
             if (users && users.length > 0) {
                 users.forEach(u => {
                     const opt = document.createElement('option');
@@ -793,6 +796,7 @@
         } catch (e) {
             console.error("Error parsing user accounts: ", e);
         }
+
         
         const modal = new bootstrap.Modal(document.getElementById('resetModal'));
         modal.show();
