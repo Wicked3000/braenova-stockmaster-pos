@@ -680,6 +680,10 @@ def close_shift(shift_id, actual_cash, expected_cash):
         "closed_at": datetime.utcnow().isoformat()
     }).eq('id', shift_id).execute()
 
-def get_active_shift(shop_id, user_id):
-    res = supabase.table('shifts').select('*').eq('shop_id', shop_id).eq('user_id', user_id).eq('status', 'open').execute()
-    return res.data[0] if res.data else None
+def get_active_shift(shop_id):
+    try:
+        res = supabase.table('shifts').select('*').eq('shop_id', shop_id).eq('status', 'open').execute()
+        return res.data[0] if res.data else None
+    except Exception as e:
+        print(f"Shift query error: {e}")
+        return None

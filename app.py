@@ -586,7 +586,7 @@ def pos():
     inventory = get_all_inventory(session.get('shop_id'))
     categories = get_all_categories(session.get('shop_id'))
     try:
-        active_shift = get_active_shift(session.get('shop_id'), session.get('user_id'))
+        active_shift = get_active_shift(session.get('shop_id'))
     except Exception as e:
         print(f"Shift lookup failed (table may not exist yet): {e}")
         active_shift = None
@@ -836,7 +836,7 @@ def log_expense():
     return redirect(url_for('dashboard'))
 
 @app.route('/shifts/open', methods=['POST'])
-@login_required
+@manager_or_owner_required
 def open_register_shift():
     try:
         starting_float = float(request.form.get('starting_float', 0))
@@ -847,7 +847,7 @@ def open_register_shift():
     return redirect(url_for('pos'))
 
 @app.route('/shifts/close', methods=['POST'])
-@login_required
+@manager_or_owner_required
 def close_register_shift():
     try:
         shift_id = request.form.get('shift_id')
