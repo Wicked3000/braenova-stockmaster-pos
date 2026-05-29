@@ -258,9 +258,15 @@
         <h4 class="fw-900 mb-4" style="color: #f91a8e;">Point of Sale</h4>
         <div class="input-group mb-3 shadow-sm">
             <input type="text" id="itemSearch" class="form-control bg-dark border-secondary text-white py-3 rounded-start-4" placeholder="Search product..." onkeyup="filterPOS()">
+            {% if session.plan != 'starter' %}
             <button class="btn text-white rounded-end-4 px-4" type="button" style="background: #f91a8e; border: 1px solid #f91a8e;" data-bs-toggle="modal" data-bs-target="#scannerModal">
                 <i class="bi bi-upc-scan" style="font-size: 1.4rem;"></i>
             </button>
+            {% else %}
+            <button class="btn text-white rounded-end-4 px-4" type="button" style="background: #444; border: 1px solid #444;" onclick="showError('Barcode scanning is a Pro feature.', 'UPGRADE REQUIRED')">
+                <i class="bi bi-upc-scan" style="font-size: 1.4rem;"></i>
+            </button>
+            {% endif %}
         </div>
         <div class="category-scroll mb-4">
             <div class="chip active" onclick="setCategory('All')">All Items</div>
@@ -425,7 +431,11 @@
                 <div class="modal-footer p-2 border-0 bg-light d-flex flex-column gap-2">
                     <div class="d-flex w-100 gap-2">
                         <button class="btn btn-outline-dark flex-grow-1 fw-bold" onclick="printReceipt()"><i class="bi bi-printer"></i> PRINT</button>
+                        {% if session.plan != 'starter' %}
                         <button class="btn btn-success flex-grow-1 fw-bold" onclick="sendWhatsAppReceipt()"><i class="bi bi-whatsapp"></i> WHATSAPP</button>
+                        {% else %}
+                        <button class="btn btn-secondary flex-grow-1 fw-bold" onclick="showError('WhatsApp receipts are a Pro feature.', 'UPGRADE REQUIRED')"><i class="bi bi-whatsapp"></i> WHATSAPP</button>
+                        {% endif %}
                     </div>
                     <button class="btn btn-primary w-100 fw-bold py-3" onclick="closeReceipt()">DONE (NEXT SALE)</button>
                 </div>
@@ -783,6 +793,11 @@
         document.getElementById('itemSearch').addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                {% if session.plan == 'starter' %}
+                showError('Barcode scanning is a Pro feature.', 'UPGRADE REQUIRED');
+                return;
+                {% endif %}
+                
                 const q = this.value.trim();
                 if (!q) return;
                 

@@ -273,7 +273,7 @@
             {% endif %}
         </div>
 
-        {% if active_shift and session.role == 'owner' %}
+        {% if active_shift and session.role == 'owner' and session.plan != 'starter' %}
         <div class="row g-3 mb-4">
             <div class="col-6 col-sm-6">
                 <div class="summary-card h-100 p-3 d-flex flex-column justify-content-center border-info border-opacity-25" style="min-height: 110px;">
