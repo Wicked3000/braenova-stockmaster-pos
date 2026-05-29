@@ -566,7 +566,6 @@
         </div>
     </div>
     {% endif %}
-     </div>
 
     <!-- Scanner Modal -->
     <div class="modal fade" id="scannerModal" tabindex="-1">
@@ -583,6 +582,69 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const scannerModalEl = document.getElementById('scannerModal');
+            let html5QrcodeScanner = null;
+
+            scannerModalEl.addEventListener('shown.bs.modal', function () {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5QrcodeScanner(
+                        "reader",
+                        { fps: 10, qrbox: {width: 250, height: 250} },
+                        /* verbose= */ false);
+                        
+                    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                }
+            });
+
+            scannerModalEl.addEventListener('hidden.bs.modal', function () {
+                if (html5QrcodeScanner) {
+                    html5QrcodeScanner.clear().catch(error => {
+                        console.error("Failed to clear html5QrcodeScanner. ", error);
+                    });
+                    html5QrcodeScanner = null;
+                }
+            });
+
+            function onScanSuccess(decodedText, decodedResult) {
+                // Find product by barcode
+                const itemCards = document.querySelectorAll('.item-card');
+                let foundItem = null;
+                
+                itemCards.forEach(card => {
+                    if (card.dataset.barcode === decodedText) {
+                        foundItem = card;
+                    }
+                });
+
+                if (foundItem) {
+                    const itemId = parseInt(foundItem.dataset.id);
+                    // Check if out of stock
+                    if (!foundItem.classList.contains('out-of-stock')) {
+                        addToCart(itemId);
+                        const pop = document.getElementById('successPop');
+                        pop.querySelector('h2').innerText = "ADDED";
+                        pop.querySelector('p').innerText = foundItem.dataset.name.toUpperCase();
+                        pop.classList.add('show');
+                        setTimeout(() => pop.classList.remove('show'), 1500);
+                    } else {
+                        showError("Item is out of stock!", "Error");
+                    }
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(scannerModalEl);
+                    modal.hide();
+                } else {
+                    showError("Barcode not found in inventory: " + decodedText, "Error");
+                }
+            }
+
+            function onScanFailure(error) {
+                // handle scan failure, usually better to ignore and keep scanning
+            }
+        });
+    </script>
     <!-- Navigation -->
     <div class="nav-bar">
         {% if session.role in ['owner', 'manager'] %}
