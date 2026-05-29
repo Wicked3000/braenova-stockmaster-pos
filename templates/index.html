@@ -109,7 +109,7 @@
                 <div class="category-scroll mb-4" id="categoryTabs">
                     <div class="chip active" onclick="setCategory('All')">All Items</div>
                     {% for cat in categories %}
-                    <div class="chip" onclick="setCategory('{{ cat.name }}')">{{ cat.name }}</div>
+                    <div class="chip" onclick='setCategory({{ cat.name | tojson | forceescape }})'>{{ cat.name }}</div>
                     {% endfor %}
                 </div>
                 <div id="itemsContainer">

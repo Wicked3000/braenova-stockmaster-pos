@@ -253,7 +253,7 @@
         <input type="text" id="itemSearch" class="form-control mb-3 bg-dark border-secondary text-white py-3 rounded-4" placeholder="Search product..." onkeyup="filterPOS()">
         <div class="category-scroll mb-4">
             <div class="chip active" onclick="setCategory('All')">All Items</div>
-            {% for cat in categories %}<div class="chip" onclick="setCategory('{{ cat.name }}')">{{ cat.name }}</div>{% endfor %}
+            {% for cat in categories %}<div class="chip" onclick='setCategory({{ cat.name | tojson | forceescape }})'>{{ cat.name }}</div>{% endfor %}
         </div>
         <div id="itemsContainer">
             {% for item in inventory %}
