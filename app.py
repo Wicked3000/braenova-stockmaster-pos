@@ -433,6 +433,13 @@ def dashboard():
     # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
     profit = summary['total_profit'] if plan != 'starter' else None
     
+    active_shift = get_active_shift(shop_id)
+    if active_shift:
+        from database import supabase
+        sales_res = supabase.table('sales').select('total_price').eq('shift_id', active_shift['id']).eq('payment_method', 'cash').execute()
+        cash_sales = sum(float(s['total_price']) for s in sales_res.data) if sales_res.data else 0
+        active_shift['current_cash'] = float(active_shift['starting_float']) + cash_sales
+    
     try:
         daily_expenses = get_daily_expenses(shop_id) if plan != 'starter' else []
     except Exception as e:
@@ -483,7 +490,8 @@ def dashboard():
                            cat_dist=cat_dist,
                            owned_shops=owned_shops,
                            current_shop_id=shop_id,
-                           daily_expenses=daily_expenses)
+                           daily_expenses=daily_expenses,
+                           active_shift=active_shift)
 
 @app.route('/shops/switch/<int:target_shop_id>')
 @login_required

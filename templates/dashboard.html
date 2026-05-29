@@ -273,6 +273,23 @@
             {% endif %}
         </div>
 
+        {% if active_shift and session.role == 'owner' %}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-sm-6">
+                <div class="summary-card h-100 p-3 d-flex flex-column justify-content-center border-info border-opacity-25" style="min-height: 110px;">
+                    <span class="d-block text-muted small text-uppercase fw-bold">Open Register Float</span>
+                    <h4 class="text-info mb-0 fw-bold">{{ active_shift.starting_float | kina }}</h4>
+                </div>
+            </div>
+            <div class="col-6 col-sm-6">
+                <div class="summary-card h-100 p-3 d-flex flex-column justify-content-center border-warning border-opacity-25" style="min-height: 110px;">
+                    <span class="d-block text-muted small text-uppercase fw-bold">Current Cash</span>
+                    <h4 class="text-warning mb-1 fw-bold">{{ active_shift.current_cash | kina }}</h4>
+                    <small class="text-muted" style="font-size: 0.65rem;">Float + Cash Sales</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <div class="summary-card mb-4 p-3 bg-black">
             <div class="chart-title p-2 small text-muted text-uppercase fw-900">Weekly Revenue Trend</div>
             <canvas id="dailySalesChart" style="max-height: 140px;"></canvas>
