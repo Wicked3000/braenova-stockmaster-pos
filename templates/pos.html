@@ -114,22 +114,28 @@
         .receipt-footer-msg { text-align: center; margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px; font-family: 'Courier Prime', monospace; font-size: 0.75rem; color: #000; }
 
         @media print {
-            body * { visibility: hidden; }
-            #receiptModalContent, #receiptModalContent * { visibility: visible; }
-            #receiptModalContent { 
+            /* Only apply receipt formatting if body has print-receipt-mode class */
+            body.print-receipt-mode * { visibility: hidden; }
+            body.print-receipt-mode #receiptModalContent, 
+            body.print-receipt-mode #receiptModalContent * { visibility: visible; }
+            body.print-receipt-mode #receiptModalContent { 
                 position: absolute; left: 0; top: 0; width: 100%; max-width: 100%;
                 margin: 0; padding: 0; background: white !important; color: black !important; 
             }
-            .modal-content, .receipt-card { border: none !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
-            .modal-backdrop { display: none !important; }
-            .receipt-inner { padding: 5px !important; } /* Minimal padding for narrow rolls */
-            @page { margin: 0; } /* Removes default browser headers/footers */
+            body.print-receipt-mode .modal-content, 
+            body.print-receipt-mode .receipt-card { border: none !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
+            body.print-receipt-mode .modal-backdrop { display: none !important; }
+            body.print-receipt-mode .receipt-inner { padding: 5px !important; } /* Minimal padding for narrow rolls */
             
-            /* Responsive table for 58mm/80mm */
-            .receipt-table { width: 100%; table-layout: fixed; }
-            .receipt-table th:nth-child(1), .receipt-table td:nth-child(1) { width: 55%; overflow: hidden; text-overflow: ellipsis; }
-            .receipt-table th:nth-child(2), .receipt-table td:nth-child(2) { width: 15%; text-align: center; }
-            .receipt-table th:nth-child(3), .receipt-table td:nth-child(3) { width: 30%; text-align: right; }
+            body.print-receipt-mode .receipt-table { width: 100%; table-layout: fixed; }
+            body.print-receipt-mode .receipt-table th:nth-child(1), 
+            body.print-receipt-mode .receipt-table td:nth-child(1) { width: 55%; overflow: hidden; text-overflow: ellipsis; }
+            body.print-receipt-mode .receipt-table th:nth-child(2), 
+            body.print-receipt-mode .receipt-table td:nth-child(2) { width: 15%; text-align: center; }
+            body.print-receipt-mode .receipt-table th:nth-child(3), 
+            body.print-receipt-mode .receipt-table td:nth-child(3) { width: 30%; text-align: right; }
+            
+            @page { margin: 0; } /* Removes default browser headers/footers */
         }
         .border-dashed { border-style: dashed !important; }
 
@@ -1061,6 +1067,16 @@
             }
         }
         
+        // Handle strict receipt printing
+        window.onbeforeprint = function() {
+            if (document.getElementById('receiptModal').classList.contains('show')) {
+                document.body.classList.add('print-receipt-mode');
+            }
+        };
+        window.onafterprint = function() {
+            document.body.classList.remove('print-receipt-mode');
+        };
+
         function printReceipt() {
             window.print();
         }
