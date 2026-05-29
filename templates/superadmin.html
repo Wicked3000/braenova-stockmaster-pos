@@ -484,8 +484,8 @@
                     maxZoom: 19
                 }).addTo(map);
 
-                var profiles = {{ profiles | tojson | forceescape }};
-                var shops = {{ shops | tojson | forceescape }};
+                var profiles = {{ profiles | tojson }};
+                var shops = {{ shops | tojson }};
                 
                 var bounds = [];
                 shops.forEach(function(shop) {
