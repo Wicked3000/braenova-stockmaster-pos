@@ -741,7 +741,8 @@ def add_product():
                 )
                 image_url = supabase.storage.from_("products").get_public_url(filename)
 
-        add_inventory_item(name, qty, threshold, price, session.get('shop_id'), cost, category, image_url, expiry)
+        barcode = request.form.get('barcode')
+        add_inventory_item(name, qty, threshold, price, session.get('shop_id'), cost, category, image_url, expiry, barcode)
         flash('New product added!', 'success')
     except Exception as e:
         flash(f'Error adding product: {str(e)}', 'error')
@@ -801,7 +802,8 @@ def update_product():
                 )
                 image_url = supabase.storage.from_("products").get_public_url(filename)
 
-        update_inventory_item(item_id, session.get('shop_id'), item_name, quantity, threshold, price, cost, category, image_url, expiry_date)
+        barcode = request.form.get('barcode')
+        update_inventory_item(item_id, session.get('shop_id'), item_name, quantity, threshold, price, cost, category, image_url, expiry_date, barcode)
         flash('Product updated successfully!', 'success')
     except Exception as e:
         flash(f'Error updating product: {str(e)}', 'error')

@@ -256,14 +256,19 @@
 
     <div class="container py-3">
         <h4 class="fw-900 mb-4" style="color: #f91a8e;">Point of Sale</h4>
-        <input type="text" id="itemSearch" class="form-control mb-3 bg-dark border-secondary text-white py-3 rounded-4" placeholder="Search product..." onkeyup="filterPOS()">
+        <div class="input-group mb-3 shadow-sm">
+            <input type="text" id="itemSearch" class="form-control bg-dark border-secondary text-white py-3 rounded-start-4" placeholder="Search product..." onkeyup="filterPOS()">
+            <button class="btn text-white rounded-end-4 px-4" type="button" style="background: #f91a8e; border: 1px solid #f91a8e;" data-bs-toggle="modal" data-bs-target="#scannerModal">
+                <i class="bi bi-upc-scan" style="font-size: 1.4rem;"></i>
+            </button>
+        </div>
         <div class="category-scroll mb-4">
             <div class="chip active" onclick="setCategory('All')">All Items</div>
             {% for cat in categories %}<div class="chip" onclick='setCategory({{ cat.name | tojson | forceescape }})'>{{ cat.name }}</div>{% endfor %}
         </div>
         <div id="itemsContainer">
             {% for item in inventory %}
-            <div class="item-card card {% if item.quantity <= 0 %}out-of-stock{% endif %}" data-id="{{ item.id }}" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}">
+            <div class="item-card card {% if item.quantity <= 0 %}out-of-stock{% endif %}" data-id="{{ item.id }}" data-name="{{ item.item_name | lower }}" data-category="{{ item.category }}" data-barcode="{{ item.barcode or '' }}">
                 <div class="sold-out-overlay">SOLD OUT</div>
                 <div class="product-image-container">
                     {% if item.image_url %}
@@ -547,8 +552,23 @@
         </div>
     </div>
     {% endif %}
+     </div>
+
+    <!-- Scanner Modal -->
+    <div class="modal fade" id="scannerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary rounded-4">
+                <div class="modal-body p-2 text-center position-relative">
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" style="z-index: 10;"></button>
+                    <h5 class="fw-bold mb-3 mt-2 text-white">Scan Barcode</h5>
+                    <div id="reader" style="width: 100%; border-radius: 15px; overflow: hidden; background: #000;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <!-- Navigation -->
     <div class="nav-bar">
         {% if session.role in ['owner', 'manager'] %}

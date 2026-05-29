@@ -216,7 +216,7 @@ def get_all_inventory(shop_id):
     res = supabase.table('inventory').select('*').eq('is_active', 1).eq('shop_id', shop_id).order('item_name').execute()
     return res.data
 
-def add_inventory_item(name, qty, threshold, price, shop_id, cost=0, category='General', image_url=None, expiry_date=None):
+def add_inventory_item(name, qty, threshold, price, shop_id, cost=0, category='General', image_url=None, expiry_date=None, barcode=None):
     if not expiry_date:
         expiry_date = None
         
@@ -229,12 +229,13 @@ def add_inventory_item(name, qty, threshold, price, shop_id, cost=0, category='G
         "category": category,
         "image_url": image_url,
         "expiry_date": expiry_date,
+        "barcode": barcode,
         "is_active": 1,
         "shop_id": shop_id
     }
     supabase.table('inventory').insert(data).execute()
 
-def update_inventory_item(item_id, shop_id, name=None, qty=None, threshold=None, price=None, cost=None, category=None, image_url=None, expiry_date=None):
+def update_inventory_item(item_id, shop_id, name=None, qty=None, threshold=None, price=None, cost=None, category=None, image_url=None, expiry_date=None, barcode=None):
     updates = {}
     if name is not None: updates["item_name"] = name
     if qty is not None: updates["quantity"] = qty
@@ -244,6 +245,7 @@ def update_inventory_item(item_id, shop_id, name=None, qty=None, threshold=None,
     if category is not None: updates["category"] = category
     if image_url is not None: updates["image_url"] = image_url
     if expiry_date: updates["expiry_date"] = expiry_date
+    if barcode is not None: updates["barcode"] = barcode
     
     supabase.table('inventory').update(updates).eq('id', item_id).eq('shop_id', shop_id).execute()
 
