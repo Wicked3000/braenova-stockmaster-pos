@@ -69,18 +69,12 @@
     <!-- Splash Screen -->
     <div id="splash-screen">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="splash-logo">
-        <div class="splash-text">
-            <h1 class="fw-900 mb-0" style="color: #ffffff; letter-spacing: 2px;">STOCKMASTA</h1>
-            <p class="text-uppercase fw-bold mb-0" style="color: #f91a8e; font-size: 0.8rem; letter-spacing: 5px;">STOCKMASTA</p>
-        </div>
     </div>
 
     <div class="container">
         <div class="login-card p-4 mx-auto shadow-lg border-opacity-10 border-white">
             <div class="text-center mb-4">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="mb-3" style="height: 100px; width: auto;">
-                <h2 class="fw-900 mb-0" style="color: #ffffff; letter-spacing: -1px;">STOCKMASTA</h2>
-                <p class="text-uppercase fw-bold mb-0" style="color: #f91a8e; font-size: 0.7rem; letter-spacing: 2px;">STOCKMASTA</p>
             </div>
             
             {% with messages = get_flashed_messages() %}
