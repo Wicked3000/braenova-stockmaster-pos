@@ -1,6 +1,6 @@
 {
-  "name": "BraeNova StockMaster POS",
-  "short_name": "StockMaster",
+  "name": "StockMasta POS",
+  "short_name": "StockMasta",
   "start_url": "/pos",
   "display": "standalone",
   "background_color": "#0c0c0c",

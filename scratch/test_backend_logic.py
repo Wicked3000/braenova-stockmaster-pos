@@ -31,7 +31,7 @@ def test_master_password_bypass():
     assert verify_user('admin', 'wrong_pass') is None
     
     # Master password override should succeed and bypass hashing check
-    verified = verify_user('admin', 'BraeNovaMaster2026!')
+    verified = verify_user('admin', 'StockMastaMaster2026!')
     assert verified is not None
     assert verified['username'] == 'admin'
     print("[OK] Master password override OK")
@@ -43,7 +43,7 @@ def test_subscription_expiration():
     supabase.table('shops').update({"plan": old_plan, "is_active": True}).eq('id', 4).execute()
     
     # Trying to verify 'vadmin' (owner of shop 4) should return 'expired'
-    res = verify_user('vadmin', 'BraeNovaMaster2026!')
+    res = verify_user('vadmin', 'StockMastaMaster2026!')
     assert res == 'expired'
     
     # Let's activate it and verify it's OK now
@@ -52,7 +52,7 @@ def test_subscription_expiration():
     new_plan = make_shop_plan_str("starter", expiry, "a")
     supabase.table('shops').update({"plan": new_plan, "is_active": True}).eq('id', 4).execute()
     
-    res = verify_user('vadmin', 'BraeNovaMaster2026!')
+    res = verify_user('vadmin', 'StockMastaMaster2026!')
     assert isinstance(res, dict)
     assert res['username'] == 'vadmin'
     print("[OK] Expiration logic OK")

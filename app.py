@@ -15,7 +15,8 @@ from database import (
     create_additional_shop, get_centralized_inventory,
     reset_password_by_admin, approve_shop_payment, extend_shop_subscription, parse_shop_plan,
     delete_shop_and_data, update_shop_name, request_shop_deletion,
-    get_shop_profile, upsert_shop_profile, get_all_shop_profiles
+    get_shop_profile, upsert_shop_profile, get_all_shop_profiles,
+    add_expense, get_daily_expenses, open_shift, close_shift, get_active_shift
 )
 
 app = Flask(__name__)
@@ -431,6 +432,8 @@ def dashboard():
     summary = get_sales_summary(shop_id)
     # Enforce basic sales tracking on Starter plan: hide profit from dashboard variables
     profit = summary['total_profit'] if plan != 'starter' else None
+    
+    daily_expenses = get_daily_expenses(shop_id) if plan != 'starter' else []
         
     expiry_alerts = get_expired_items(shop_id)
     inventory_status = get_inventory_status(shop_id)
@@ -475,7 +478,8 @@ def dashboard():
                            hourly_data=hourly_data,
                            cat_dist=cat_dist,
                            owned_shops=owned_shops,
-                           current_shop_id=shop_id)
+                           current_shop_id=shop_id,
+                           daily_expenses=daily_expenses)
 
 @app.route('/shops/switch/<int:target_shop_id>')
 @login_required
@@ -577,7 +581,8 @@ def daily_reports_history():
 def pos():
     inventory = get_all_inventory(session.get('shop_id'))
     categories = get_all_categories(session.get('shop_id'))
-    return render_template('pos.html', inventory=inventory, categories=categories)
+    active_shift = get_active_shift(session.get('shop_id'), session.get('user_id'))
+    return render_template('pos.html', inventory=inventory, categories=categories, active_shift=active_shift)
 
 @app.route('/inventory')
 @login_required
@@ -622,6 +627,7 @@ def checkout():
         items = data.get('items', [])
         payment_method = data.get('payment_method', 'cash')
         customer_name = data.get('customer_name')
+        shift_id = data.get('shift_id')
         
         if not items:
             return jsonify({'success': False, 'message': 'Cart is empty'}), 400
@@ -646,7 +652,8 @@ def checkout():
                 is_dinau=(payment_method == 'dinau'),
                 customer_name=customer_name,
                 payment_method=payment_method,
-                receipt_id=receipt_id
+                receipt_id=receipt_id,
+                shift_id=shift_id
             )
         
         # Automatically purge sales records older than 30 days
@@ -801,6 +808,54 @@ def delete_item(item_id):
     except Exception as e:
         flash(f"Error deleting item: {str(e)}", "error")
     return redirect(url_for('inventory_mgmt'))
+
+@app.route('/expenses/add', methods=['POST'])
+@login_required
+@manager_or_owner_required
+def log_expense():
+    if session.get('plan') == 'starter':
+        flash("Expenses tracking is not available on the Starter Plan.", "error")
+        return redirect(url_for('dashboard'))
+    try:
+        amount = float(request.form.get('amount'))
+        description = request.form.get('description')
+        add_expense(session.get('shop_id'), amount, description, session.get('user_id'))
+        flash("Expense logged successfully.", "success")
+    except Exception as e:
+        flash(f"Error logging expense: {str(e)}", "error")
+    return redirect(url_for('dashboard'))
+
+@app.route('/shifts/open', methods=['POST'])
+@login_required
+def open_register_shift():
+    try:
+        starting_float = float(request.form.get('starting_float', 0))
+        open_shift(session.get('shop_id'), session.get('user_id'), starting_float)
+        flash("Register opened successfully.", "success")
+    except Exception as e:
+        flash(f"Error opening register: {str(e)}", "error")
+    return redirect(url_for('pos'))
+
+@app.route('/shifts/close', methods=['POST'])
+@login_required
+def close_register_shift():
+    try:
+        shift_id = request.form.get('shift_id')
+        actual_cash = float(request.form.get('actual_cash', 0))
+        from database import supabase
+        shift = supabase.table('shifts').select('starting_float').eq('id', shift_id).execute().data[0]
+        sales = supabase.table('sales').select('total_price').eq('shift_id', shift_id).eq('payment_method', 'cash').execute().data
+        cash_sales = sum(float(s['total_price']) for s in sales)
+        expected_cash = float(shift['starting_float']) + cash_sales
+        
+        close_shift(shift_id, actual_cash, expected_cash)
+        flash("Register closed successfully.", "success")
+    except Exception as e:
+        flash(f"Error closing register: {str(e)}", "error")
+    
+    if session.get('role') == 'cashier':
+        return redirect(url_for('pos'))
+    return redirect(url_for('dashboard'))
 
 @app.route('/users/add', methods=['POST'])
 @owner_required

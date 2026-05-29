@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database import supabase
 
 def setup_superadmins():
-    password = "BraeNovaAdmin2026!"
+    password = "StockMastaAdmin2026!"
     password_hash = generate_password_hash(password)
     
     print("=== SETTING UP SUPERADMINS ===")

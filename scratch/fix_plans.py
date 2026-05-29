@@ -15,8 +15,8 @@ def fix_lifetime_plans():
             
         plan_name, expiry_yymmdd, status_char = parse_shop_plan(plan_str)
         
-        # If it's a lifetime plan (991231) and NOT BraeNova Base Shop
-        if expiry_yymmdd == '991231' and shop['name'] != 'BraeNova Base Shop':
+        # If it's a lifetime plan (991231) and NOT StockMasta Base Shop
+        if expiry_yymmdd == '991231' and shop['name'] != 'StockMasta Base Shop':
             print(f"Fixing lifetime plan for shop: {shop['name']} (ID: {shop['id']})")
             
             # Set to a monthly plan, expiring 30 days from today
