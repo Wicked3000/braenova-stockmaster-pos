@@ -616,10 +616,7 @@ def delete_shop_and_data(shop_id):
     # 5. Delete categories
     supabase.table('categories').delete().eq('shop_id', shop_id).execute()
     
-    # 6. Delete users
-    supabase.table('users').delete().eq('shop_id', shop_id).execute()
-    
-    # 7. Soft-delete the shop to preserve revenue history
+    # 6. Soft-delete the shop and unlink owner to preserve revenue history
     shop_res = supabase.table('shops').select('plan').eq('id', shop_id).execute()
     if shop_res.data:
         plan_str = shop_res.data[0].get('plan')
@@ -628,3 +625,6 @@ def delete_shop_and_data(shop_id):
         supabase.table('shops').update({"is_active": False, "owner_id": None, "plan": new_plan_str}).eq('id', shop_id).execute()
     else:
         supabase.table('shops').update({"is_active": False, "owner_id": None}).eq('id', shop_id).execute()
+
+    # 7. Delete users
+    supabase.table('users').delete().eq('shop_id', shop_id).execute()
