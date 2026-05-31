@@ -101,8 +101,10 @@
                         <div class="d-flex flex-column align-items-end">
                             <div class="stock-qty">{{ item.quantity }}</div>
                             <div class="stock-cost">Cost: K{{ "%.2f"|format(item.cost_price|float) }}</div>
-                            <form action="/warehouse/delete/{{ item.id }}" method="POST" class="mt-2" onsubmit="return confirm('Are you sure you want to delete this warehouse item?')">
-                                <button type="submit" class="btn btn-sm text-danger border-0 p-0"><i class="bi bi-trash"></i></button>
+                            <form action="/warehouse/delete/{{ item.id }}" method="POST" class="mt-2" id="del-item-form-{{ item.id }}">
+                                <button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="openDeleteModal('/warehouse/delete/{{ item.id }}', 'Remove this warehouse item and all its data?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -147,11 +149,10 @@
                                 </td>
                                 <td class="td-qty">{{ log.quantity_moved }}</td>
                                 <td class="td-del">
-                                    <form action="/warehouse/log/delete/{{ log.id }}" method="POST" onsubmit="return confirm('Delete this log entry?')">
-                                        <button type="submit" class="btn-del-log" title="Delete log">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-del-log" title="Delete log"
+                                        onclick="openDeleteModal('/warehouse/log/delete/{{ log.id }}', 'Delete this log entry? This cannot be undone.')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -268,8 +269,36 @@
         </div>
     </div>
 
+    <!-- ✦ Custom Delete Confirmation Modal ✦ -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 340px;">
+            <div class="modal-content" style="background: #161b22; border: 1px solid #30363d; border-radius: 18px; overflow: hidden;">
+                <div class="modal-body text-center px-4 pt-4 pb-2">
+                    <div style="width:52px;height:52px;background:rgba(248,81,73,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+                        <i class="bi bi-trash" style="font-size:1.5rem;color:#f85149;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1" style="color:#fff;">Confirm Delete</h6>
+                    <p id="deleteModalMsg" class="text-muted small mb-0">Are you sure?</p>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2 d-flex">
+                    <button type="button" class="btn fw-600 flex-fill" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:10px;" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteConfirmForm" method="POST" class="flex-fill m-0">
+                        <button type="submit" class="btn fw-bold w-100" style="background:#da3633;color:#fff;border:none;border-radius:10px;">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Custom delete modal
+        function openDeleteModal(action, message) {
+            document.getElementById('deleteConfirmForm').action = action;
+            document.getElementById('deleteModalMsg').textContent = message;
+            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+        }
+
         function openRestock(id, name) {
             document.getElementById('restock_item_id').value = id;
             document.getElementById('restock_item_name_hidden').value = name;
