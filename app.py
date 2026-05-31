@@ -947,6 +947,50 @@ def warehouse_delete(item_id):
     flash('Item removed from warehouse.', 'success')
     return redirect(url_for('warehouse'))
 
+@app.route('/warehouse/log/delete/<int:log_id>', methods=['POST'])
+@login_required
+@owner_required
+def warehouse_log_delete(log_id):
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+    try:
+        from database import supabase
+        supabase.table('warehouse_logs').delete().eq('id', log_id).eq('shop_id', session.get('shop_id')).execute()
+        flash('Log entry deleted.', 'success')
+    except Exception as e:
+        flash(f'Error deleting log: {str(e)}', 'error')
+    return redirect(url_for('warehouse') + '#logs')
+
+@app.route('/warehouse/logs/export')
+@login_required
+@owner_required
+def warehouse_logs_export():
+    if session.get('plan') == 'starter':
+        return redirect(url_for('dashboard'))
+    try:
+        from database import get_warehouse_logs
+        import csv
+        import io
+        from flask import Response
+        logs = get_warehouse_logs(session.get('shop_id'))
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Date', 'Item', 'Action', 'Qty'])
+        for log in logs:
+            date_str = log['date_moved'].strftime('%Y-%m-%d %H:%M') if log.get('date_moved') else 'Unknown'
+            writer.writerow([date_str, log.get('item_name', ''), log.get('movement_type', ''), log.get('quantity_moved', '')])
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment;filename=warehouse_movement_logs.csv'}
+        )
+    except Exception as e:
+        flash(f'Export failed: {str(e)}', 'error')
+        return redirect(url_for('warehouse'))
+
+
+
 @app.route('/expenses/add', methods=['POST'])
 @login_required
 @manager_or_owner_required
