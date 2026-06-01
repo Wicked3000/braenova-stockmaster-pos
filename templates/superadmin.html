@@ -276,7 +276,6 @@
             object-fit: contain !important;
             transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
             display: block;
         }
 
@@ -284,8 +283,12 @@
             transform: scale(1.2) translateY(-2px);
         }
 
+        .active-pin {
+            filter: hue-rotate(130deg) brightness(1.1) saturate(1.2) drop-shadow(0 2px 5px rgba(0,0,0,0.4)) !important;
+        }
+
         .inactive-pin {
-            filter: grayscale(100%) !important;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)) !important;
         }
     </style>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
@@ -502,12 +505,12 @@
             </h5>
             <div class="d-flex gap-3" style="font-size: 0.8rem; font-weight: 600;">
                 <div class="d-flex align-items-center gap-2">
-                    <img src="/static/shop-location-icon.png" class="shop-location-pin" style="width: 24px !important; height: 24px !important; pointer-events: none;" />
-                    <span class="text-white">Active Shop</span>
+                    <img src="/static/shop-location-icon.png" class="shop-location-pin active-pin" style="width: 24px !important; height: 24px !important; pointer-events: none;" />
+                    <span class="text-white">Online</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <img src="/static/shop-location-icon.png" class="shop-location-pin inactive-pin" style="width: 24px !important; height: 24px !important; pointer-events: none;" />
-                    <span class="text-white">Inactive Shop</span>
+                    <span class="text-white">Offline</span>
                 </div>
             </div>
         </div>
@@ -584,8 +587,8 @@
                             }).addTo(map);
 
                             var statusHtml = isActive 
-                                ? `<span class="badge text-uppercase" style="background-color: var(--neon-green) !important; color: #000; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Active</span>`
-                                : `<span class="badge text-uppercase" style="background-color: hsl(354, 100%, 64%) !important; color: #fff; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Inactive</span>`;
+                                ? `<span class="badge text-uppercase" style="background-color: var(--neon-green) !important; color: #000; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Online</span>`
+                                : `<span class="badge text-uppercase" style="background-color: hsl(354, 100%, 64%) !important; color: #fff; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Offline</span>`;
                                 
                             marker.bindPopup(`
                                 <div style="color: #333; font-family: 'Outfit', sans-serif; min-width: 180px;">
