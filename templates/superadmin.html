@@ -264,11 +264,11 @@
 
         /* Custom Map Shop Logo Markers */
         .shop-marker {
-            width: 54px;
-            height: 34px;
-            border-radius: 6px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             background: hsl(240, 10%, 6%);
-            padding: 3px;
+            padding: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -522,14 +522,14 @@
             </h5>
             <div class="d-flex gap-3" style="font-size: 0.8rem; font-weight: 600;">
                 <div class="d-flex align-items-center gap-2">
-                    <div class="shop-marker marker-active" style="width: 32px; height: 20px; border-width: 1px; padding: 1px; pointer-events: none; box-shadow: 0 0 4px rgba(46, 213, 115, 0.4); cursor: default;">
-                        <img src="/static/logo.png" class="marker-logo" />
+                    <div class="shop-marker marker-active" style="width: 24px; height: 24px; border-width: 1px; padding: 2px; pointer-events: none; box-shadow: 0 0 4px rgba(46, 213, 115, 0.4); cursor: default;">
+                        <img src="/static/shop-location-icon.png" class="marker-logo" />
                     </div>
                     <span class="text-white">Active Shop</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="shop-marker marker-inactive" style="width: 32px; height: 20px; border-width: 1px; padding: 1px; pointer-events: none; box-shadow: 0 0 4px rgba(255, 71, 87, 0.4); cursor: default;">
-                        <img src="/static/logo.png" class="marker-logo" />
+                    <div class="shop-marker marker-inactive" style="width: 24px; height: 24px; border-width: 1px; padding: 2px; pointer-events: none; box-shadow: 0 0 4px rgba(255, 71, 87, 0.4); cursor: default;">
+                        <img src="/static/shop-location-icon.png" class="marker-logo" />
                     </div>
                     <span class="text-white">Inactive Shop</span>
                 </div>
@@ -593,16 +593,16 @@
                             
                             var markerHtml = `
                                 <div class="shop-marker ${isActive ? 'marker-active' : 'marker-inactive'}">
-                                    <img src="/static/logo.png" class="marker-logo" alt="${shop.name}" />
+                                    <img src="/static/shop-location-icon.png" class="marker-logo" alt="${shop.name}" />
                                 </div>
                             `;
                             
                             var customIcon = L.divIcon({
                                 html: markerHtml,
                                 className: 'custom-shop-icon',
-                                iconSize: [54, 34],
-                                iconAnchor: [27, 17],
-                                popupAnchor: [0, -17]
+                                iconSize: [36, 36],
+                                iconAnchor: [18, 18],
+                                popupAnchor: [0, -18]
                             });
 
                             var marker = L.marker([lat, lng], {
