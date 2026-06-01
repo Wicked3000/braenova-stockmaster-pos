@@ -24,7 +24,7 @@ def run_tests():
             sess['user_id'] = 1
             sess['username'] = 'shopowner'
             sess['role'] = 'owner'
-            sess['shop_id'] = 1
+            sess['shop_id'] = 6
             sess['plan'] = 'starter'
         
         resp = client.post('/superadmin/delete-shop', data={'shop_id': '123'}, follow_redirects=True)

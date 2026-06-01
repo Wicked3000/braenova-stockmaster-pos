@@ -470,42 +470,103 @@
 
     <!-- Geographic Map Distribution -->
     <div class="glass-card mb-4" style="border-left: 3px solid var(--neon-magenta);">
-        <h5 class="fw-bold mb-3 d-flex align-items-center">
-            <i class="bi bi-geo-alt-fill me-2" style="color: var(--neon-magenta);"></i> Active Shop Geographic Distribution
-        </h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-geo-alt-fill me-2" style="color: var(--neon-magenta);"></i> Shop Geographic Distribution
+            </h5>
+            <div class="d-flex gap-3" style="font-size: 0.8rem; font-weight: 600;">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: var(--neon-green); box-shadow: 0 0 6px var(--neon-green);"></span>
+                    <span class="text-white">Active Shop</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: hsl(354, 100%, 64%); box-shadow: 0 0 6px hsl(354, 100%, 64%);"></span>
+                    <span class="text-white">Inactive Shop</span>
+                </div>
+            </div>
+        </div>
         <div id="shopMap" style="height: 400px; width: 100%; border-radius: 12px; border: 1px solid var(--card-border); z-index: 1;"></div>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                var map = L.map('shopMap').setView([-6.2298, 147.0000], 5); // Default to PNG center
-                
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                // Initialize map layers
+                var googleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var googleRoadmap = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var googleSatellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var darkCarto = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
                     subdomains: 'abcd',
                     maxZoom: 19
-                }).addTo(map);
+                });
+
+                // Default center to PNG
+                var map = L.map('shopMap', {
+                    center: [-6.2298, 147.0000],
+                    zoom: 5,
+                    layers: [googleHybrid]
+                });
+
+                var baseMaps = {
+                    "Google Hybrid": googleHybrid,
+                    "Google Roadmap": googleRoadmap,
+                    "Google Satellite": googleSatellite,
+                    "Dark Matter (CartoDB)": darkCarto
+                };
+
+                L.control.layers(baseMaps).addTo(map);
 
                 var profiles = {{ profiles | tojson }};
                 var shops = {{ shops | tojson }};
                 
                 var bounds = [];
                 shops.forEach(function(shop) {
-                    if(shop.is_active && profiles[shop.id]) {
-                        var lat = profiles[shop.id].latitude;
-                        var lng = profiles[shop.id].longitude;
-                        if(lat && lng) {
+                    var profile = profiles[shop.id];
+                    if(profile) {
+                        var lat = parseFloat(profile.latitude);
+                        var lng = parseFloat(profile.longitude);
+                        if(!isNaN(lat) && !isNaN(lng)) {
+                            var isActive = shop.is_active;
+                            var dotColor = isActive ? "var(--neon-green)" : "hsl(354, 100%, 64%)";
+                            
                             var marker = L.circleMarker([lat, lng], {
                                 radius: 8,
-                                fillColor: "#f91a8e",
+                                fillColor: dotColor,
                                 color: "#fff",
                                 weight: 2,
                                 opacity: 1,
-                                fillOpacity: 0.8
+                                fillOpacity: 0.85
                             }).addTo(map);
+
+                            var statusHtml = isActive 
+                                ? `<span class="badge text-uppercase" style="background-color: var(--neon-green) !important; color: #000; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Active</span>`
+                                : `<span class="badge text-uppercase" style="background-color: hsl(354, 100%, 64%) !important; color: #fff; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Inactive</span>`;
+                                
                             marker.bindPopup(`
-                                <div style="color: #333;">
-                                    <strong>${shop.name}</strong><br>
-                                    ${profiles[shop.id].physical_address || 'No address provided'}<br>
-                                    Contact: ${profiles[shop.id].contact_phone || 'N/A'}
+                                <div style="color: #333; font-family: 'Outfit', sans-serif; min-width: 180px;">
+                                    <h6 style="margin: 0 0 5px 0; font-weight: 800; font-size: 0.95rem; color: #111;">${shop.name}</h6>
+                                    <div style="margin-bottom: 8px; display: flex; gap: 5px; align-items: center;">
+                                        ${statusHtml} 
+                                        <span class="badge bg-secondary text-uppercase" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; font-weight: 700; color: #fff;">${shop.plan_name || 'Starter'}</span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; line-height: 1.4; color: #555; border-top: 1px solid #eee; padding-top: 6px; margin-top: 6px;">
+                                        <div style="margin-bottom: 2px;"><strong>Owner:</strong> @${shop.owner_username || 'Unknown'}</div>
+                                        <div style="margin-bottom: 2px;"><strong>Address:</strong> ${profile.physical_address || 'No address provided'}</div>
+                                        <div><strong>Contact:</strong> ${profile.contact_phone || 'N/A'}</div>
+                                    </div>
                                 </div>
                             `);
                             bounds.push([lat, lng]);
