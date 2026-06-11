@@ -4,6 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/pos_screen.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/inventory_screen.dart';
+import 'screens/dinau_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/sales_history_screen.dart';
+import 'screens/cashiers_screen.dart';
+import 'screens/main_layout.dart';
 
 void main() {
   runApp(
@@ -21,9 +28,38 @@ final _router = GoRouter(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
     ),
+    ShellRoute(
+      builder: (context, state, child) => MainLayout(child: child),
+      routes: [
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/pos',
+          builder: (context, state) => const PosScreen(),
+        ),
+        GoRoute(
+          path: '/inventory',
+          builder: (context, state) => const InventoryScreen(),
+        ),
+        GoRoute(
+          path: '/dinau',
+          builder: (context, state) => const DinauScreen(),
+        ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+      ],
+    ),
     GoRoute(
-      path: '/pos',
-      builder: (context, state) => const PosScreen(),
+      path: '/sales_history',
+      builder: (context, state) => const SalesHistoryScreen(),
+    ),
+    GoRoute(
+      path: '/cashiers',
+      builder: (context, state) => const CashiersScreen(),
     ),
   ],
 );
@@ -36,7 +72,7 @@ class StockMasterApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'StockMaster',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme, // We're using a dark theme by default
+      theme: AppTheme.darkTheme,
       routerConfig: _router,
     );
   }

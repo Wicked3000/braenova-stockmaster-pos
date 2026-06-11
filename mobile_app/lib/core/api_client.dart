@@ -53,9 +53,42 @@ class ApiClient {
     return await dio.get('/categories');
   }
 
+  Future<Response> addProduct(Map<String, dynamic> productData) async {
+    return await dio.post('/inventory', data: productData);
+  }
+
+  Future<Response> updateProduct(int id, Map<String, dynamic> productData) async {
+    return await dio.put('/inventory/$id', data: productData);
+  }
+
+  Future<Response> addCategory(String name) async {
+    return await dio.post('/categories', data: {'name': name});
+  }
+
   // --- Dashboard ---
   Future<Response> getDashboardSummary() async {
     return await dio.get('/dashboard/summary');
+  }
+
+  // --- Sales History ---
+  Future<Response> getSalesHistory() async {
+    return await dio.get('/sales');
+  }
+
+  // --- Cashiers / Staff Management ---
+  Future<Response> getCashiers() async {
+    return await dio.get('/cashiers');
+  }
+
+  Future<Response> addCashier(String username, String password) async {
+    return await dio.post('/cashiers', data: {
+      'username': username,
+      'password': password,
+    });
+  }
+
+  Future<Response> deleteCashier(int cashierId) async {
+    return await dio.delete('/cashiers/$cashierId');
   }
 
   // --- POS / Checkout ---

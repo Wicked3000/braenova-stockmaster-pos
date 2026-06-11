@@ -1199,17 +1199,74 @@ def api_login():
         }
     })
 
-@app.route('/api/v1/inventory', methods=['GET'])
+@app.route('/api/v1/inventory', methods=['GET', 'POST'])
 @jwt_required
 def api_inventory():
     shop_id = request.user.get('shop_id')
+    
+    if request.method == 'POST':
+        if request.user.get('role') == 'cashier':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            
+        data = request.json
+        name = data.get('item_name')
+        qty = int(data.get('stock_qty', 0))
+        threshold = int(data.get('low_stock_threshold', 5))
+        price = float(data.get('price', 0.0))
+        cost = float(data.get('cost', 0.0))
+        category = data.get('category_id') or 'General'
+        barcode = data.get('barcode')
+        
+        if not name or price <= 0:
+            return jsonify({'success': False, 'message': 'Invalid name or price'}), 400
+            
+        add_inventory_item(
+            name=name, qty=qty, threshold=threshold, price=price, 
+            shop_id=shop_id, cost=cost, category=category, barcode=barcode
+        )
+        return jsonify({'success': True, 'message': 'Item added'})
+
+    # GET
     inventory = get_all_inventory(shop_id)
     return jsonify({'success': True, 'data': inventory})
 
-@app.route('/api/v1/categories', methods=['GET'])
+@app.route('/api/v1/inventory/<int:item_id>', methods=['PUT'])
+@jwt_required
+def api_update_inventory(item_id):
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') == 'cashier':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    kwargs = {}
+    if 'item_name' in data: kwargs['name'] = data['item_name']
+    if 'stock_qty' in data: kwargs['qty'] = int(data['stock_qty'])
+    if 'low_stock_threshold' in data: kwargs['threshold'] = int(data['low_stock_threshold'])
+    if 'price' in data: kwargs['price'] = float(data['price'])
+    if 'cost' in data: kwargs['cost'] = float(data['cost'])
+    if 'category_id' in data: kwargs['category'] = data['category_id']
+    if 'barcode' in data: kwargs['barcode'] = data['barcode']
+    
+    update_inventory_item(item_id=item_id, shop_id=shop_id, **kwargs)
+    return jsonify({'success': True, 'message': 'Item updated'})
+
+@app.route('/api/v1/categories', methods=['GET', 'POST'])
 @jwt_required
 def api_categories():
     shop_id = request.user.get('shop_id')
+    
+    if request.method == 'POST':
+        if request.user.get('role') == 'cashier':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            
+        data = request.json
+        name = data.get('name')
+        if not name:
+            return jsonify({'success': False, 'message': 'Category name required'}), 400
+            
+        add_category(name, shop_id)
+        return jsonify({'success': True, 'message': 'Category added'})
+        
     categories = get_all_categories(shop_id)
     return jsonify({'success': True, 'data': categories})
 
@@ -1295,6 +1352,52 @@ def api_checkout():
             
     except Exception as e:
         return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
+
+@app.route('/api/v1/sales', methods=['GET'])
+@jwt_required
+def api_sales():
+    shop_id = request.user.get('shop_id')
+    sales = get_sales_history(shop_id)
+    # Datetime serialization
+    for s in sales:
+        if isinstance(s.get('sale_date'), datetime):
+            s['sale_date'] = s['sale_date'].isoformat()
+    return jsonify({'success': True, 'data': sales})
+
+@app.route('/api/v1/cashiers', methods=['GET', 'POST'])
+@jwt_required
+def api_cashiers():
+    shop_id = request.user.get('shop_id')
+    
+    if request.method == 'POST':
+        if request.user.get('role') == 'cashier':
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+            
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password required'}), 400
+            
+        from werkzeug.security import generate_password_hash
+        password_hash = generate_password_hash(password)
+        res = add_user(username, password_hash, 'cashier', shop_id)
+        if res:
+            return jsonify({'success': True, 'message': 'Cashier added'})
+        return jsonify({'success': False, 'message': 'Username might already exist'}), 400
+        
+    cashiers = get_all_cashiers(shop_id)
+    return jsonify({'success': True, 'data': cashiers})
+
+@app.route('/api/v1/cashiers/<int:cashier_id>', methods=['DELETE'])
+@jwt_required
+def api_delete_cashier(cashier_id):
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') == 'cashier':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    delete_user(cashier_id, shop_id)
+    return jsonify({'success': True, 'message': 'Cashier deleted'})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)

@@ -18,6 +18,8 @@ class _MainLayoutState extends State<MainLayout> {
     '/dashboard',
     '/pos',
     '/inventory',
+    '/dinau',
+    '/settings',
   ];
 
   void _onTap(int index) {
@@ -52,6 +54,16 @@ class _MainLayoutState extends State<MainLayout> {
             icon: Icon(Icons.inventory_2_outlined),
             selectedIcon: Icon(Icons.inventory_2, color: AppTheme.primary),
             label: 'Inventory',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.credit_book_outlined),
+            selectedIcon: Icon(Icons.credit_book, color: AppTheme.primary),
+            label: 'Dinau',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings, color: AppTheme.primary),
+            label: 'Settings',
           ),
         ],
       ),
