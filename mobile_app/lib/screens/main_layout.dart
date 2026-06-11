@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 
@@ -22,6 +24,22 @@ class _MainLayoutState extends State<MainLayout> {
     '/settings',
   ];
 
+  final List<String> _labels = [
+    'Dashboard',
+    'POS',
+    'Inventory',
+    'Dinau',
+    'Settings',
+  ];
+
+  final List<String> _icons = [
+    'assets/icons/dashboard.svg',
+    'assets/icons/pos.svg',
+    'assets/icons/inventory.svg',
+    'assets/icons/dinau.svg',
+    'assets/icons/settings.svg',
+  ];
+
   void _onTap(int index) {
     if (index == _currentIndex) return;
     setState(() {
@@ -34,38 +52,67 @@ class _MainLayoutState extends State<MainLayout> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: widget.child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onTap,
-        backgroundColor: AppTheme.surface,
-        indicatorColor: AppTheme.primary.withOpacity(0.2),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard, color: AppTheme.primary),
-            label: 'Dashboard',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(
+            top: BorderSide(color: AppTheme.surfaceLight, width: 1),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.point_of_sale_outlined),
-            selectedIcon: Icon(Icons.point_of_sale, color: AppTheme.primary),
-            label: 'POS',
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(_labels.length, (index) {
+                final isSelected = _currentIndex == index;
+                return GestureDetector(
+                  onTap: () => _onTap(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppTheme.primary.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SvgPicture.asset(
+                          _icons[index],
+                          width: 24,
+                          height: 24,
+                          colorFilter: ColorFilter.mode(
+                            isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _labels[index],
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2, color: AppTheme.primary),
-            label: 'Inventory',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.book_outlined),
-            selectedIcon: Icon(Icons.book, color: AppTheme.primary),
-            label: 'Dinau',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings, color: AppTheme.primary),
-            label: 'Settings',
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -1,18 +1,19 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
   // Connected directly to the live Render Backend!
-  static const String baseUrl = 'https://braenova-stockmaster-pos.onrender.com/api/v1'; 
-  
+  static const String baseUrl = 'https://braenova-stockmaster-pos.onrender.com/api/v1';
+
   final Dio dio;
   final FlutterSecureStorage secureStorage;
 
   ApiClient()
       : dio = Dio(BaseOptions(
           baseUrl: baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 15),
         )),
         secureStorage = const FlutterSecureStorage() {
     _setupInterceptors();
@@ -21,18 +22,14 @@ class ApiClient {
   void _setupInterceptors() {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // Inject JWT token into headers if available
         final token = await secureStorage.read(key: 'jwt_token');
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
+        options.headers['Content-Type'] = 'application/json';
         return handler.next(options);
       },
       onError: (DioException e, handler) {
-        // Handle 401 Unauthorized globally (e.g., token expired)
-        if (e.response?.statusCode == 401) {
-          // Trigger logout or token refresh logic here
-        }
         return handler.next(e);
       },
     ));
@@ -40,10 +37,16 @@ class ApiClient {
 
   // --- Authentication ---
   Future<Response> login(String username, String password) async {
-    return await dio.post('/auth/login', data: {
+    final response = await dio.post('/auth/login', data: {
       'username': username,
       'password': password,
     });
+    // Save username for profile display
+    if (response.data['success'] == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username);
+    }
+    return response;
   }
 
   // --- Inventory ---
@@ -61,6 +64,10 @@ class ApiClient {
 
   Future<Response> updateProduct(int id, Map<String, dynamic> productData) async {
     return await dio.put('/inventory/$id', data: productData);
+  }
+
+  Future<Response> deleteProduct(int id) async {
+    return await dio.delete('/inventory/$id');
   }
 
   Future<Response> addCategory(String name) async {
@@ -96,5 +103,22 @@ class ApiClient {
   // --- POS / Checkout ---
   Future<Response> checkout(Map<String, dynamic> checkoutData) async {
     return await dio.post('/checkout', data: checkoutData);
+  }
+
+  // --- Dinau (Store Credit) ---
+  Future<Response> getDinauRecords() async {
+    return await dio.get('/dinau');
+  }
+
+  Future<Response> addDinauRecord(Map<String, dynamic> data) async {
+    return await dio.post('/dinau', data: data);
+  }
+
+  Future<Response> markDinauPaid(int recordId) async {
+    return await dio.put('/dinau/$recordId', data: {'status': 'paid'});
+  }
+
+  Future<Response> deleteDinauRecord(int recordId) async {
+    return await dio.delete('/dinau/$recordId');
   }
 }
