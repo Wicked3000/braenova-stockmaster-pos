@@ -427,15 +427,6 @@
       ]
     },
     {
-      "name": "sqflite_common",
-      "version": "2.5.9",
-      "dependencies": [
-        "meta",
-        "path",
-        "synchronized"
-      ]
-    },
-    {
       "name": "sqflite_android",
       "version": "2.4.3",
       "dependencies": [
@@ -443,6 +434,15 @@
         "path",
         "sqflite_common",
         "sqflite_platform_interface"
+      ]
+    },
+    {
+      "name": "sqflite_common",
+      "version": "2.5.11",
+      "dependencies": [
+        "meta",
+        "path",
+        "synchronized"
       ]
     },
     {

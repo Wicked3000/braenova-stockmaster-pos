@@ -56,8 +56,8 @@ class _MainLayoutState extends State<MainLayout> {
             label: 'Inventory',
           ),
           NavigationDestination(
-            icon: Icon(Icons.credit_book_outlined),
-            selectedIcon: Icon(Icons.credit_book, color: AppTheme.primary),
+            icon: Icon(Icons.book_outlined),
+            selectedIcon: Icon(Icons.book, color: AppTheme.primary),
             label: 'Dinau',
           ),
           NavigationDestination(

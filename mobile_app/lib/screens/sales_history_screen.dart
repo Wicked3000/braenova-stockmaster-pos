@@ -80,7 +80,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                         leading: CircleAvatar(
                           backgroundColor: isDinau ? AppTheme.error.withOpacity(0.2) : AppTheme.primary.withOpacity(0.2),
                           child: Icon(
-                            isDinau ? Icons.credit_book : Icons.receipt,
+                            isDinau ? Icons.book : Icons.receipt,
                             color: isDinau ? AppTheme.error : AppTheme.primary,
                           ),
                         ),

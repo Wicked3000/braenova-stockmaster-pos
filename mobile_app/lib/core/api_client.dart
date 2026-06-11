@@ -2,7 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'http://10.0.2.2:5000/api/v1'; // Emulator localhost
+  // Use localhost for Windows testing, or the live Render URL
+  static const String baseUrl = 'http://127.0.0.1:5000/api/v1'; // Local testing
+  // static const String baseUrl = 'https://braenova.onrender.com/api/v1'; // Live Production
+  
   final Dio dio;
   final FlutterSecureStorage secureStorage;
 
