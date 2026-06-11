@@ -1,4 +1,6 @@
 import os
+import jwt
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -21,6 +23,7 @@ from database import (
 
 app = Flask(__name__)
 app.secret_key = 'braenova_stockmaster_secret_key'
+app.config['JWT_SECRET_KEY'] = 'braenova_jwt_secret_key_2026'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -97,6 +100,25 @@ def check_subscription_status():
                 print(f"Subscription status check error: {e}")
 
 # RBAC Decorators
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'success': False, 'message': 'Missing or invalid token'}), 401
+        
+        token = auth_header.split(' ')[1]
+        try:
+            data = jwt.decode(token, app.config['JWT_SECRET_KEY'], algorithms=["HS256"])
+            request.user = data
+        except jwt.ExpiredSignatureError:
+            return jsonify({'success': False, 'message': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'success': False, 'message': 'Invalid token'}), 401
+            
+        return f(*args, **kwargs)
+    return decorated_function
+
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -1141,6 +1163,138 @@ def post_notice():
         create_notice(title, content, target_role, attachment_url=attachment_url)
         flash("Notice sent successfully.", "success")
     return redirect(url_for('superadmin_dashboard'))
+
+# --- FLUTTER API V1 ---
+
+@app.route('/api/v1/auth/login', methods=['POST'])
+def api_login():
+    data = request.get_json()
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'success': False, 'message': 'Missing credentials'}), 400
+        
+    user = verify_user(data['username'], data['password'])
+    if not user or isinstance(user, str):
+        err_msg = "Invalid Credentials" if not isinstance(user, str) else f"Account Error: {user}"
+        return jsonify({'success': False, 'message': err_msg}), 401
+        
+    # Generate JWT token
+    payload = {
+        'user_id': user['id'],
+        'username': user['username'],
+        'role': user['role'],
+        'shop_id': user.get('shop_id'),
+        'plan': user.get('plan', 'starter'),
+        'exp': datetime.utcnow() + timedelta(days=7) # Token expires in 7 days
+    }
+    token = jwt.encode(payload, app.config['JWT_SECRET_KEY'], algorithm="HS256")
+    
+    return jsonify({
+        'success': True,
+        'token': token,
+        'user': {
+            'username': user['username'],
+            'role': user['role'],
+            'shop_id': user.get('shop_id'),
+            'plan': user.get('plan', 'starter')
+        }
+    })
+
+@app.route('/api/v1/inventory', methods=['GET'])
+@jwt_required
+def api_inventory():
+    shop_id = request.user.get('shop_id')
+    inventory = get_all_inventory(shop_id)
+    return jsonify({'success': True, 'data': inventory})
+
+@app.route('/api/v1/categories', methods=['GET'])
+@jwt_required
+def api_categories():
+    shop_id = request.user.get('shop_id')
+    categories = get_all_categories(shop_id)
+    return jsonify({'success': True, 'data': categories})
+
+@app.route('/api/v1/dashboard/summary', methods=['GET'])
+@jwt_required
+def api_dashboard_summary():
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    summary = get_sales_summary(shop_id)
+    
+    if plan == 'starter':
+        summary.pop('total_profit', None)
+        
+    return jsonify({'success': True, 'data': summary})
+
+@app.route('/api/v1/dinau', methods=['GET'])
+@jwt_required
+def api_dinau():
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    if plan == 'starter':
+        return jsonify({'success': False, 'message': 'Dinau not available on starter plan'}), 403
+        
+    dinau_records = get_all_dinau(shop_id)
+    # Parse dates to string for JSON serialization
+    for record in dinau_records:
+        if isinstance(record.get('record_date'), datetime):
+            record['record_date'] = record['record_date'].isoformat()
+            
+    return jsonify({'success': True, 'data': dinau_records})
+
+@app.route('/api/v1/checkout', methods=['POST'])
+@jwt_required
+def api_checkout():
+    try:
+        data = request.json
+        items = data.get('items', [])
+        payment_method = data.get('payment_method', 'cash')
+        customer_name = data.get('customer_name')
+        shop_id = request.user.get('shop_id')
+        user_id = request.user.get('user_id')
+        plan = request.user.get('plan', 'starter')
+        
+        # shift handling logic omitted for brevity in MVP but we can add shift_id if needed
+        shift_id = data.get('shift_id')
+        
+        if not items:
+            return jsonify({'success': False, 'message': 'Cart is empty'}), 400
+
+        if payment_method == 'dinau' and plan == 'starter':
+            return jsonify({'success': False, 'message': 'Store credit (Dinau) is not available on the Starter Plan.'}), 400
+
+        total_transaction_amount = sum(float(i['total_price']) for i in items)
+        if payment_method == 'dinau' and total_transaction_amount < 20.00:
+            return jsonify({'success': False, 'message': 'Minimum K20.00 required for credit sales.'}), 400
+
+        import uuid
+        receipt_id = str(uuid.uuid4())[:8].upper()
+
+        for item in items:
+            add_sale(
+                inventory_id=item['id'],
+                qty_sold=item['qty'],
+                total_price=item['total_price'],
+                shop_id=shop_id,
+                cashier_id=user_id,
+                is_dinau=(payment_method == 'dinau'),
+                customer_name=customer_name,
+                payment_method=payment_method,
+                receipt_id=receipt_id,
+                shift_id=shift_id
+            )
+        
+        cleanup_old_sales(shop_id)
+
+        if payment_method == 'dinau' and customer_name:
+            add_dinau_record(customer_name, total_transaction_amount, shop_id)
+        
+        return jsonify({
+            'success': True,
+            'receipt_id': receipt_id
+        })
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
