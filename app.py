@@ -22,6 +22,9 @@ from database import (
 )
 
 app = Flask(__name__)
+from flask_cors import CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
 app.secret_key = 'braenova_stockmaster_secret_key'
 app.config['JWT_SECRET_KEY'] = 'braenova_jwt_secret_key_2026'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
