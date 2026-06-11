@@ -202,6 +202,14 @@ def logout():
 
 # --- PUBLIC & ONBOARDING ROUTES ---
 
+# --- FLUTTER WEB APP ROUTE ---
+from flask import send_from_directory
+
+@app.route('/app')
+@app.route('/app/<path:path>')
+def serve_flutter_app(path=""):
+    return send_from_directory('static/flutter', 'index.html')
+
 @app.route('/')
 def landing():
     if 'user_id' in session:
