@@ -162,29 +162,34 @@ def superadmin_required(f):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = verify_user(request.form['username'], request.form['password'])
-        if user == "inactive":
-            flash("Your shop account is pending payment activation. Please make payment to gain access.", "warning")
-            return redirect(url_for('pending_activation', username=request.form['username']))
-        elif user == "suspended":
-            flash("Your shop account is currently suspended. Please contact support.", "error")
-            return redirect(url_for('login'))
-        elif user == "expired":
-            flash("Your monthly subscription has expired. Please contact administration to renew.", "warning")
-            return redirect(url_for('login'))
-        elif user:
-            session['user_id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role']
-            session['shop_id'] = user.get('shop_id')
-            session['plan'] = user.get('plan', 'starter')
+        try:
+            user = verify_user(request.form['username'], request.form['password'])
+            if user == "inactive":
+                flash("Your shop account is pending payment activation. Please make payment to gain access.", "warning")
+                return redirect(url_for('pending_activation', username=request.form['username']))
+            elif user == "suspended":
+                flash("Your shop account is currently suspended. Please contact support.", "error")
+                return redirect(url_for('login'))
+            elif user == "expired":
+                flash("Your monthly subscription has expired. Please contact administration to renew.", "warning")
+                return redirect(url_for('login'))
+            elif user:
+                session['user_id'] = user['id']
+                session['username'] = user['username']
+                session['role'] = user['role']
+                session['shop_id'] = user.get('shop_id')
+                session['plan'] = user.get('plan', 'starter')
+                
+                if user['role'] == 'superadmin':
+                    return redirect(url_for('superadmin_dashboard'))
+                if user['role'] == 'cashier':
+                    return redirect(url_for('pos'))
+                return redirect(url_for('dashboard'))
+            flash("Invalid Credentials", "error")
+        except Exception as e:
+            flash("Cannot connect to Database. If you are using a free Supabase tier, your project might be paused.", "error")
+            print(f"Login Error: {e}")
             
-            if user['role'] == 'superadmin':
-                return redirect(url_for('superadmin_dashboard'))
-            if user['role'] == 'cashier':
-                return redirect(url_for('pos'))
-            return redirect(url_for('dashboard'))
-        flash("Invalid Credentials", "error")
     return render_template('login.html')
 
 @app.route('/logout')
