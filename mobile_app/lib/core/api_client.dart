@@ -41,10 +41,14 @@ class ApiClient {
       'username': username,
       'password': password,
     });
-    // Save username for profile display
+    // Save user info for profile display and role-based access
     if (response.data['success'] == true) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('username', username);
+      if (response.data['user'] != null) {
+        await prefs.setString('role', response.data['user']['role'] ?? 'cashier');
+        await prefs.setString('plan', response.data['user']['plan'] ?? 'starter');
+      }
     }
     return response;
   }
@@ -120,5 +124,34 @@ class ApiClient {
 
   Future<Response> deleteDinauRecord(int recordId) async {
     return await dio.delete('/dinau/$recordId');
+  }
+  // --- Warehouse ---
+  Future<Response> getWarehouse() async {
+    return await dio.get('/warehouse');
+  }
+
+  Future<Response> addWarehouseItem(Map<String, dynamic> data) async {
+    return await dio.post('/warehouse', data: data);
+  }
+
+  Future<Response> updateWarehouseItem(int id, Map<String, dynamic> data) async {
+    return await dio.put('/warehouse/$id', data: data);
+  }
+
+  Future<Response> deleteWarehouseItem(int id) async {
+    return await dio.delete('/warehouse/$id');
+  }
+
+  // --- Expenses & Reports ---
+  Future<Response> getExpenses() async {
+    return await dio.get('/expenses');
+  }
+
+  Future<Response> addExpense(Map<String, dynamic> data) async {
+    return await dio.post('/expenses', data: data);
+  }
+
+  Future<Response> getReports() async {
+    return await dio.get('/reports');
   }
 }

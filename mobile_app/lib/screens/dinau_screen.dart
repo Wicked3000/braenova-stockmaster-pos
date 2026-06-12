@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
 class DinauScreen extends ConsumerStatefulWidget {
@@ -17,11 +18,27 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   int _filterIndex = 0; // 0=All, 1=Unpaid, 2=Paid
+  String _plan = 'starter';
 
   @override
   void initState() {
     super.initState();
-    _loadRecords();
+    _checkPlanAndLoad();
+  }
+
+  Future<void> _checkPlanAndLoad() async {
+    final prefs = await SharedPreferences.getInstance();
+    final plan = prefs.getString('plan') ?? 'starter';
+    setState(() => _plan = plan);
+
+    if (plan != 'starter') {
+      await _loadRecords();
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Store Credit (Dinau) is not available on your plan.';
+      });
+    }
   }
 
   Future<void> _loadRecords() async {
@@ -41,6 +58,7 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
       if (mounted) {
         if (e.toString().contains('403') || e.toString().contains('401')) {
           setState(() => _errorMessage = 'Store Credit (Dinau) is not available on your plan.');
+          setState(() => _plan = 'starter'); // fallback
         } else {
           setState(() => _errorMessage = 'Unable to load records. Please try again.');
         }
@@ -363,12 +381,14 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
                     ),
                   ],
                 ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddDinauDialog,
-        backgroundColor: AppTheme.primary,
-        tooltip: 'Add Record',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _plan == 'starter' 
+          ? null 
+          : FloatingActionButton(
+              onPressed: _showAddDinauDialog,
+              backgroundColor: AppTheme.primary,
+              tooltip: 'Add Record',
+              child: const Icon(Icons.add),
+            ),
     );
   }
 

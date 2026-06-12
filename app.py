@@ -1429,3 +1429,101 @@ def serve_notice_attachment(filename):
         return send_from_directory(upload_dir, filename)
     from flask import abort
     abort(404)
+
+
+# --- NEW APIs FOR FLUTTER APP PARITY ---
+
+@app.route('/api/v1/warehouse', methods=['GET', 'POST'])
+@jwt_required
+def api_warehouse():
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    
+    if plan == 'starter':
+        return jsonify({'success': False, 'message': 'Warehouse is a Pro feature.'}), 403
+        
+    if request.method == 'GET':
+        from database import get_warehouse_inventory
+        items = get_warehouse_inventory(shop_id)
+        return jsonify({'success': True, 'data': items})
+        
+    if request.method == 'POST':
+        data = request.get_json()
+        name = data.get('item_name')
+        qty = int(data.get('quantity', 0))
+        cost = float(data.get('cost_price', 0))
+        supplier = data.get('supplier_name', '')
+        
+        from database import add_warehouse_item
+        add_warehouse_item(name, qty, cost, supplier, shop_id)
+        return jsonify({'success': True, 'message': 'Added to warehouse'})
+
+@app.route('/api/v1/warehouse/<int:item_id>', methods=['PUT', 'DELETE'])
+@jwt_required
+def api_warehouse_item(item_id):
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    
+    if plan == 'starter':
+        return jsonify({'success': False, 'message': 'Warehouse is a Pro feature.'}), 403
+        
+    from database import update_warehouse_item, delete_warehouse_item
+    
+    if request.method == 'DELETE':
+        delete_warehouse_item(item_id, shop_id)
+        return jsonify({'success': True, 'message': 'Deleted'})
+        
+    if request.method == 'PUT':
+        data = request.get_json()
+        update_warehouse_item(
+            item_id=item_id, shop_id=shop_id,
+            name=data.get('item_name'),
+            qty=data.get('quantity'),
+            cost=data.get('cost_price'),
+            supplier=data.get('supplier_name')
+        )
+        return jsonify({'success': True, 'message': 'Updated'})
+
+@app.route('/api/v1/expenses', methods=['GET', 'POST'])
+@jwt_required
+def api_expenses():
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    
+    if plan == 'starter':
+        return jsonify({'success': False, 'message': 'Expenses tracking is a Pro feature.'}), 403
+        
+    from database import get_daily_expenses, add_expense
+    
+    if request.method == 'GET':
+        expenses = get_daily_expenses(shop_id)
+        return jsonify({'success': True, 'data': expenses})
+        
+    if request.method == 'POST':
+        data = request.get_json()
+        amt = float(data.get('amount', 0))
+        desc = data.get('description', '')
+        add_expense(shop_id, amt, desc, request.user.get('user_id'))
+        return jsonify({'success': True, 'message': 'Expense logged'})
+
+@app.route('/api/v1/reports', methods=['GET'])
+@jwt_required
+def api_reports():
+    shop_id = request.user.get('shop_id')
+    plan = request.user.get('plan', 'starter')
+    
+    if plan == 'starter':
+        return jsonify({'success': False, 'message': 'Detailed reports are a Pro feature.'}), 403
+        
+    from database import get_all_reports, get_inventory_financials
+    reports = get_all_reports(shop_id)
+    financials = get_inventory_financials(shop_id)
+    
+    return jsonify({
+        'success': True,
+        'data': {
+            'reports': reports,
+            'financials': financials
+        }
+    })
+

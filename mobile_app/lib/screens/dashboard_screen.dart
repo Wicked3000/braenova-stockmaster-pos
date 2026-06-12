@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -16,11 +17,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _summaryData;
   List<dynamic> _recentSales = [];
   bool _isLoading = true;
+  String _role = 'cashier';
+  String _plan = 'starter';
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    _loadRoleAndData();
+  }
+
+  Future<void> _loadRoleAndData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _role = prefs.getString('role') ?? 'cashier';
+      _plan = prefs.getString('plan') ?? 'starter';
+    });
+    await _loadDashboardData();
   }
 
   Future<void> _loadDashboardData() async {
@@ -172,12 +184,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Icons.receipt_long_rounded,
                           AppTheme.secondary,
                         ),
-                        _buildStatCard(
-                          'Est. Profit',
-                          fmt.format(_summaryData?['total_profit'] ?? 0),
-                          Icons.account_balance_wallet_rounded,
-                          const Color(0xFF8B5CF6),
-                        ),
+                        if ((_role == 'owner' || _role == 'superadmin') && _plan != 'starter')
+                          _buildStatCard(
+                            'Est. Profit',
+                            fmt.format(_summaryData?['total_profit'] ?? 0),
+                            Icons.account_balance_wallet_rounded,
+                            const Color(0xFF8B5CF6),
+                          ),
                         _buildStatCard(
                           'Low Stock',
                           '${_summaryData?['low_stock_count'] ?? 0}',

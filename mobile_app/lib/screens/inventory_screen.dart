@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -21,12 +22,19 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   String? _filterCategoryId;
   String _sortBy = 'name'; // name, price, stock
   late TabController _tabController;
+  String _role = 'cashier';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _loadData();
+    _loadRoleAndData();
+  }
+
+  Future<void> _loadRoleAndData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _role = prefs.getString('role') ?? 'cashier');
+    await _loadData();
   }
 
   @override
@@ -423,6 +431,74 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final price = ((item['unit_price'] ?? item['price'] ?? 0) as num).toDouble();
     final isOut = stockQty == 0;
     final isLow = stockQty > 0 && stockQty <= 5;
+    final isOwner = _role == 'owner' || _role == 'superadmin';
+
+    Widget tileContent = Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isOut ? AppTheme.error.withOpacity(0.3) : isLow ? Colors.orange.withOpacity(0.3) : AppTheme.surfaceLight,
+        ),
+      ),
+      child: Row(children: [
+        Container(width: 50, height: 50,
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            color: isOut ? AppTheme.error.withOpacity(0.08) : AppTheme.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12)),
+          child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+              ? Image.network(
+                  item['image_url'],
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
+                )
+              : Icon(Icons.inventory_2_rounded,
+                  color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26)),
+        const SizedBox(width: 14),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(item['item_name'],
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 3),
+          Row(children: [
+            Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.5), borderRadius: BorderRadius.circular(5)),
+              child: Text(_getCategoryName(item['category_id']),
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11))),
+            if (item['barcode'] != null && item['barcode'].toString().isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Text('• ${item['barcode']}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+            ],
+          ]),
+        ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(fmt.format(price),
+            style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 15)),
+          const SizedBox(height: 5),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: isOut ? AppTheme.error.withOpacity(0.12) : isLow ? Colors.orange.withOpacity(0.12) : AppTheme.secondary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8)),
+            child: Text(
+              isOut ? 'Out of Stock' : isLow ? '⚠ Low: $stockQty' : 'Qty: $stockQty',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                color: isOut ? AppTheme.error : isLow ? Colors.orange : AppTheme.secondary)),
+          ),
+        ]),
+        if (isOwner) ...[
+          const SizedBox(width: 4),
+          const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary, size: 18),
+        ],
+      ]),
+    );
+
+    if (!isOwner) {
+      return tileContent;
+    }
 
     return Dismissible(
       key: Key(item['id'].toString()),
@@ -440,66 +516,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       },
       child: GestureDetector(
         onTap: () => _showAddProductSheet(existing: Map<String, dynamic>.from(item)),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isOut ? AppTheme.error.withOpacity(0.3) : isLow ? Colors.orange.withOpacity(0.3) : AppTheme.surfaceLight,
-            ),
-          ),
-          child: Row(children: [
-            Container(width: 50, height: 50,
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                color: isOut ? AppTheme.error.withOpacity(0.08) : AppTheme.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(12)),
-              child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
-                  ? Image.network(
-                      item['image_url'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
-                    )
-                  : Icon(Icons.inventory_2_rounded,
-                      color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26)),
-            const SizedBox(width: 14),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item['item_name'],
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 3),
-              Row(children: [
-                Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.5), borderRadius: BorderRadius.circular(5)),
-                  child: Text(_getCategoryName(item['category_id']),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11))),
-                if (item['barcode'] != null && item['barcode'].toString().isNotEmpty) ...[
-                  const SizedBox(width: 6),
-                  Text('• ${item['barcode']}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-                ],
-              ]),
-            ])),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(fmt.format(price),
-                style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 15)),
-              const SizedBox(height: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isOut ? AppTheme.error.withOpacity(0.12) : isLow ? Colors.orange.withOpacity(0.12) : AppTheme.secondary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8)),
-                child: Text(
-                  isOut ? 'Out of Stock' : isLow ? '⚠ Low: $stockQty' : 'Qty: $stockQty',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
-                    color: isOut ? AppTheme.error : isLow ? Colors.orange : AppTheme.secondary)),
-              ),
-            ]),
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary, size: 18),
-          ]),
-        ),
+        child: tileContent,
       ),
     );
   }
@@ -518,7 +535,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
       appBar: AppBar(
         title: const Text('Inventory', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
-          IconButton(icon: const Icon(Icons.category_rounded), onPressed: _showCategoryManager, tooltip: 'Manage Categories'),
+          if (_role == 'owner' || _role == 'superadmin')
+            IconButton(icon: const Icon(Icons.category_rounded), onPressed: _showCategoryManager, tooltip: 'Manage Categories'),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort_rounded),
             tooltip: 'Sort',
@@ -641,12 +659,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                       ),
               ),
             ]),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddProductSheet(),
-        backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Product', style: TextStyle(fontWeight: FontWeight.w700)),
-      ),
+      floatingActionButton: (_role == 'owner' || _role == 'superadmin') 
+          ? FloatingActionButton.extended(
+              onPressed: () => _showAddProductSheet(),
+              backgroundColor: AppTheme.primary,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add Product', style: TextStyle(fontWeight: FontWeight.w700)),
+            )
+          : null,
     );
   }
 }

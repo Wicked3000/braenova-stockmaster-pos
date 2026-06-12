@@ -18,16 +18,22 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   String _username = '';
+  String _role = 'cashier';
+  String _plan = 'starter';
 
   @override
   void initState() {
     super.initState();
-    _loadUsername();
+    _loadProfile();
   }
 
-  Future<void> _loadUsername() async {
+  Future<void> _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() => _username = prefs.getString('username') ?? 'User');
+    setState(() {
+      _username = prefs.getString('username') ?? 'User';
+      _role = prefs.getString('role') ?? 'cashier';
+      _plan = prefs.getString('plan') ?? 'starter';
+    });
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -153,7 +159,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         _username.isEmpty ? 'User' : _username,
                         style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
                       ),
-                      const Text('Store Staff', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                      Text(
+                        _role == 'superadmin' ? 'Super Admin' : _role == 'owner' ? 'Store Owner' : 'Cashier',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${_plan.toUpperCase()} PLAN',
+                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ],
                   ),
                 ],
@@ -174,21 +195,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 MaterialPageRoute(builder: (_) => const SalesHistoryScreen()),
               ),
             ),
-            _buildTile(
-              icon: Icons.people_alt_rounded,
-              title: 'Staff Management',
-              subtitle: 'Manage cashiers & staff',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CashiersScreen()),
+            if (_role == 'owner' || _role == 'superadmin') ...[
+              _buildTile(
+                icon: Icons.people_alt_rounded,
+                title: 'Staff Management',
+                subtitle: 'Manage cashiers & staff',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CashiersScreen()),
+                ),
               ),
-            ),
-            _buildTile(
-              icon: Icons.storefront_rounded,
-              title: 'Shop Details',
-              subtitle: 'Edit shop info',
-              onTap: () {},
-            ),
-            const SizedBox(height: 16),
+              _buildTile(
+                icon: Icons.storefront_rounded,
+                title: 'Shop Details',
+                subtitle: 'Edit shop info',
+                onTap: () {},
+              ),
+              _buildTile(
+                icon: Icons.star_rounded,
+                title: 'Subscription Plan',
+                subtitle: 'Manage plan & billing',
+                iconColor: const Color(0xFF8B5CF6),
+                onTap: () {},
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // App preferences
             const Padding(

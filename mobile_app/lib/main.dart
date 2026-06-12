@@ -11,6 +11,8 @@ import 'screens/settings_screen.dart';
 import 'screens/sales_history_screen.dart';
 import 'screens/cashiers_screen.dart';
 import 'screens/main_layout.dart';
+import 'screens/warehouse_screen.dart';
+import 'screens/reports_screen.dart';
 
 void main() {
   runApp(
@@ -50,6 +52,14 @@ final _router = GoRouter(
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: '/warehouse',
+          builder: (context, state) => const WarehouseScreen(),
+        ),
+        GoRoute(
+          path: '/reports',
+          builder: (context, state) => const ReportsScreen(),
         ),
       ],
     ),
