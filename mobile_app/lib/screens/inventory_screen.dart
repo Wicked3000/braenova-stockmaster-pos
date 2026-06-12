@@ -163,51 +163,83 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 const SizedBox(height: 16),
 
                 // Name
+                const Text('Product Name *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
                 TextFormField(
                   controller: nameCtrl,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Product Name *', prefixIcon: Icon(Icons.inventory_2_rounded)),
+                  decoration: const InputDecoration(hintText: 'e.g. Coke 330ml', prefixIcon: Icon(Icons.inventory_2_rounded)),
                   validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Price + Cost row
                 Row(children: [
-                  Expanded(child: TextFormField(
-                    controller: priceCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Sell Price (K) *', prefixIcon: Icon(Icons.sell_rounded)),
-                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Sell Price (K) *', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: priceCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(hintText: '0.00', prefixIcon: Icon(Icons.sell_rounded)),
+                        validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                      ),
+                    ],
                   )),
-                  const SizedBox(width: 12),
-                  Expanded(child: TextFormField(
-                    controller: costCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Cost Price (K)', prefixIcon: Icon(Icons.shopping_bag_outlined)),
+                  const SizedBox(width: 16),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Cost Price (K)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: costCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(hintText: '0.00', prefixIcon: Icon(Icons.shopping_bag_outlined)),
+                      ),
+                    ],
                   )),
                 ]),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Qty + Threshold row
                 Row(children: [
-                  Expanded(child: TextFormField(
-                    controller: qtyCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Stock Qty', prefixIcon: Icon(Icons.storage_rounded)),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Stock Qty', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: qtyCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(hintText: '0', prefixIcon: Icon(Icons.storage_rounded)),
+                      ),
+                    ],
                   )),
-                  const SizedBox(width: 12),
-                  Expanded(child: TextFormField(
-                    controller: threshCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Low Stock Alert', prefixIcon: Icon(Icons.warning_amber_rounded)),
+                  const SizedBox(width: 16),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Low Stock Alert', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                      const SizedBox(height: 6),
+                      TextFormField(
+                        controller: threshCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(hintText: '5', prefixIcon: Icon(Icons.warning_amber_rounded)),
+                      ),
+                    ],
                   )),
                 ]),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Category dropdown
+                const Text('Category', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   value: selectedCatId,
-                  decoration: const InputDecoration(labelText: 'Category', prefixIcon: Icon(Icons.category_rounded)),
+                  decoration: const InputDecoration(hintText: 'Select Category', prefixIcon: Icon(Icons.category_rounded)),
                   dropdownColor: AppTheme.surfaceLight,
                   items: [
                     const DropdownMenuItem(value: null, child: Text('No Category')),
@@ -218,21 +250,25 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   ],
                   onChanged: (v) => setSheet(() => selectedCatId = v),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Barcode
+                const Text('Barcode (optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
                 TextFormField(
                   controller: barcodeCtrl,
-                  decoration: const InputDecoration(labelText: 'Barcode (optional)', prefixIcon: Icon(Icons.qr_code_rounded)),
+                  decoration: const InputDecoration(hintText: 'Scan or type barcode', prefixIcon: Icon(Icons.qr_code_rounded)),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 
                 // Image URL
+                const Text('Image URL (optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                const SizedBox(height: 6),
                 TextFormField(
                   controller: imageUrlCtrl,
-                  decoration: const InputDecoration(labelText: 'Image URL (optional)', prefixIcon: Icon(Icons.image_outlined)),
+                  decoration: const InputDecoration(hintText: 'https://...', prefixIcon: Icon(Icons.image_outlined)),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 32),
 
                 // Save button
                 SizedBox(
