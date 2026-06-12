@@ -14,30 +14,37 @@ class PosScreen extends ConsumerStatefulWidget {
 
 class _PosScreenState extends ConsumerState<PosScreen> {
   List<dynamic> _inventory = [];
+  List<dynamic> _categories = [];
   List<Map<String, dynamic>> _cart = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  String? _selectedCategoryId;
+  bool _isCheckingOut = false;
 
   @override
   void initState() {
     super.initState();
-    _loadInventory();
+    _loadData();
   }
 
-  Future<void> _loadInventory() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
       final client = ref.read(apiClientProvider);
-      final response = await client.getInventory();
-      if (response.data['success'] && mounted) {
+      final results = await Future.wait([
+        client.getInventory(),
+        client.getCategories(),
+      ]);
+      if (mounted) {
         setState(() {
-          _inventory = response.data['data'];
+          if (results[0].data['success']) _inventory = results[0].data['data'];
+          if (results[1].data['success']) _categories = results[1].data['data'];
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading inventory: $e'), backgroundColor: AppTheme.error),
+          SnackBar(content: Text('Error loading: $e'), backgroundColor: AppTheme.error),
         );
       }
     } finally {
@@ -45,155 +52,236 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
+  List<dynamic> get _filteredInventory {
+    return _inventory.where((item) {
+      final q = _searchQuery.toLowerCase();
+      final matchesSearch = q.isEmpty ||
+          item['item_name'].toString().toLowerCase().contains(q) ||
+          (item['barcode'] != null && item['barcode'].toString().contains(q));
+      final matchesCategory = _selectedCategoryId == null ||
+          item['category_id']?.toString() == _selectedCategoryId;
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
   void _addToCart(dynamic item) {
+    final stockQty = (item['quantity'] ?? 0) as int;
+    if (stockQty == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${item['item_name']} is out of stock'), backgroundColor: AppTheme.error),
+      );
+      return;
+    }
     setState(() {
-      final existingIndex = _cart.indexWhere((c) => c['id'] == item['id']);
-      if (existingIndex >= 0) {
-        if (_cart[existingIndex]['qty'] < item['stock_qty']) {
-          _cart[existingIndex]['qty']++;
-          _cart[existingIndex]['total_price'] = _cart[existingIndex]['qty'] * (item['price'] as num).toDouble();
+      final idx = _cart.indexWhere((c) => c['id'] == item['id']);
+      if (idx >= 0) {
+        if (_cart[idx]['qty'] < stockQty) {
+          _cart[idx]['qty']++;
+          _cart[idx]['total_price'] = _cart[idx]['qty'] * (_cart[idx]['price'] as num).toDouble();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Max stock reached for ${item['item_name']}')),
+            const SnackBar(content: Text('Max stock reached')),
           );
         }
       } else {
-        if (item['stock_qty'] > 0) {
-          _cart.add({
-            'id': item['id'],
-            'name': item['item_name'],
-            'price': (item['price'] as num).toDouble(),
-            'qty': 1,
-            'total_price': (item['price'] as num).toDouble(),
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${item['item_name']} is out of stock'), backgroundColor: AppTheme.error),
-          );
-        }
+        final price = ((item['unit_price'] ?? item['price'] ?? 0) as num).toDouble();
+        _cart.add({
+          'id': item['id'],
+          'name': item['item_name'],
+          'price': price,
+          'qty': 1,
+          'total_price': price,
+          'max_qty': stockQty,
+        });
       }
     });
   }
 
-  void _decrementCart(int index) {
+  void _updateCartQty(int index, int newQty) {
     setState(() {
-      if (_cart[index]['qty'] > 1) {
-        _cart[index]['qty']--;
-        _cart[index]['total_price'] = _cart[index]['qty'] * _cart[index]['price'];
-      } else {
+      if (newQty <= 0) {
         _cart.removeAt(index);
+      } else {
+        _cart[index]['qty'] = newQty;
+        _cart[index]['total_price'] = newQty * (_cart[index]['price'] as num).toDouble();
       }
     });
   }
 
-  void _removeFromCart(int index) {
-    setState(() => _cart.removeAt(index));
-  }
+  double get _cartTotal => _cart.fold(0.0, (s, i) => s + (i['total_price'] as num).toDouble());
+  int get _cartCount => _cart.fold(0, (s, i) => s + (i['qty'] as int));
 
-  Future<void> _checkout({String method = 'cash', String customerName = ''}) async {
+  Future<void> _checkout(String method, {String customerName = ''}) async {
     if (_cart.isEmpty) return;
-    final client = ref.read(apiClientProvider);
+    setState(() => _isCheckingOut = true);
     try {
+      final client = ref.read(apiClientProvider);
       final response = await client.checkout({
-        'items': _cart,
+        'items': _cart.map((i) => {'id': i['id'], 'qty': i['qty'], 'price': i['price']}).toList(),
         'payment_method': method,
         'customer_name': customerName,
+        'total_amount': _cartTotal,
       });
-      if (response.data['success']) {
+      if (response.data['success'] && mounted) {
+        final receiptId = response.data['receipt_id'] ?? response.data['data']?['receipt_id'] ?? '';
+        _showReceipt(receiptId, method, customerName);
         setState(() => _cart.clear());
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ Sale complete! Receipt #${response.data['receipt_id']}'),
-              backgroundColor: AppTheme.secondary,
-            ),
-          );
-          _loadInventory();
-        }
+        _loadData();
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${response.data['message']}'), backgroundColor: AppTheme.error),
+            SnackBar(content: Text(response.data['message'] ?? 'Checkout failed'), backgroundColor: AppTheme.error),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Network error during checkout.'), backgroundColor: AppTheme.error),
+          SnackBar(content: Text('Checkout error: $e'), backgroundColor: AppTheme.error),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isCheckingOut = false);
     }
   }
 
-  void _showCheckoutDialog() {
+  void _showReceipt(dynamic receiptId, String method, String customerName) {
     final fmt = NumberFormat.currency(symbol: 'K');
-    final cartTotal = _cart.fold(0.0, (sum, item) => sum + (item['total_price'] as num).toDouble());
-
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Total: ${fmt.format(cartTotal)}',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.secondary)),
-            const SizedBox(height: 8),
-            Text('${_cart.length} item(s) in cart', style: const TextStyle(color: AppTheme.textSecondary)),
-            const SizedBox(height: 20),
-            const Text('Select Payment Method:', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+            const Icon(Icons.check_circle_rounded, color: AppTheme.secondary, size: 64),
+            const SizedBox(height: 12),
+            const Text('Sale Complete!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            if (receiptId != '') Text('Receipt #$receiptId', style: const TextStyle(color: AppTheme.textSecondary)),
+            const Divider(height: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Payment'),
+                Text(method.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            if (customerName.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Customer'),
+                  Text(customerName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ],
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(fmt.format(_cartTotal), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 18)),
+              ],
+            ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _checkout(method: 'cash');
-            },
-            icon: const Icon(Icons.payments_outlined, size: 18),
-            label: const Text('Cash'),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.secondary),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _showDinauCheckout();
-            },
-            icon: const Icon(Icons.credit_card_outlined, size: 18),
-            label: const Text('Dinau'),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Done'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showDinauCheckout() {
+  void _showCheckoutDialog() {
+    final fmt = NumberFormat.currency(symbol: 'K');
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Checkout', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              Text('${_cart.length} item(s) • Total: ${fmt.format(_cartTotal)}',
+                  style: const TextStyle(color: AppTheme.textSecondary)),
+              const SizedBox(height: 24),
+              const Text('Choose Payment Method:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PaymentButton(
+                      icon: Icons.payments_rounded,
+                      label: 'Cash',
+                      color: AppTheme.secondary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _checkout('cash');
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _PaymentButton(
+                      icon: Icons.credit_card_rounded,
+                      label: 'Dinau\n(Store Credit)',
+                      color: AppTheme.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showDinauDialog();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Center(child: Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDinauDialog() {
     final nameController = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Store Credit (Dinau)'),
+        title: const Text('Store Credit (Dinau)', style: TextStyle(fontWeight: FontWeight.w700)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter customer name for store credit:', style: TextStyle(color: AppTheme.textSecondary)),
+            const Text('Enter the customer name for this credit sale:', style: TextStyle(color: AppTheme.textSecondary)),
             const SizedBox(height: 16),
             TextField(
               controller: nameController,
               autofocus: true,
+              textCapitalization: TextCapitalization.words,
               decoration: const InputDecoration(
-                labelText: 'Customer Name',
+                labelText: 'Customer Name *',
                 prefixIcon: Icon(Icons.person_outline),
               ),
             ),
@@ -201,16 +289,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
               if (nameController.text.trim().isEmpty) return;
-              Navigator.pop(ctx);
-              _checkout(method: 'dinau', customerName: nameController.text.trim());
+              Navigator.pop(context);
+              _checkout('dinau', customerName: nameController.text.trim());
             },
-            child: const Text('Confirm'),
+            child: const Text('Confirm Credit Sale'),
           ),
         ],
       ),
@@ -218,172 +306,109 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   void _showCartSheet() {
-    final fmt = NumberFormat.currency(symbol: 'K');
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final cartTotal = _cart.fold(0.0, (sum, item) => sum + (item['total_price'] as num).toDouble());
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          final fmt = NumberFormat.currency(symbol: 'K');
           return DraggableScrollableSheet(
             initialChildSize: 0.75,
             minChildSize: 0.4,
             maxChildSize: 0.95,
             expand: false,
-            builder: (_, scrollController) => Column(
+            builder: (_, sc) => Column(
               children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(2)),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Container(width: 40, height: 4, decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(2))),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Cart (${_cart.length})',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text('Cart (${_cart.length} items)', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                       if (_cart.isNotEmpty)
                         TextButton(
-                          onPressed: () {
-                            setState(() => _cart.clear());
-                            setSheetState(() {});
-                          },
-                          child: const Text('Clear All', style: TextStyle(color: AppTheme.error)),
+                          onPressed: () { setState(() => _cart.clear()); setSheet(() {}); },
+                          child: const Text('Clear All', style: TextStyle(color: AppTheme.error, fontSize: 13)),
                         ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: _cart.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.shopping_cart_outlined, size: 48, color: AppTheme.textSecondary),
-                              SizedBox(height: 12),
-                              Text('Cart is empty', style: TextStyle(color: AppTheme.textSecondary)),
-                            ],
-                          ),
-                        )
+                      ? const Center(child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.shopping_cart_outlined, size: 52, color: AppTheme.textSecondary),
+                            SizedBox(height: 12),
+                            Text('Cart is empty', style: TextStyle(color: AppTheme.textSecondary)),
+                          ],
+                        ))
                       : ListView.builder(
-                          controller: scrollController,
+                          controller: sc,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: _cart.length,
-                          itemBuilder: (_, index) {
-                            final item = _cart[index];
+                          itemBuilder: (_, i) {
+                            final item = _cart[i];
                             return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppTheme.surfaceLight.withOpacity(0.3),
+                                color: AppTheme.surfaceLight.withOpacity(0.25),
                                 borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: AppTheme.surfaceLight),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item['name'],
-                                            style: const TextStyle(fontWeight: FontWeight.w600)),
-                                        Text(fmt.format(item['price']),
-                                            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                  Row(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          _decrementCart(index);
-                                          setSheetState(() {});
-                                        },
-                                        child: Container(
-                                          width: 30, height: 30,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.surfaceLight,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.remove, size: 16),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        child: Text('${item['qty']}',
-                                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          final invItem = _inventory.firstWhere((i) => i['id'] == item['id'], orElse: () => null);
-                                          if (invItem != null) _addToCart(invItem);
-                                          setSheetState(() {});
-                                        },
-                                        child: Container(
-                                          width: 30, height: 30,
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.primary.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: const Icon(Icons.add, size: 16, color: AppTheme.primary),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(fmt.format(item['total_price']),
-                                      style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.secondary)),
-                                ],
-                              ),
+                              child: Row(children: [
+                                Expanded(child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    Text(fmt.format(item['price']), style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                                  ],
+                                )),
+                                Row(children: [
+                                  _QtyButton(icon: Icons.remove, onTap: () { _updateCartQty(i, (item['qty'] as int) - 1); setSheet(() {}); }),
+                                  Padding(padding: const EdgeInsets.symmetric(horizontal: 14),
+                                    child: Text('${item['qty']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800))),
+                                  _QtyButton(icon: Icons.add, isAdd: true, onTap: () {
+                                    final max = item['max_qty'] ?? 999;
+                                    if ((item['qty'] as int) < max) { _updateCartQty(i, (item['qty'] as int) + 1); setSheet(() {}); }
+                                  }),
+                                ]),
+                                const SizedBox(width: 12),
+                                Text(fmt.format(item['total_price']), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 15)),
+                              ]),
                             );
                           },
                         ),
                 ),
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surfaceLight.withOpacity(0.4),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                              Text(fmt.format(cartTotal),
-                                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.secondary)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: _cart.isEmpty ? null : () {
-                              Navigator.pop(ctx);
-                              _showCheckoutDialog();
-                            },
-                            icon: const Icon(Icons.payments_outlined),
-                            label: const Text('Proceed to Checkout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ],
+                SafeArea(child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.3), borderRadius: BorderRadius.circular(14)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                          Text(fmt.format(_cartTotal), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.secondary)),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
+                    const SizedBox(height: 12),
+                    SizedBox(width: double.infinity, height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: _cart.isEmpty ? null : () { Navigator.pop(context); _showCheckoutDialog(); },
+                        icon: const Icon(Icons.payments_rounded),
+                        label: const Text('Checkout', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ]),
+                )),
               ],
             ),
           );
@@ -392,317 +417,262 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildProductCard(dynamic item) {
     final fmt = NumberFormat.currency(symbol: 'K');
-    final filtered = _inventory.where((item) {
-      final q = _searchQuery.toLowerCase();
-      return item['item_name'].toString().toLowerCase().contains(q) ||
-          (item['barcode'] != null && item['barcode'].toString().contains(q));
-    }).toList();
+    final cartItem = _cart.where((c) => c['id'] == item['id']).toList();
+    final cartQty = cartItem.isNotEmpty ? cartItem.first['qty'] as int : 0;
+    final stockQty = (item['quantity'] ?? 0) as int;
+    final price = ((item['unit_price'] ?? item['price'] ?? 0) as num).toDouble();
+    final isOut = stockQty == 0;
 
-    final cartTotal = _cart.fold(0.0, (sum, item) => sum + (item['total_price'] as num).toDouble());
-    final isWide = MediaQuery.of(context).size.width >= 800;
-    final cartCount = _cart.fold(0, (sum, item) => sum + (item['qty'] as int));
-
-    Widget productGrid = _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : filtered.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.search_off, size: 48, color: AppTheme.textSecondary),
-                    const SizedBox(height: 12),
-                    Text(
-                      _searchQuery.isEmpty ? 'No products found' : 'No results for "$_searchQuery"',
-                      style: const TextStyle(color: AppTheme.textSecondary),
-                    ),
-                  ],
+    return GestureDetector(
+      onTap: isOut ? null : () => _addToCart(item),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: cartQty > 0 ? AppTheme.primary : (isOut ? AppTheme.error.withOpacity(0.3) : AppTheme.surfaceLight),
+            width: cartQty > 0 ? 2 : 1,
+          ),
+          boxShadow: [BoxShadow(
+            color: cartQty > 0 ? AppTheme.primary.withOpacity(0.15) : Colors.black.withOpacity(0.08),
+            blurRadius: 10, offset: const Offset(0, 3),
+          )],
+        ),
+        child: Stack(children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isOut ? AppTheme.surfaceLight.withOpacity(0.3) : AppTheme.primary.withOpacity(0.07),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 ),
-              )
-            : GridView.builder(
-                padding: const EdgeInsets.all(16),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: isWide ? 3 : 2,
-                  childAspectRatio: 0.82,
-                  crossAxisSpacing: 14,
-                  mainAxisSpacing: 14,
-                ),
-                itemCount: filtered.length,
-                itemBuilder: (context, index) {
-                  final item = filtered[index];
-                  final inCart = _cart.firstWhere((c) => c['id'] == item['id'], orElse: () => {});
-                  final cartQty = inCart.isNotEmpty ? inCart['qty'] as int : 0;
-                  final isOutOfStock = item['stock_qty'] == 0;
-
-                  return GestureDetector(
-                    onTap: isOutOfStock ? null : () => _addToCart(item),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: cartQty > 0 ? AppTheme.primary.withOpacity(0.5) : AppTheme.surfaceLight,
-                          width: cartQty > 0 ? 2 : 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: cartQty > 0 ? AppTheme.primary.withOpacity(0.1) : Colors.black.withOpacity(0.1),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Stack(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: isOutOfStock
-                                        ? AppTheme.surfaceLight.withOpacity(0.3)
-                                        : AppTheme.primary.withOpacity(0.08),
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-                                  ),
-                                  child: Icon(
-                                    Icons.inventory_2_rounded,
-                                    size: 44,
-                                    color: isOutOfStock ? AppTheme.textSecondary.withOpacity(0.4) : AppTheme.primary.withOpacity(0.6),
-                                  ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item['item_name'],
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                        color: isOutOfStock ? AppTheme.textSecondary : AppTheme.textPrimary,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          fmt.format(item['price']),
-                                          style: const TextStyle(
-                                            color: AppTheme.secondary,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: isOutOfStock
-                                                ? AppTheme.error.withOpacity(0.1)
-                                                : item['stock_qty'] <= 5
-                                                    ? Colors.orange.withOpacity(0.1)
-                                                    : AppTheme.secondary.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Text(
-                                            isOutOfStock ? 'OUT' : 'x${item['stock_qty']}',
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              color: isOutOfStock
-                                                  ? AppTheme.error
-                                                  : item['stock_qty'] <= 5
-                                                      ? Colors.orange
-                                                      : AppTheme.secondary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (cartQty > 0)
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Container(
-                                width: 26,
-                                height: 26,
-                                alignment: Alignment.center,
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '$cartQty',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                child: Icon(Icons.inventory_2_rounded, size: 42,
+                  color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(item['item_name'], style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13,
+                  color: isOut ? AppTheme.textSecondary : AppTheme.textPrimary),
+                  maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 6),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text(fmt.format(price),
+                    style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 14)),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isOut ? AppTheme.error.withOpacity(0.12) :
+                          (stockQty <= 5 ? Colors.orange.withOpacity(0.12) : AppTheme.secondary.withOpacity(0.1)),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  );
-                },
-              );
+                    child: Text(isOut ? 'OUT' : 'x$stockQty',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                        color: isOut ? AppTheme.error : (stockQty <= 5 ? Colors.orange : AppTheme.secondary))),
+                  ),
+                ]),
+              ]),
+            ),
+          ]),
+          if (cartQty > 0) Positioned(top: 8, right: 8,
+            child: Container(width: 26, height: 26, alignment: Alignment.center,
+              decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+              child: Text('$cartQty', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)))),
+          if (isOut) Positioned.fill(child: Container(
+            decoration: BoxDecoration(color: Colors.black.withOpacity(0.35), borderRadius: BorderRadius.circular(16)),
+            alignment: Alignment.center,
+            child: const Text('OUT OF STOCK', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w800)),
+          )),
+        ]),
+      ),
+    );
+  }
 
-    Widget cartPanel = Container(
+  Widget _buildCartPanel() {
+    final fmt = NumberFormat.currency(symbol: 'K');
+    return Container(
       decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(left: BorderSide(color: AppTheme.surfaceLight, width: 1)),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceLight.withOpacity(0.3),
-              border: const Border(bottom: BorderSide(color: AppTheme.surfaceLight, width: 1)),
+      child: Column(children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.25),
+            border: const Border(bottom: BorderSide(color: AppTheme.surfaceLight, width: 1))),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Cart • ${_cartCount} item${_cartCount != 1 ? 's' : ''}',
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+            if (_cart.isNotEmpty)
+              TextButton(onPressed: () => setState(() => _cart.clear()),
+                child: const Text('Clear', style: TextStyle(color: AppTheme.error, fontSize: 12))),
+          ]),
+        ),
+        Expanded(
+          child: _cart.isEmpty
+            ? const Center(child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shopping_cart_outlined, size: 40, color: AppTheme.textSecondary),
+                  SizedBox(height: 8),
+                  Text('Tap items to add', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                ],
+              ))
+            : ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: _cart.length,
+                itemBuilder: (_, i) {
+                  final item = _cart[i];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Row(children: [
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(fmt.format(item['price']), style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                      ])),
+                      Row(children: [
+                        _QtyButton(icon: Icons.remove, onTap: () => _updateCartQty(i, (item['qty'] as int) - 1)),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text('${item['qty']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15))),
+                        _QtyButton(icon: Icons.add, isAdd: true, onTap: () {
+                          final max = item['max_qty'] ?? 999;
+                          if ((item['qty'] as int) < max) _updateCartQty(i, (item['qty'] as int) + 1);
+                        }),
+                      ]),
+                      const SizedBox(width: 8),
+                      Text(fmt.format(item['total_price']),
+                        style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 13)),
+                    ]),
+                  );
+                },
+              ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.surfaceLight))),
+          child: Column(children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              const Text('Total', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+              Text(fmt.format(_cartTotal), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 20)),
+            ]),
+            const SizedBox(height: 12),
+            SizedBox(width: double.infinity, height: 48,
+              child: ElevatedButton.icon(
+                onPressed: (_cart.isEmpty || _isCheckingOut) ? null : _showCheckoutDialog,
+                icon: _isCheckingOut
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.payments_rounded, size: 18),
+                label: Text(_isCheckingOut ? 'Processing...' : 'Checkout',
+                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Current Cart', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                if (_cart.isNotEmpty)
-                  GestureDetector(
-                    onTap: () => setState(() => _cart.clear()),
-                    child: const Text('Clear', style: TextStyle(color: AppTheme.error, fontSize: 13)),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _cart.isEmpty
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined, size: 40, color: AppTheme.textSecondary),
-                        SizedBox(height: 8),
-                        Text('Tap items to add', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: _cart.length,
-                    itemBuilder: (_, i) {
-                      final item = _cart[i];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(item['name'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                  Text(fmt.format(item['price']), style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-                                ],
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: () => _decrementCart(i),
-                                  child: Container(
-                                    width: 26, height: 26,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(6)),
-                                    child: const Icon(Icons.remove, size: 14),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  child: Text('${item['qty']}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    final inv = _inventory.firstWhere((i) => i['id'] == item['id'], orElse: () => null);
-                                    if (inv != null) _addToCart(inv);
-                                  },
-                                  child: Container(
-                                    width: 26, height: 26,
-                                    alignment: Alignment.center,
-                                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.2), borderRadius: BorderRadius.circular(6)),
-                                    child: const Icon(Icons.add, size: 14, color: AppTheme.primary),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 8),
-                            Text(fmt.format(item['total_price']), style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.secondary, fontSize: 13)),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppTheme.surfaceLight, width: 1)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    Text(fmt.format(cartTotal), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppTheme.secondary)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _cart.isEmpty ? null : _showCheckoutDialog,
-                    child: const Text('Checkout', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+          ]),
+        ),
+      ]),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 800;
+    final fmt = NumberFormat.currency(symbol: 'K');
+    final filtered = _filteredInventory;
+
+    Widget productArea = Column(children: [
+      // Category filter chips
+      if (_categories.isNotEmpty)
+        SizedBox(
+          height: 46,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: const Text('All'),
+                  selected: _selectedCategoryId == null,
+                  onSelected: (_) => setState(() => _selectedCategoryId = null),
+                  backgroundColor: AppTheme.surfaceLight,
+                  selectedColor: AppTheme.primary.withOpacity(0.25),
+                  labelStyle: TextStyle(
+                    color: _selectedCategoryId == null ? AppTheme.primary : AppTheme.textSecondary,
+                    fontWeight: _selectedCategoryId == null ? FontWeight.w700 : FontWeight.normal,
+                  ),
+                  side: BorderSide(color: _selectedCategoryId == null ? AppTheme.primary : Colors.transparent),
+                  checkmarkColor: AppTheme.primary,
+                ),
+              ),
+              ..._categories.map((cat) {
+                final id = cat['id'].toString();
+                final selected = _selectedCategoryId == id;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(cat['name']),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _selectedCategoryId = selected ? null : id),
+                    backgroundColor: AppTheme.surfaceLight,
+                    selectedColor: AppTheme.primary.withOpacity(0.25),
+                    labelStyle: TextStyle(
+                      color: selected ? AppTheme.primary : AppTheme.textSecondary,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+                    ),
+                    side: BorderSide(color: selected ? AppTheme.primary : Colors.transparent),
+                    checkmarkColor: AppTheme.primary,
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+
+      // Product grid
+      Expanded(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : filtered.isEmpty
+                ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.search_off_rounded, size: 52, color: AppTheme.textSecondary),
+                    const SizedBox(height: 12),
+                    Text(_searchQuery.isEmpty ? 'No products available' : 'No results for "$_searchQuery"',
+                      style: const TextStyle(color: AppTheme.textSecondary)),
+                  ]))
+                : GridView.builder(
+                    padding: const EdgeInsets.all(14),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: isWide ? 3 : 2,
+                      childAspectRatio: 0.82,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) => _buildProductCard(filtered[i]),
+                  ),
+      ),
+    ]);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Point of Sale', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadInventory),
+          IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _loadData, tooltip: 'Refresh'),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
+          preferredSize: const Size.fromHeight(58),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: const Icon(Icons.search, size: 20),
+                hintText: 'Search products or scan barcode...',
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () => setState(() => _searchQuery = ''),
-                      )
+                    ? IconButton(icon: const Icon(Icons.clear, size: 18), onPressed: () => setState(() => _searchQuery = ''))
                     : null,
               ),
               onChanged: (v) => setState(() => _searchQuery = v),
@@ -712,21 +682,74 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
       body: isWide
           ? Row(children: [
-              Expanded(flex: 2, child: productGrid),
-              SizedBox(width: 340, child: cartPanel),
+              Expanded(flex: 2, child: productArea),
+              SizedBox(width: 320, child: _buildCartPanel()),
             ])
-          : productGrid,
+          : productArea,
       floatingActionButton: !isWide
           ? FloatingActionButton.extended(
               onPressed: _showCartSheet,
-              backgroundColor: AppTheme.primary,
-              icon: const Icon(Icons.shopping_cart_outlined),
+              backgroundColor: _cart.isEmpty ? AppTheme.surfaceLight : AppTheme.primary,
+              icon: const Icon(Icons.shopping_cart_rounded),
               label: Text(
-                cartCount > 0 ? '$cartCount item${cartCount > 1 ? 's' : ''} • ${fmt.format(cartTotal)}' : 'Cart',
+                _cartCount > 0 ? '$_cartCount item${_cartCount > 1 ? 's' : ''} • ${fmt.format(_cartTotal)}' : 'Cart',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             )
           : null,
+    );
+  }
+}
+
+// Helper widgets
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool isAdd;
+  const _QtyButton({required this.icon, required this.onTap, this.isAdd = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28, height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isAdd ? AppTheme.primary.withOpacity(0.2) : AppTheme.surfaceLight,
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Icon(icon, size: 15, color: isAdd ? AppTheme.primary : AppTheme.textPrimary),
+      ),
+    );
+  }
+}
+
+class _PaymentButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _PaymentButton({required this.icon, required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(label, textAlign: TextAlign.center,
+            style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 14)),
+        ]),
+      ),
     );
   }
 }

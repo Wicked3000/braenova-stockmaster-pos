@@ -264,7 +264,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                   ),
                                 ),
                                 Text(
-                                  fmt.format(sale['total_amount'] ?? 0),
+                                  fmt.format(sale['total_price'] ?? 0),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 16,
