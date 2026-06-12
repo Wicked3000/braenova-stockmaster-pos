@@ -445,12 +445,19 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(
               child: Container(
+                clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
                   color: isOut ? AppTheme.surfaceLight.withOpacity(0.3) : AppTheme.primary.withOpacity(0.07),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 ),
-                child: Icon(Icons.inventory_2_rounded, size: 42,
-                  color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
+                child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                    ? Image.network(
+                        item['image_url'],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 42, color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
+                      )
+                    : Icon(Icons.inventory_2_rounded, size: 42,
+                        color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
               ),
             ),
             Padding(

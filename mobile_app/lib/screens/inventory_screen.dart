@@ -137,6 +137,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final qtyCtrl = TextEditingController(text: existing?['quantity']?.toString() ?? existing?['stock_qty']?.toString() ?? '0');
     final threshCtrl = TextEditingController(text: existing?['min_threshold']?.toString() ?? existing?['low_stock_threshold']?.toString() ?? '5');
     final barcodeCtrl = TextEditingController(text: existing?['barcode'] ?? '');
+    final imageUrlCtrl = TextEditingController(text: existing?['image_url'] ?? '');
     String? selectedCatId = existing?['category_id']?.toString();
     final formKey = GlobalKey<FormState>();
     bool isSaving = false;
@@ -224,6 +225,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                   controller: barcodeCtrl,
                   decoration: const InputDecoration(labelText: 'Barcode (optional)', prefixIcon: Icon(Icons.qr_code_rounded)),
                 ),
+                const SizedBox(height: 14),
+                
+                // Image URL
+                TextFormField(
+                  controller: imageUrlCtrl,
+                  decoration: const InputDecoration(labelText: 'Image URL (optional)', prefixIcon: Icon(Icons.image_outlined)),
+                ),
                 const SizedBox(height: 28),
 
                 // Save button
@@ -243,6 +251,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           'low_stock_threshold': int.tryParse(threshCtrl.text) ?? 5,
                           'barcode': barcodeCtrl.text.trim(),
                           'category_id': selectedCatId,
+                          'image_url': imageUrlCtrl.text.trim(),
                         };
                         if (existing == null) {
                           await client.addProduct(data);
@@ -407,11 +416,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           ),
           child: Row(children: [
             Container(width: 50, height: 50,
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: isOut ? AppTheme.error.withOpacity(0.08) : AppTheme.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.inventory_2_rounded,
-                color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26)),
+              child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
+                  ? Image.network(
+                      item['image_url'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
+                    )
+                  : Icon(Icons.inventory_2_rounded,
+                      color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26)),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(item['item_name'],

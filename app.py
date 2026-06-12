@@ -1232,13 +1232,14 @@ def api_inventory():
         cost = float(data.get('cost', 0.0))
         category = data.get('category_id') or 'General'
         barcode = data.get('barcode')
+        image_url = data.get('image_url')
         
         if not name or price <= 0:
             return jsonify({'success': False, 'message': 'Invalid name or price'}), 400
             
         add_inventory_item(
             name=name, qty=qty, threshold=threshold, price=price, 
-            shop_id=shop_id, cost=cost, category=category, barcode=barcode
+            shop_id=shop_id, cost=cost, category=category, barcode=barcode, image_url=image_url
         )
         return jsonify({'success': True, 'message': 'Item added'})
 
@@ -1262,6 +1263,7 @@ def api_update_inventory(item_id):
     if 'cost' in data: kwargs['cost'] = float(data['cost'])
     if 'category_id' in data: kwargs['category'] = data['category_id']
     if 'barcode' in data: kwargs['barcode'] = data['barcode']
+    if 'image_url' in data: kwargs['image_url'] = data['image_url']
     
     update_inventory_item(item_id=item_id, shop_id=shop_id, **kwargs)
     return jsonify({'success': True, 'message': 'Item updated'})
