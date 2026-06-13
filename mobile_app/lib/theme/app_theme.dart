@@ -63,7 +63,7 @@ class AppTheme {
         labelStyle: const TextStyle(color: textSecondary),
         hintStyle: const TextStyle(color: textSecondary),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: const CardTheme(
         color: surface,
         elevation: 8,
       ),
