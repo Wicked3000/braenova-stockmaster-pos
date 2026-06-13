@@ -48,11 +48,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LOG_CONTENT=""
+          echo "### Build Error Log Summary" > error_summary.log
+          echo "" >> error_summary.log
+          echo "#### pub_get.log" >> error_summary.log
+          echo "\`\`\`" >> error_summary.log
           if [ -f mobile_app/pub_get.log ]; then
-            LOG_CONTENT="### pub_get.log"$'\n\n'"\$(cat mobile_app/pub_get.log)"$'\n\n'
+            cat mobile_app/pub_get.log >> error_summary.log
+          else
+            echo "Not found" >> error_summary.log
           fi
+          echo "\`\`\`" >> error_summary.log
+          echo "" >> error_summary.log
+          echo "#### build_web.log" >> error_summary.log
+          echo "\`\`\`" >> error_summary.log
           if [ -f mobile_app/build_web.log ]; then
-            LOG_CONTENT="\${LOG_CONTENT}### build_web.log"$'\n\n'"\$(cat mobile_app/build_web.log)"
+            cat mobile_app/build_web.log >> error_summary.log
+          else
+            echo "Not found" >> error_summary.log
           fi
-          gh issue create --title "Flutter Build Failed" --body "\$LOG_CONTENT" || true
+          echo "\`\`\`" >> error_summary.log
+          gh issue create --title "Flutter Build Failed Details" --body-file error_summary.log || true
