@@ -25,7 +25,17 @@ jobs:
 
       - name: Install dependencies
         working-directory: mobile_app
-        run: flutter pub get
+        run: flutter pub get > pub_get.log 2>&1 || (cat pub_get.log && exit 1)
+
+      - name: Save log on failure
+        if: failure()
+        run: |
+          cp mobile_app/pub_get.log static/flutter/pub_get.log
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add static/flutter/pub_get.log
+          git commit -m "chore: save pub get log on failure"
+          git push
 
       - name: Build Flutter Web
         working-directory: mobile_app
