@@ -268,8 +268,8 @@ def delete_inventory_item(item_id, shop_id):
 def add_sale(inventory_id, qty_sold, total_price, shop_id, cashier_id=None, is_dinau=False, customer_name=None, payment_method='cash', receipt_id=None, shift_id=None):
     res = supabase.table('inventory').select('cost_price', 'quantity').eq('id', inventory_id).eq('shop_id', shop_id).execute()
     item = res.data[0] if res.data else None
-    cost_price = item.get('cost_price') or 0.0
-    cost_at_sale = (float(cost_price) * int(qty_sold)) if item else 0.0
+    cost_price = float(item.get('cost_price') or 0.0) if item else 0.0
+    cost_at_sale = cost_price * int(qty_sold)
     
     sale_data = {
         "inventory_id": inventory_id,

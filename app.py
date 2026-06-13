@@ -1402,7 +1402,10 @@ def api_checkout():
         })
             
     except Exception as e:
-        return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
+        import traceback
+        tb = traceback.format_exc()
+        print(tb)
+        return jsonify({'success': False, 'message': f'Server Error: {str(e)}\n\nTraceback:\n{tb}'}), 200
 
 @app.route('/api/v1/sales', methods=['GET'])
 @jwt_required
