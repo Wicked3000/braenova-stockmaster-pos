@@ -108,16 +108,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   Future<void> _deleteProduct(dynamic item) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Product', style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text('Delete "${item['item_name']}"? This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false),
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Delete'),
           ),
@@ -398,15 +398,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
   Future<void> _deleteCategory(dynamic cat) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Category', style: TextStyle(fontWeight: FontWeight.w700)),
         content: Text('Delete category "${cat['name']}"?\nAll products in this category will become Uncategorized.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
             child: const Text('Delete'),
           ),

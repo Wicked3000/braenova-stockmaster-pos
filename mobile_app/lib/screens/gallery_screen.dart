@@ -33,7 +33,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
   void _showImage(String url, String title) {
     showDialog(
       context: context,
-      builder: (_) => Dialog(
+      builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(10),
         child: Column(
@@ -61,7 +61,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close, color: Colors.white, shadows: [Shadow(blurRadius: 10, color: Colors.black)]),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(ctx),
                 ),
               ],
             ),

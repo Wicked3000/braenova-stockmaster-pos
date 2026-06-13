@@ -319,7 +319,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => Padding(
+      builder: (ctx) => Padding(
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -342,7 +342,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       label: 'Cash',
                       color: AppTheme.secondary,
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(ctx);
                         _showCashDialog();
                       },
                     ),
@@ -354,7 +354,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       label: 'Mobile Banking',
                       color: AppTheme.primary,
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(ctx);
                         _checkout('mobile');
                       },
                     ),
@@ -370,7 +370,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       label: 'Internet Banking',
                       color: AppTheme.primary,
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(ctx);
                         _checkout('card');
                       },
                     ),
@@ -382,7 +382,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       label: 'Dinau\n(Store Credit)',
                       color: AppTheme.error,
                       onTap: () {
-                        Navigator.pop(context);
+                        Navigator.pop(ctx);
                         _showDinauDialog();
                       },
                     ),
@@ -391,7 +391,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(ctx),
                 child: const Center(child: Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
               ),
             ],
@@ -507,13 +507,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
               if (nameController.text.trim().isEmpty) return;
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               _checkout('dinau', customerName: nameController.text.trim());
             },
             child: const Text('Confirm Credit Sale'),
@@ -838,7 +838,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   
   void _showOpenShiftDialog() {
     final floatCtrl = TextEditingController(text: '0.00');
-    showDialog(context: context, barrierDismissible: false, builder: (_) => AlertDialog(
+    showDialog(context: context, barrierDismissible: false, builder: (ctx) => AlertDialog(
       title: const Text('Open Register Shift'),
       content: TextField(
         controller: floatCtrl,
@@ -848,7 +848,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       actions: [
         ElevatedButton(onPressed: () {
           final amt = double.tryParse(floatCtrl.text) ?? 0.0;
-          Navigator.pop(context);
+          Navigator.pop(ctx);
           _openShift(amt);
         }, child: const Text('Open Shift'))
       ],
@@ -857,7 +857,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   void _showCloseShiftDialog() {
     final cashCtrl = TextEditingController(text: '0.00');
-    showDialog(context: context, builder: (_) => AlertDialog(
+    showDialog(context: context, builder: (ctx) => AlertDialog(
       title: const Text('Close Register Shift'),
       content: TextField(
         controller: cashCtrl,
@@ -865,12 +865,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         decoration: const InputDecoration(labelText: 'Actual Cash in Drawer (K)', prefixText: 'K '),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
           onPressed: () {
           final amt = double.tryParse(cashCtrl.text) ?? 0.0;
-          Navigator.pop(context);
+          Navigator.pop(ctx);
           _closeShift(amt);
         }, child: const Text('Close Shift'))
       ],

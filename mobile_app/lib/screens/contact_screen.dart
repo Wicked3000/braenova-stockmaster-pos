@@ -78,7 +78,7 @@ class _ContactScreenState extends State<ContactScreen> {
 
       showDialog(
         context: context,
-        builder: (_) => AlertDialog(
+        builder: (ctx) => AlertDialog(
           title: const Text('Enquiry Submitted'),
           content: Text(
             _isLoggedIn
@@ -87,7 +87,7 @@ class _ContactScreenState extends State<ContactScreen> {
           ),
           actions: [
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(ctx),
               child: const Text('Done'),
             ),
           ],
