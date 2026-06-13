@@ -103,16 +103,18 @@ class _MainLayoutState extends State<MainLayout> {
           ],
         ),
         child: SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: List.generate(_labels.length, (index) {
                 final isSelected = _currentIndex == index;
                 return GestureDetector(
                   onTap: () => _onTap(index),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,9 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _summaryData;
   List<dynamic> _recentSales = [];
+  List<dynamic> _chartData = [];
+  List<dynamic> _hourlyData = [];
+  List<dynamic> _catDist = [];
   bool _isLoading = true;
   String _role = 'cashier';
   String _plan = 'starter';
@@ -48,6 +52,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         setState(() {
           if (results[0].data['success']) {
             _summaryData = results[0].data['data'];
+            _chartData = results[0].data['chart_data'] ?? [];
+            _hourlyData = results[0].data['hourly_data'] ?? [];
+            _catDist = results[0].data['cat_dist'] ?? [];
           }
           if (results[1].data['success']) {
             final allSales = results[1].data['data'] as List<dynamic>;
@@ -118,6 +125,113 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  Widget _buildCharts() {
+    if (_chartData.isEmpty && _hourlyData.isEmpty && _catDist.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_chartData.isNotEmpty) ...[
+          const Text('Weekly Revenue Trend', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textSecondary)),
+          const SizedBox(height: 12),
+          Container(
+            height: 180,
+            padding: const EdgeInsets.fromLTRB(4, 16, 16, 4),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.surfaceLight),
+            ),
+            child: LineChart(
+              LineChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: _chartData.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['total'] ?? 0).toDouble())).toList(),
+                    isCurved: true,
+                    color: AppTheme.primary,
+                    barWidth: 3,
+                    belowBarData: BarAreaData(show: true, color: AppTheme.primary.withOpacity(0.15)),
+                    dotData: const FlDotData(show: true),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (_hourlyData.isNotEmpty) ...[
+          const Text('Peak Hours (Today)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textSecondary)),
+          const SizedBox(height: 12),
+          Container(
+            height: 160,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.surfaceLight),
+            ),
+            child: BarChart(
+              BarChartData(
+                gridData: const FlGridData(show: false),
+                titlesData: const FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                barGroups: _hourlyData.asMap().entries.map((e) => BarChartGroupData(
+                  x: e.key,
+                  barRods: [BarChartRodData(toY: (e.value['total'] ?? 0).toDouble(), color: Colors.amber, width: 12, borderRadius: BorderRadius.circular(4))],
+                )).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (_catDist.isNotEmpty) ...[
+          const Text('Sales by Category', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppTheme.textSecondary)),
+          const SizedBox(height: 12),
+          Container(
+            height: 220,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.surfaceLight),
+            ),
+            child: PieChart(
+              PieChartData(
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+                sections: _catDist.asMap().entries.map((e) {
+                  final index = e.key;
+                  final category = e.value['category'] ?? 'Unknown';
+                  final total = (e.value['total'] ?? 0).toDouble();
+                  final totalSum = _catDist.fold(0.0, (sum, item) => sum + (item['total'] ?? 0));
+                  final percent = totalSum > 0 ? (total / totalSum * 100) : 0;
+                  final colors = [AppTheme.primary, AppTheme.secondary, Colors.amber, Colors.green, Colors.purple, Colors.orange];
+                  return PieChartSectionData(
+                    color: colors[index % colors.length],
+                    value: total,
+                    title: '${percent.toStringAsFixed(1)}%',
+                    radius: 60,
+                    titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                    badgeWidget: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(4)),
+                      child: Text(category, style: const TextStyle(fontSize: 10, color: Colors.white)),
+                    ),
+                    badgePositionPercentageOffset: 1.2,
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat.currency(symbol: 'K');
@@ -128,8 +242,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         title: Image.asset(
           'assets/images/logo.png',
-          height: 32,
-          errorBuilder: (_, __, ___) => const Text('StockMaster'),
+          height: 56,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => const Text('StockMaster', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
         ),
         centerTitle: false,
         actions: [
@@ -200,6 +315,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ],
                     ),
                     const SizedBox(height: 28),
+
+                    _buildCharts(),
 
                     // Recent Sales
                     Row(

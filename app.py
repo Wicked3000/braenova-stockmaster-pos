@@ -1298,7 +1298,17 @@ def api_dashboard_summary():
     if plan == 'starter':
         summary.pop('total_profit', None)
         
-    return jsonify({'success': True, 'data': summary})
+    chart_data = get_daily_sales_chart(shop_id)
+    hourly_data = get_hourly_sales_today(shop_id)
+    cat_dist = get_category_sales_distribution(shop_id)
+        
+    return jsonify({
+        'success': True, 
+        'data': summary,
+        'chart_data': [dict(d) for d in chart_data] if chart_data else [],
+        'hourly_data': [dict(h) for h in hourly_data] if hourly_data else [],
+        'cat_dist': [dict(c) for c in cat_dist] if cat_dist else []
+    })
 
 @app.route('/api/v1/dinau', methods=['GET'])
 @jwt_required
