@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Warehouse | StockMasta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+        .app-header { background: #161b22; padding: 15px 20px; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .h4-title { margin: 0; font-weight: 700; color: #58a6ff; letter-spacing: -0.5px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #161b22; border-top: 1px solid #30363d; display: flex; justify-content: space-around; padding: 12px 0; z-index: 1000; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        .nav-btn { color: #8b949e; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; font-weight: 500; transition: color 0.2s; }
+        .nav-btn.active { color: #58a6ff; }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 2px; }
+        .content-area { padding: 20px; padding-bottom: 100px; max-width: 800px; margin: 0 auto; }
+        
+        .stock-card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .stock-info h5 { margin: 0 0 5px 0; font-weight: 600; color: #fff; }
+        .stock-meta { font-size: 0.85rem; color: #8b949e; }
+        .stock-qty { font-size: 1.5rem; font-weight: 800; color: #58a6ff; text-align: right; }
+        .stock-cost { font-size: 0.8rem; color: #2ea043; }
+        
+        .btn-action { padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; }
+        .btn-transfer { background: #a371f7; color: #fff; border: none; }
+        .btn-add { background: #238636; color: #fff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: 600; }
+        
+        /* Modal Styles */
+        .modal-content { background: #161b22; border: 1px solid #30363d; color: #c9d1d9; border-radius: 16px; }
+        .modal-header { border-bottom: 1px solid #30363d; }
+        .modal-footer { border-top: 1px solid #30363d; }
+        .form-control, .form-select { background: #0d1117; border: 1px solid #30363d; color: #c9d1d9; border-radius: 8px; }
+        .form-control:focus, .form-select:focus { background: #0d1117; border-color: #58a6ff; color: #fff; box-shadow: 0 0 0 0.25rem rgba(88, 166, 255, 0.25); }
+        .form-label { font-size: 0.85rem; font-weight: 600; color: #8b949e; margin-bottom: 4px; }
+        
+        /* Log Table */
+        .log-table-wrap { background: #161b22; border: 1px solid #30363d; border-radius: 14px; overflow: hidden; }
+        .log-table { width: 100%; border-collapse: collapse; margin: 0; }
+        .log-table thead th { color: #8b949e; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 12px 16px; border-bottom: 1px solid #30363d; background: #0d1117; }
+        .log-table thead th:last-child { text-align: right; }
+        .log-table tbody tr { transition: background 0.15s; }
+        .log-table tbody tr:hover { background: rgba(88,166,255,0.05); }
+        .log-table td { color: #c9d1d9; font-size: 0.875rem; padding: 12px 16px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+        .log-table tbody tr:last-child td { border-bottom: none; }
+        .log-table .td-date { color: #8b949e; font-size: 0.82rem; white-space: nowrap; }
+        .log-table .td-qty { text-align: right; font-weight: 700; font-size: 1rem; color: #fff; }
+        .log-table .td-del { text-align: right; width: 40px; }
+        .btn-del-log { background: none; border: none; color: #8b949e; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: color 0.2s, background 0.2s; line-height: 1; }
+        .btn-del-log:hover { color: #f85149; background: rgba(248,81,73,0.12); }
+        .log-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+        .btn-export { display: inline-flex; align-items: center; gap: 6px; background: #238636; color: #fff; border: none; border-radius: 20px; padding: 7px 16px; font-size: 0.82rem; font-weight: 700; cursor: pointer; text-decoration: none; transition: background 0.2s; }
+        .btn-export:hover { background: #2ea043; color: #fff; }
+        /* Badge pill variants */
+        .badge-log { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.03em; }
+        .badge-in-new { background: rgba(56,189,170,0.15); color: #38bdaa; border: 1px solid #38bdaa; }
+        .badge-in { background: rgba(46,160,67,0.15); color: #3fb950; border: 1px solid #2ea043; }
+        .badge-out { background: rgba(210,153,34,0.15); color: #e3b341; border: 1px solid #d29922; }
+        
+        .nav-pills .nav-link { color: #8b949e; border-radius: 20px; padding: 8px 20px; margin-right: 10px; font-weight: 600; font-size: 0.9rem; }
+        .nav-pills .nav-link.active { background-color: #58a6ff; color: #fff; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h4 class="h4-title"><i class="bi bi-boxes"></i> Warehouse</h4>
+        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal"><i class="bi bi-plus-lg"></i> Bulk Item</button>
+    </header>
+
+    <div class="content-area">
+        {% include 'partials/flash_messages.html' ignore missing %}
+        
+        <ul class="nav nav-pills mb-4" id="warehouseTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="stock-tab" data-bs-toggle="pill" data-bs-target="#stock" type="button" role="tab">Current Stock</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="logs-tab" data-bs-toggle="pill" data-bs-target="#logs" type="button" role="tab">Movement Logs</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="warehouseTabsContent">
+            <!-- STOCK TAB -->
+            <div class="tab-pane fade show active" id="stock" role="tabpanel">
+                {% if not inventory %}
+                <div class="text-center mt-5 text-muted">
+                    <i class="bi bi-box2" style="font-size: 3rem;"></i>
+                    <p class="mt-3">Warehouse is empty. Add bulk stock.</p>
+                </div>
+                {% else %}
+                    {% for item in inventory %}
+                    <div class="stock-card">
+                        <div class="stock-info">
+                            <h5>{{ item.item_name }}</h5>
+                            <div class="stock-meta">Supplier: {{ item.supplier_name or 'N/A' }}</div>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="openRestock({{ item.id }}, '{{ item.item_name | replace("'", "\'") }}')"><i class="bi bi-box-arrow-in-down"></i> Restock</button>
+                                <button class="btn btn-sm btn-transfer" onclick="openTransfer({{ item.id }}, '{{ item.item_name | replace("'", "\'") }}', {{ item.quantity }})"><i class="bi bi-shop"></i> To Shop</button>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column align-items-end">
+                            <div class="stock-qty">{{ item.quantity }}</div>
+                            <div class="stock-cost">Cost: K{{ "%.2f"|format(item.cost_price|float) }}</div>
+                            <form action="/warehouse/delete/{{ item.id }}" method="POST" class="mt-2" id="del-item-form-{{ item.id }}">
+                                <button type="button" class="btn btn-sm text-danger border-0 p-0" onclick="openDeleteModal('/warehouse/delete/{{ item.id }}', 'Remove this warehouse item and all its data?')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            
+            <!-- LOGS TAB -->
+            <div class="tab-pane fade" id="logs" role="tabpanel">
+                {% if not logs %}
+                <div class="text-center mt-5 text-muted">No warehouse movements yet.</div>
+                {% else %}
+                <div class="log-toolbar">
+                    <a href="/warehouse/logs/export" class="btn-export">
+                        <i class="bi bi-download"></i> Export CSV
+                    </a>
+                </div>
+                <div class="log-table-wrap">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Action</th>
+                                <th>Qty</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td class="td-date">{{ log.date_moved.strftime('%d/%m %H:%M') if log.date_moved else 'Unknown' }}</td>
+                                <td>{{ log.item_name }}</td>
+                                <td>
+                                    {% if 'NEW' in log.movement_type %}
+                                    <span class="badge-log badge-in-new">{{ log.movement_type }}</span>
+                                    {% elif 'IN' in log.movement_type %}
+                                    <span class="badge-log badge-in">{{ log.movement_type }}</span>
+                                    {% else %}
+                                    <span class="badge-log badge-out">{{ log.movement_type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="td-qty">{{ log.quantity_moved }}</td>
+                                <td class="td-del">
+                                    <button type="button" class="btn-del-log" title="Delete log"
+                                        onclick="openDeleteModal('/warehouse/log/delete/{{ log.id }}', 'Delete this log entry? This cannot be undone.')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-bar">
+        {% if session.role in ['owner', 'manager'] %}
+        <a href="/dashboard" class="nav-btn"><span class="nav-icon"><i class="bi bi-house"></i></span>Home</a>
+        {% endif %}
+        <a href="/sales-log" class="nav-btn"><span class="nav-icon"><i class="bi bi-receipt"></i></span>Log</a>
+        {% if session.role in ['owner', 'manager'] %}
+        <a href="/inventory" class="nav-btn"><span class="nav-icon"><i class="bi bi-box-seam"></i></span>Stock</a>
+        <a href="/warehouse" class="nav-btn active"><span class="nav-icon"><i class="bi bi-boxes"></i></span>Bulk</a>
+        <a href="/reports" class="nav-btn"><span class="nav-icon"><i class="bi bi-graph-down"></i></span>Reports</a>
+        {% endif %}
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form action="/warehouse/add" method="POST">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Add Bulk Item</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <div class="mb-3">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="item_name" required>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label">Initial Qty</label>
+                                <input type="number" class="form-control" name="quantity" required min="0">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Cost Price (K)</label>
+                                <input type="number" step="0.01" class="form-control" name="cost_price" required min="0">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Supplier Name (Optional)</label>
+                            <input type="text" class="form-control" name="supplier_name">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">Add to Warehouse</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Restock Modal -->
+    <div class="modal fade" id="restockModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form action="/warehouse/restock" method="POST">
+                    <input type="hidden" name="item_id" id="restock_item_id">
+                    <input type="hidden" name="item_name" id="restock_item_name_hidden">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Restock Warehouse</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <p class="text-muted small mb-3">Adding bulk boxes to <strong id="restock_item_name" class="text-white"></strong></p>
+                        <div class="mb-3">
+                            <label class="form-label">Quantity to Add</label>
+                            <input type="number" class="form-control form-control-lg" name="added_qty" required min="1">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="submit" class="btn btn-success w-100 fw-bold">Restock</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transfer Modal -->
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form action="/warehouse/transfer" method="POST">
+                    <input type="hidden" name="warehouse_item_id" id="transfer_item_id">
+                    <input type="hidden" name="item_name" id="transfer_item_name_hidden">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Transfer to Shop</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <p class="text-muted small mb-3">Move stock from warehouse to shop floor. <br>Item: <strong id="transfer_item_name" class="text-white"></strong> (Max: <span id="transfer_max"></span>)</p>
+                        <div class="mb-3">
+                            <label class="form-label">Transfer Quantity</label>
+                            <input type="number" class="form-control form-control-lg" name="transfer_qty" id="transfer_qty" required min="1">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="submit" class="btn btn-transfer w-100 fw-bold"><i class="bi bi-shop"></i> Move to Shop</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✦ Custom Delete Confirmation Modal ✦ -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 340px;">
+            <div class="modal-content" style="background: #161b22; border: 1px solid #30363d; border-radius: 18px; overflow: hidden;">
+                <div class="modal-body text-center px-4 pt-4 pb-2">
+                    <div style="width:52px;height:52px;background:rgba(248,81,73,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+                        <i class="bi bi-trash" style="font-size:1.5rem;color:#f85149;"></i>
+                    </div>
+                    <h6 class="fw-bold mb-1" style="color:#fff;">Confirm Delete</h6>
+                    <p id="deleteModalMsg" class="text-muted small mb-0">Are you sure?</p>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4 pt-2 gap-2 d-flex">
+                    <button type="button" class="btn fw-600 flex-fill" style="background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:10px;" data-bs-dismiss="modal">Cancel</button>
+                    <form id="deleteConfirmForm" method="POST" class="flex-fill m-0">
+                        <button type="submit" class="btn fw-bold w-100" style="background:#da3633;color:#fff;border:none;border-radius:10px;">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Custom delete modal
+        function openDeleteModal(action, message) {
+            document.getElementById('deleteConfirmForm').action = action;
+            document.getElementById('deleteModalMsg').textContent = message;
+            new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+        }
+
+        function openRestock(id, name) {
+            document.getElementById('restock_item_id').value = id;
+            document.getElementById('restock_item_name_hidden').value = name;
+            document.getElementById('restock_item_name').innerText = name;
+            new bootstrap.Modal(document.getElementById('restockModal')).show();
+        }
+        
+        function openTransfer(id, name, maxQty) {
+            document.getElementById('transfer_item_id').value = id;
+            document.getElementById('transfer_item_name_hidden').value = name;
+            document.getElementById('transfer_item_name').innerText = name;
+            document.getElementById('transfer_max').innerText = maxQty;
+            document.getElementById('transfer_qty').max = maxQty;
+            new bootstrap.Modal(document.getElementById('transferModal')).show();
+        }
+    </script>
+</body>
+</html>

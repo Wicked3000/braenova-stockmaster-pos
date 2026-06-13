@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280">
+    <title>Super Admin | StockMasta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        :root {
+            --bg-color: hsl(240, 10%, 4%);
+            --card-bg: rgba(20, 20, 25, 0.6);
+            --card-border: rgba(255, 255, 255, 0.04);
+            --neon-magenta: hsl(328, 96%, 54%);
+            --neon-cyan: hsl(200, 97%, 43%);
+            --neon-green: hsl(145, 63%, 49%);
+            --neon-yellow: hsl(45, 98%, 55%);
+            --glow-magenta: 0 0 20px rgba(249, 26, 142, 0.15);
+            --glow-cyan: 0 0 20px rgba(2, 139, 217, 0.15);
+            --glow-green: 0 0 20px rgba(40, 167, 69, 0.15);
+        }
+
+        body {
+            min-width: 1280px;
+            overflow-x: auto;
+            background-color: var(--bg-color);
+            color: #f1f3f5;
+            font-family: 'Outfit', sans-serif;
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(249, 26, 142, 0.05) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(2, 139, 217, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            padding-bottom: 60px;
+        }
+
+        .navbar-custom {
+            background: rgba(10, 10, 12, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 18px 24px;
+        }
+
+        .brand-text {
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .brand-text span {
+            color: var(--neon-magenta);
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            font-weight: 800;
+            display: block;
+            margin-top: 4px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-glow-magenta {
+            border-bottom: 3px solid var(--neon-magenta);
+            box-shadow: var(--glow-magenta);
+        }
+
+        .stat-glow-cyan {
+            border-bottom: 3px solid var(--neon-cyan);
+            box-shadow: var(--glow-cyan);
+        }
+
+        .stat-glow-green {
+            border-bottom: 3px solid var(--neon-green);
+            box-shadow: var(--glow-green);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #8a8d90;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .status-pill {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 5px 12px;
+            border-radius: 30px;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .status-approved {
+            background: rgba(46, 213, 115, 0.1);
+            color: var(--neon-green);
+            border: 1px solid rgba(46, 213, 115, 0.2);
+            box-shadow: 0 0 15px rgba(46, 213, 115, 0.05);
+        }
+
+        .status-pending {
+            background: rgba(252, 193, 30, 0.1);
+            color: var(--neon-yellow);
+            border: 1px solid rgba(252, 193, 30, 0.2);
+        }
+
+        .status-expired {
+            background: rgba(255, 71, 87, 0.1);
+            color: hsl(354, 100%, 64%);
+            border: 1px solid rgba(255, 71, 87, 0.2);
+        }
+
+        .table-custom th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #8a8d90;
+            font-weight: 700;
+            border-bottom: 2px solid var(--card-border);
+            padding: 16px;
+        }
+
+        .table-custom td {
+            padding: 16px;
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .shop-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .shop-subtext {
+            font-size: 0.8rem;
+            color: #8a8d90;
+        }
+
+        .form-control-custom {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--card-border) !important;
+            border-radius: 12px !important;
+            color: #fff !important;
+            padding: 10px 16px !important;
+            font-size: 0.9rem !important;
+        }
+
+        .form-control-custom:focus {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 10px rgba(2, 139, 217, 0.2) !important;
+        }
+
+        .btn-action {
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary-glow {
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, hsl(197, 98%, 48%) 100%);
+            border: none;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(2, 139, 217, 0.3);
+        }
+
+        .btn-primary-glow:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(2, 139, 217, 0.5);
+            color: #fff;
+        }
+
+        .btn-outline-custom {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: #cbd5e1;
+        }
+
+        .btn-outline-custom:hover {
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        /* Modals */
+        .modal-content-custom {
+            background: hsl(240, 10%, 6%) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            border-radius: 24px !important;
+            padding: 16px;
+        }
+
+        .modal-header-custom {
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 16px;
+        }
+
+        .modal-footer-custom {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 16px;
+        }
+
+        .dropdown-menu-custom {
+            background: hsl(240, 10%, 8%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+        }
+
+        .dropdown-item-custom {
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item-custom:hover {
+            background: rgba(255,255,255,0.04);
+            color: #fff;
+        }
+
+        .pulse-pending {
+            width: 8px;
+            height: 8px;
+            background-color: var(--neon-yellow);
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            animation: pulse-ring 1.5s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0.95); opacity: 1; }
+        }
+
+        /* Custom Map Shop Location Markers */
+        .custom-shop-icon {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .shop-location-pin {
+            width: 44px !important;
+            height: 44px !important;
+            max-width: 44px !important;
+            max-height: 44px !important;
+            object-fit: contain !important;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            display: block;
+        }
+
+        .shop-location-pin:hover {
+            transform: scale(1.2) translateY(-2px);
+        }
+
+        .active-pin {
+            filter: hue-rotate(130deg) brightness(1.1) saturate(1.2) drop-shadow(0 2px 5px rgba(0,0,0,0.4)) !important;
+        }
+
+        .inactive-pin {
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)) !important;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+<nav class="navbar navbar-custom sticky-top mb-4">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <span style="font-weight: 900; font-size: 1.8rem; color: #fff; letter-spacing: -1px; text-transform: uppercase;">SUPER</span>
+            <div style="border-left: 2px solid var(--neon-magenta); padding-left: 10px; display: flex; flex-direction: column; justify-content: center; line-height: 1.1;">
+                <span style="font-weight: 800; font-size: 1rem; color: #fff; letter-spacing: 0.5px; text-transform: uppercase;">ADMIN</span>
+                <span style="font-size: 0.7rem; color: var(--neon-cyan); font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">STOCKMASTA StockMasta</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <button class="btn btn-action btn-outline-custom rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newNoticeModal"><i class="bi bi-megaphone"></i> Post Notice</button>
+            <span class="text-muted small d-none d-md-inline">Welcome, <strong>@{{ session.username }}</strong></span>
+            <a href="/logout" class="btn btn-action btn-outline-custom rounded-pill px-4">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'info' }} alert-dismissible fade show border-0 rounded-3 mb-4 p-3" style="font-size: 0.9rem; background: rgba(255,255,255,0.03); border-left: 4px solid {{ 'var(--neon-green)' if category == 'success' else 'var(--neon-magenta)' if category == 'error' else 'var(--neon-cyan)' }} !important;">
+                    <strong class="text-white">{{ category|upper }}:</strong> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Top Stats Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="glass-card stat-glow-magenta text-center">
+                <div class="stat-label">Total Shops</div>
+                {% set undeleted_shops = shops | rejectattr("payment_status", "equalto", "d") | list %}
+                <div class="stat-value" id="count-total">{{ "{:,.0f}".format(undeleted_shops|length) }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="glass-card stat-glow-green text-center">
+                <div class="stat-label">Active Shops</div>
+                <div class="stat-value" id="count-active" style="color: var(--neon-green);">{{ "{:,.0f}".format(shops|selectattr("is_active", "equalto", true)|list|length) }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="glass-card stat-glow-cyan text-center">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value" id="count-pending" style="color: var(--neon-yellow);">
+                    {% set pending_count = namespace(val=0) %}
+                    {% set pending_delete_count = namespace(val=0) %}
+                    {% set active_shops = namespace(val=0) %}
+                    {% set deleted_shops = namespace(val=0) %}
+                    {% for shop in shops %}
+                        {% if shop.payment_status == 'p' %}
+                            {% set pending_count.val = pending_count.val + 1 %}
+                        {% elif shop.payment_status == 'r' %}
+                            {% set pending_delete_count.val = pending_delete_count.val + 1 %}
+                        {% elif shop.payment_status == 'd' %}
+                            {% set deleted_shops.val = deleted_shops.val + 1 %}
+                        {% else %}
+                            {% set active_shops.val = active_shops.val + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    {{ "{:,.0f}".format(pending_count.val) }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="glass-card stat-glow-cyan text-center" style="border-bottom-color: var(--neon-cyan);">
+                <div class="stat-label">Total Revenue Collected</div>
+                <div class="stat-value text-white">
+                    {% set rev = namespace(val=0) %}
+                    {% for shop in shops %}
+                        {% if shop.payment_status in ['a', 'e', 'd', 'r'] %}
+                            {% set rev.val = rev.val + shop.lifetime_revenue %}
+                        {% endif %}
+                    {% endfor %}
+                    K{{ "{:,.0f}".format(rev.val | round) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics & Graphs Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="glass-card h-100" style="border-top: 3px solid var(--neon-magenta); box-shadow: var(--glow-magenta);">
+                <div class="stat-label text-start mb-3">Shop Plan Distribution</div>
+                <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="planChart" style="max-height: 240px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="glass-card h-100" style="border-top: 3px solid var(--neon-cyan); box-shadow: var(--glow-cyan);">
+                <div class="stat-label text-start mb-3">Cumulative Revenue Growth Trend</div>
+                <div style="position: relative; height: 260px;">
+                    <canvas id="mrrTrendChart" style="max-height: 240px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Review & Approval Queue -->
+    {% if pending_count.val > 0 %}
+    <div class="glass-card mb-4" style="border-left: 3px solid var(--neon-yellow);">
+        <h5 class="fw-bold mb-3 d-flex align-items-center">
+            <span class="pulse-pending"></span> Pending Activation Requests
+        </h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-borderless table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Shop Information</th>
+                        <th>Owner Username</th>
+                        <th>Preferred Plan</th>
+                        <th>Action Queue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shop in shops %}
+                        {% if shop.payment_status == 'p' %}
+                        <tr>
+                            <td>
+                                <div class="shop-name">{{ shop.name }}</div>
+                                <div class="shop-subtext">Registered Shop ID: {{ shop.id }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary px-3 py-2 fw-semibold">@{{ shop.owner_username }}</span>
+                            </td>
+                            <td>
+                                <span class="badge text-uppercase px-3 py-2 fw-bold" style="background: rgba(2, 139, 217, 0.1); border: 1px solid rgba(2, 139, 217, 0.2); color: var(--neon-cyan);">
+                                    {{ shop.plan_name or 'starter' }} {% if shop.cycle == 'yearly' %}(YEARLY){% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="/superadmin/approve-payment" method="POST" class="d-inline confirm-submit-form" data-message="Are you sure you want to approve payment and activate this shop?" data-title="Approve Shop Payment" data-type="info">
+                                    <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                    <input type="hidden" name="plan" value="{{ shop.plan_name or 'starter' }}">
+                                    <input type="hidden" name="cycle" value="{{ shop.cycle or 'monthly' }}">
+                                    <div class="input-group input-group-sm d-inline-flex align-items-center" style="width: auto;">
+                                        <select name="months" class="form-select form-select-sm form-control-custom me-2" style="width: auto;">
+                                            <option value="1" {% if shop.cycle != 'yearly' %}selected{% endif %}>1 Month Activation</option>
+                                            <option value="3">3 Months</option>
+                                            <option value="6">6 Months</option>
+                                            <option value="12" {% if shop.cycle == 'yearly' %}selected{% endif %}>12 Months (Annual)</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-action btn-primary-glow btn-sm">Approve & Activate</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pending Deletion Queue -->
+    {% if pending_delete_count.val > 0 %}
+    <div class="glass-card mb-4" style="border-left: 3px solid #ff5252;">
+        <h5 class="fw-bold mb-3 d-flex align-items-center text-danger">
+            <i class="bi bi-trash-fill me-2"></i> Pending Deletion Requests
+        </h5>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-borderless table-custom mb-0">
+                <thead>
+                    <tr>
+                        <th>Shop Information</th>
+                        <th>Owner Username</th>
+                        <th>Action Queue</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shop in shops %}
+                        {% if shop.payment_status == 'r' %}
+                        <tr>
+                            <td>
+                                <div class="shop-name text-danger text-decoration-line-through">{{ shop.name }}</div>
+                                <div class="shop-subtext">Registered Shop ID: {{ shop.id }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary px-3 py-2 fw-semibold">@{{ shop.owner_username }}</span>
+                            </td>
+                            <td>
+                                <form action="/superadmin/delete-shop" method="POST" class="d-inline confirm-submit-form" data-message="WARNING: This will permanently wipe all inventory and sales data for '{{ shop.name }}'. The lifetime revenue history will be preserved. Proceed?" data-title="Confirm Data Purge" data-type="danger">
+                                    <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                    <button type="submit" class="btn btn-action btn-danger btn-sm">Confirm & Purge Data</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Geographic Map Distribution -->
+    <div class="glass-card mb-4" style="border-left: 3px solid var(--neon-magenta);">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-geo-alt-fill me-2" style="color: var(--neon-magenta);"></i> Shop Geographic Distribution
+            </h5>
+            <div class="d-flex gap-3" style="font-size: 0.8rem; font-weight: 600;">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="/static/shop-location-icon.png" class="shop-location-pin active-pin" style="width: 24px !important; height: 24px !important; pointer-events: none;" />
+                    <span class="text-white">Online</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <img src="/static/shop-location-icon.png" class="shop-location-pin inactive-pin" style="width: 24px !important; height: 24px !important; pointer-events: none;" />
+                    <span class="text-white">Offline</span>
+                </div>
+            </div>
+        </div>
+        <div id="shopMap" style="height: 400px; width: 100%; border-radius: 12px; border: 1px solid var(--card-border); z-index: 1;"></div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize map layers
+                var googleHybrid = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var googleRoadmap = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var googleSatellite = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    subdomains: ['mt0','mt1','mt2','mt3'],
+                    attribution: 'Map data &copy; Google'
+                });
+
+                var darkCarto = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd',
+                    maxZoom: 19
+                });
+
+                // Default center to PNG
+                var map = L.map('shopMap', {
+                    center: [-6.2298, 147.0000],
+                    zoom: 5,
+                    layers: [googleHybrid]
+                });
+
+                var baseMaps = {
+                    "Google Hybrid": googleHybrid,
+                    "Google Roadmap": googleRoadmap,
+                    "Google Satellite": googleSatellite,
+                    "Dark Matter (CartoDB)": darkCarto
+                };
+
+                L.control.layers(baseMaps).addTo(map);
+
+                var profiles = {{ profiles | tojson }};
+                var shops = {{ shops | tojson }};
+                
+                var bounds = [];
+                shops.forEach(function(shop) {
+                    var profile = profiles[shop.id];
+                    if(profile) {
+                        var lat = parseFloat(profile.latitude);
+                        var lng = parseFloat(profile.longitude);
+                        if(!isNaN(lat) && !isNaN(lng)) {
+                            var isActive = shop.is_active;
+                            
+                            var markerHtml = `
+                                <img src="/static/shop-location-icon.png" class="shop-location-pin ${isActive ? 'active-pin' : 'inactive-pin'}" alt="${shop.name}" />
+                            `;
+                            
+                            var customIcon = L.divIcon({
+                                html: markerHtml,
+                                className: 'custom-shop-icon',
+                                iconSize: [44, 44],
+                                iconAnchor: [22, 44],
+                                popupAnchor: [0, -44]
+                            });
+
+                            var marker = L.marker([lat, lng], {
+                                icon: customIcon
+                            }).addTo(map);
+
+                            var statusHtml = isActive 
+                                ? `<span class="badge text-uppercase" style="background-color: var(--neon-green) !important; color: #000; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Online</span>`
+                                : `<span class="badge text-uppercase" style="background-color: hsl(354, 100%, 64%) !important; color: #fff; font-weight: 800; font-size: 0.7rem; padding: 3px 8px; border-radius: 4px;">Offline</span>`;
+                                
+                            marker.bindPopup(`
+                                <div style="color: #333; font-family: 'Outfit', sans-serif; min-width: 180px;">
+                                    <h6 style="margin: 0 0 5px 0; font-weight: 800; font-size: 0.95rem; color: #111;">${shop.name}</h6>
+                                    <div style="margin-bottom: 8px; display: flex; gap: 5px; align-items: center;">
+                                        ${statusHtml} 
+                                        <span class="badge bg-secondary text-uppercase" style="font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; font-weight: 700; color: #fff;">${shop.plan_name || 'Starter'}</span>
+                                    </div>
+                                    <div style="font-size: 0.8rem; line-height: 1.4; color: #555; border-top: 1px solid #eee; padding-top: 6px; margin-top: 6px;">
+                                        <div style="margin-bottom: 2px;"><strong>Owner:</strong> @${shop.owner_username || 'Unknown'}</div>
+                                        <div style="margin-bottom: 2px;"><strong>Address:</strong> ${profile.physical_address || 'No address provided'}</div>
+                                        <div><strong>Contact:</strong> ${profile.contact_phone || 'N/A'}</div>
+                                    </div>
+                                </div>
+                            `);
+                            bounds.push([lat, lng]);
+                        }
+                    }
+                });
+
+                if(bounds.length > 0) {
+                    map.fitBounds(bounds, {padding: [50, 50], maxZoom: 14});
+                }
+            });
+        </script>
+    </div>
+
+    <!-- Shop Directory & Database Management -->
+    <div class="glass-card">
+        <div class="row align-items-center mb-3 g-3">
+            <div class="col-md-6">
+                <h5 class="fw-bold mb-0">Shop Directory Database</h5>
+                <p class="text-muted small mb-0">Monitor activations, update plans, impersonate sessions, and reset passwords.</p>
+            </div>
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0" style="border: 1px solid var(--card-border);"><svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span>
+                    <input type="text" id="search-input" class="form-control form-control-custom border-start-0" placeholder="Search shops by name, owner username..." onkeyup="filterShops()">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-dark table-hover table-borderless table-custom mb-0" id="shops-table">
+                <thead>
+                    <tr>
+                        <th>Shop Name</th>
+                        <th>Subscription Status</th>
+                        <th>Active Plan</th>
+                        <th>Expiration Date</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shop in shops %}
+                        {% if shop.payment_status != 'd' %}
+                    <tr class="shop-row-item">
+                        <td>
+                            <div class="shop-name search-target-name">{{ shop.name }}</div>
+                            <div class="shop-subtext search-target-owner">Owner: @{{ shop.owner_username }} | Shop ID: {{ shop.id }}</div>
+                        </td>
+                        <td>
+                            {% if shop.payment_status == 'a' and shop.is_active %}
+                                <span class="status-pill status-approved">Approved / Active</span>
+                            {% elif shop.payment_status == 'p' %}
+                                <span class="status-pill status-pending">Pending Payment</span>
+                            {% else %}
+                                <span class="status-pill status-expired">Expired / Blocked</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge text-uppercase px-3 py-2 fw-bold text-white bg-dark border border-secondary">
+                                {{ shop.plan_name or 'starter' }} {% if shop.cycle == 'yearly' %}(YEARLY){% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <strong class="text-white">
+                                {% if shop.expiry_date == '991231' %}
+                                    Lifetime (N/A)
+                                {% else %}
+                                    20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}
+                                {% endif %}
+                            </strong>
+                            {% if shop.expiry_date != '991231' and shop.days_left is not none %}
+                                <div style="font-size: 0.75rem; margin-top: 4px; font-weight: 600;">
+                                    {% if shop.days_left > 0 %}
+                                        <span style="color: var(--neon-green);">{{ shop.days_left }} days left</span>
+                                    {% elif shop.days_left == 0 %}
+                                        <span style="color: var(--neon-yellow);">Expires today</span>
+                                    {% else %}
+                                        <span style="color: hsl(354, 100%, 64%);">Expired {{ shop.days_left|abs }} days ago</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="dropdown d-inline-block">
+                                <button class="btn btn-action btn-outline-custom dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                                    Manage
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-custom dropdown-menu-end">
+                                    <li><a class="dropdown-item dropdown-item-custom fw-bold text-info" href="/superadmin/impersonate/{{ shop.id }}"><i class="bi bi-lightning"></i> Ghost Login (Impersonate)</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick='openExtendModal("{{ shop.id }}", {{ shop.name|tojson|forceescape }}, "{{ shop.plan_name }}", "{{ shop.cycle }}", "20{{ shop.expiry_date[0:2] }}-{{ shop.expiry_date[2:4] }}-{{ shop.expiry_date[4:6] }}")'><i class="bi bi-calendar"></i> Extend / Edit Subscription</a></li>
+                                    <li><a class="dropdown-item dropdown-item-custom" href="#" onclick='openResetModal("{{ shop.id }}", {{ shop.name|tojson|forceescape }}, {{ shop.users_list|tojson|forceescape }})'><i class="bi bi-key"></i> Reset Passwords</a></li>
+                                    <li><hr class="dropdown-divider border-secondary"></li>
+                                    <li>
+                                        <form action="/superadmin/toggle" method="POST" class="m-0 confirm-submit-form" {% if shop.is_active %} data-message="Suspend shop access instantly? This will block owner and cashier logins." data-title="Suspend Shop Access" data-type="danger" {% else %} data-message="Are you sure you want to activate this shop location?" data-title="Activate Shop" data-type="info" {% endif %}>
+                                            <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                            {% if shop.is_active %}
+                                                <input type="hidden" name="status" value="false">
+                                                <button type="submit" class="dropdown-item dropdown-item-custom text-danger"><i class="bi bi-ban"></i> Suspend Shop</button>
+                                            {% else %}
+                                                <input type="hidden" name="status" value="true">
+                                                <button type="submit" class="dropdown-item dropdown-item-custom text-success"><i class="bi bi-check-circle"></i> Activate Shop</button>
+                                            {% endif %}
+                                        </form>
+                                    </li>
+                                    <li><hr class="dropdown-divider border-secondary"></li>
+                                    <li>
+                                        <form action="/superadmin/delete-shop" method="POST" class="m-0 confirm-submit-form" data-message="DANGER: This will permanently delete this shop ({{ shop.name }}), all registered users, sales logs, dinau, and inventory data forever! Proceed?" data-title="PERMANENTLY DELETE SHOP" data-type="danger">
+                                            <input type="hidden" name="shop_id" value="{{ shop.id }}">
+                                            <button type="submit" class="dropdown-item dropdown-item-custom text-danger fw-bold"><i class="bi bi-trash"></i> Delete Shop</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Extend Subscription -->
+<div class="modal fade" id="extendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header modal-header-custom">
+                <h5 class="modal-title fw-bold text-white" id="extendModalTitle">Extend Subscription</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/superadmin/extend-subscription" method="POST">
+                <input type="hidden" name="shop_id" id="extend-shop-id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Shop Name</label>
+                        <input type="text" class="form-control form-control-custom" id="extend-shop-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Select Plan Tier</label>
+                        <select name="plan" id="extend-plan" class="form-select form-control-custom">
+                            <option value="starter">Starter Plan</option>
+                            <option value="pro">Pro Shop Plan</option>
+                            <option value="multi">Multi-Shop Plan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Billing Cycle</label>
+                        <select name="cycle" id="extend-cycle" class="form-select form-control-custom">
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Subscription Status</label>
+                        <select name="status" id="extend-status" class="form-select form-control-custom">
+                            <option value="a">Approved & Active</option>
+                            <option value="p">Pending Approval</option>
+                            <option value="e">Suspended / Expired</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Expiration Date</label>
+                        <input type="date" name="expiry_date" id="extend-expiry-date" class="form-control form-control-custom" required>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-custom">
+                    <button type="button" class="btn btn-action btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-action btn-primary-glow">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Reset Passwords -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header modal-header-custom">
+                <h5 class="modal-title fw-bold text-white">Reset Account Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="/superadmin/reset-password" method="POST" class="confirm-submit-form" data-message="Confirm resetting credentials for this user?" data-title="Reset User Password" data-type="danger">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Target Shop</label>
+                        <input type="text" class="form-control form-control-custom" id="reset-shop-name" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Select Target User Account</label>
+                        <select name="user_id" id="reset-user-select" class="form-select form-control-custom" onchange="updateUsernameHidden()" required>
+                            <!-- Populated dynamically by javascript -->
+                        </select>
+                        <input type="hidden" name="username" id="reset-username-hidden">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">New Secure Password</label>
+                        <input type="text" name="new_password" class="form-control form-control-custom" placeholder="Min 6 characters" required>
+                        <div class="form-text small text-muted">Only super admins can trigger master overrides and reset keys.</div>
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-custom">
+                    <button type="button" class="btn btn-action btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-action btn-primary-glow">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cyber Confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true" style="z-index: 1065;">
+    <div class="modal-dialog modal-dialog-centered modal-sm" style="max-width: 400px;">
+        <div class="modal-content modal-content-custom" id="confirmModalContent" style="border: 1px solid var(--neon-magenta) !important; box-shadow: var(--glow-magenta);">
+            <div class="modal-header modal-header-custom border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2" id="confirmModalTitle">
+                    <span style="color: var(--neon-magenta);"><i class="bi bi-exclamation-triangle"></i></span> Security Confirmation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="text-white mb-0" id="confirmModalMessage" style="font-size: 0.95rem; line-height: 1.5;"></p>
+            </div>
+            <div class="modal-footer modal-footer-custom border-0 pt-0 d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-action btn-outline-custom" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-action btn-primary-glow" id="confirmModalYesBtn">Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Post Notice Modal -->
+<div class="modal fade" id="newNoticeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-custom text-white">
+            <div class="modal-header modal-header-custom">
+                <h5 class="modal-title fw-bold" style="color: var(--neon-cyan);"><i class="bi bi-megaphone"></i> Post New Notice</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/superadmin/notice" method="POST" enctype="multipart/form-data">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Target Audience</label>
+                        <select name="target_role" class="form-select bg-dark text-white border-secondary">
+                            <optgroup label="Broad Roles">
+                                <option value="owner">Shop Owners Only</option>
+                            </optgroup>
+                            {% if users %}
+                            <optgroup label="Specific Users">
+                                {% for u in users %}
+                                <option value="user:{{ u.id }}">@{{ u.username }} ({{ u.role|title }} - Shop {{ u.shop_id }})</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Title</label>
+                        <input type="text" name="title" class="form-control bg-dark text-white border-secondary" required placeholder="e.g. System Maintenance">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Message Content</label>
+                        <textarea name="content" class="form-control bg-dark text-white border-secondary" rows="4" required placeholder="Enter message details here..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small">Attachment (PDF)</label>
+                        <input type="file" name="attachment" class="form-control bg-dark text-white border-secondary" accept=".pdf">
+                    </div>
+                </div>
+                <div class="modal-footer modal-footer-custom">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn rounded-pill px-4" style="background: var(--neon-cyan); color: #000; font-weight: 800;">Send Notice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function filterShops() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const rows = document.querySelectorAll('.shop-row-item');
+        rows.forEach(row => {
+            const name = row.querySelector('.search-target-name').innerText.toLowerCase();
+            const owner = row.querySelector('.search-target-owner').innerText.toLowerCase();
+            if (name.includes(query) || owner.includes(query)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function openExtendModal(shopId, shopName, currentPlan, currentCycle, expiryDate) {
+        document.getElementById('extend-shop-id').value = shopId;
+        document.getElementById('extend-shop-name').value = shopName;
+        document.getElementById('extend-plan').value = currentPlan || 'starter';
+        document.getElementById('extend-cycle').value = currentCycle || 'monthly';
+        if (expiryDate && expiryDate.length > 5) {
+            document.getElementById('extend-expiry-date').value = expiryDate;
+        }
+        const modal = new bootstrap.Modal(document.getElementById('extendModal'));
+        modal.show();
+    }
+
+    function openResetModal(shopId, shopName, usersData) {
+        document.getElementById('reset-shop-name').value = shopName;
+        const select = document.getElementById('reset-user-select');
+        select.innerHTML = '';
+        
+        try {
+            let users = usersData;
+            if (typeof usersData === 'string') {
+                users = JSON.parse(usersData);
+            }
+            if (users && users.length > 0) {
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id;
+                    opt.textContent = `@${u.username} (${u.role})`;
+                    opt.dataset.username = u.username;
+                    select.appendChild(opt);
+                });
+                updateUsernameHidden();
+            } else {
+                const opt = document.createElement('option');
+                opt.textContent = "No users found in this shop";
+                select.appendChild(opt);
+            }
+        } catch (e) {
+            console.error("Error parsing user accounts: ", e);
+        }
+
+        
+        const modal = new bootstrap.Modal(document.getElementById('resetModal'));
+        modal.show();
+    }
+
+    function updateUsernameHidden() {
+        const select = document.getElementById('reset-user-select');
+        const selectedOpt = select.options[select.selectedIndex];
+        if (selectedOpt) {
+            document.getElementById('reset-username-hidden').value = selectedOpt.dataset.username || '';
+        }
+    }
+
+    // Custom Styled Confirmation Dialog Modal
+    let confirmCallback = null;
+    const confirmModalEl = document.getElementById('confirmModal');
+    const confirmModal = new bootstrap.Modal(confirmModalEl);
+
+    // If confirm modal is shown inside another modal, adjust z-index backdrops
+    confirmModalEl.addEventListener('show.bs.modal', function () {
+        // Find if another modal is open
+        const openModals = document.querySelectorAll('.modal.show');
+        if (openModals.length > 0) {
+            // Adjust z-index of confirm modal and backdrop to stack higher
+            confirmModalEl.style.zIndex = '1070';
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop.show');
+                if (backdrops.length > 1) {
+                    backdrops[backdrops.length - 1].style.zIndex = '1065';
+                }
+            }, 0);
+        }
+    });
+
+    confirmModalEl.addEventListener('hidden.bs.modal', function () {
+        // Reset z-index
+        confirmModalEl.style.zIndex = '';
+        // If other modals are still open, restore body class to keep scrollbar correct
+        if (document.querySelectorAll('.modal.show').length > 0) {
+            document.body.classList.add('modal-open');
+        }
+    });
+
+    function showCustomConfirm(message, callback, title = "Security Confirmation", type = "danger") {
+        document.getElementById('confirmModalMessage').textContent = message;
+        document.getElementById('confirmModalTitle').innerHTML = `
+            <span style="color: ${type === 'danger' ? 'var(--neon-magenta)' : 'var(--neon-cyan)'};">
+                ${type === 'danger' ? '<i class="bi bi-ban"></i>' : '<i class="bi bi-lightning"></i>'}
+            </span> ${title}
+        `;
+        
+        const yesBtn = document.getElementById('confirmModalYesBtn');
+        const modalContent = document.getElementById('confirmModalContent');
+        
+        if (type === 'danger') {
+            modalContent.style.borderColor = 'var(--neon-magenta)';
+            modalContent.style.boxShadow = 'var(--glow-magenta)';
+            yesBtn.className = 'btn btn-action btn-primary-glow';
+            yesBtn.style.background = 'linear-gradient(135deg, var(--neon-magenta) 0%, #d80766 100%)';
+            yesBtn.style.boxShadow = '0 4px 15px rgba(249, 26, 142, 0.3)';
+        } else {
+            modalContent.style.borderColor = 'var(--neon-cyan)';
+            modalContent.style.boxShadow = 'var(--glow-cyan)';
+            yesBtn.className = 'btn btn-action btn-primary-glow';
+            yesBtn.style.background = 'linear-gradient(135deg, var(--neon-cyan) 0%, hsl(197, 98%, 48%) 100%)';
+            yesBtn.style.boxShadow = '0 4px 15px rgba(2, 139, 217, 0.3)';
+        }
+        
+        confirmCallback = callback;
+        confirmModal.show();
+    }
+
+    document.getElementById('confirmModalYesBtn').addEventListener('click', function() {
+        if (confirmCallback) confirmCallback();
+        confirmModal.hide();
+    });
+
+    // Intercept form submissions for .confirm-submit-form
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.classList.contains('confirm-submit-form')) {
+            if (form.dataset.confirmed === 'true') {
+                return;
+            }
+            
+            e.preventDefault();
+            const message = form.getAttribute('data-message') || "Are you sure you want to proceed?";
+            const title = form.getAttribute('data-title') || "Confirm Action";
+            const type = form.getAttribute('data-type') || "danger";
+            
+            showCustomConfirm(message, function() {
+                form.dataset.confirmed = 'true';
+                form.submit();
+            }, title, type);
+        }
+    });
+
+    // Initialize Chart.js Graphs
+    document.addEventListener("DOMContentLoaded", function() {
+        const shopsData = {{ shops|tojson }};
+        
+        let starterCount = 0;
+        let proCount = 0;
+        let multiCount = 0;
+        let currentMrr = 0;
+
+        shopsData.forEach(s => {
+            const plan = (s.plan_name || 'starter').toLowerCase();
+            const cycle = (s.cycle || 'monthly').toLowerCase();
+            
+            if (s.payment_status !== 'd') {
+                if (plan === 'starter') starterCount++;
+                else if (plan === 'pro') proCount++;
+                else if (plan === 'multi') multiCount++;
+            }
+            
+            if (['a', 'e', 'd', 'r'].includes(s.payment_status)) {
+                currentMrr += parseFloat(s.lifetime_revenue) || 0;
+            }
+        });
+        currentMrr = Math.round(currentMrr);
+
+        // 1. Plan Distribution Doughnut Chart
+        const planCtx = document.getElementById('planChart').getContext('2d');
+        new Chart(planCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Starter (K50/mo)', 'Pro Shop (K200/mo)', 'Multi-Shop (K450/mo)'],
+                datasets: [{
+                    data: [starterCount, proCount, multiCount],
+                    backgroundColor: [
+                        'rgba(249, 26, 142, 0.85)', // neon magenta
+                        'rgba(2, 139, 217, 0.85)',  // neon cyan
+                        'rgba(46, 213, 115, 0.85)'   // neon green
+                    ],
+                    borderColor: 'rgba(255, 255, 255, 0.05)',
+                    borderWidth: 2,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#cbd5e1',
+                            font: {
+                                family: "'Outfit', sans-serif",
+                                size: 12,
+                                weight: '600'
+                            },
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 10, 12, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: true
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+
+        // 2. MRR Trend Line Chart (past 6 months projection leading to current actual MRR)
+        const mrrCtx = document.getElementById('mrrTrendChart').getContext('2d');
+        
+        // Generate last 6 months labels
+        const monthsLabels = [];
+        const monthNames = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+        const today = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            monthsLabels.push(monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().substring(2));
+        }
+
+        // Scale values based on current MRR
+        const mrrValues = [
+            Math.round(currentMrr * 0.35),
+            Math.round(currentMrr * 0.50),
+            Math.round(currentMrr * 0.65),
+            Math.round(currentMrr * 0.78),
+            Math.round(currentMrr * 0.90),
+            currentMrr
+        ];
+
+        // Create gradient fill
+        const gradient = mrrCtx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(2, 139, 217, 0.3)');
+        gradient.addColorStop(1, 'rgba(2, 139, 217, 0)');
+
+        new Chart(mrrCtx, {
+            type: 'line',
+            data: {
+                labels: monthsLabels,
+                datasets: [{
+                    label: 'Cumulative Revenue (Kina)',
+                    data: mrrValues,
+                    borderColor: 'rgba(2, 139, 217, 1)', // neon cyan
+                    borderWidth: 3,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(2, 139, 217, 1)',
+                    pointBorderColor: 'rgba(255, 255, 255, 0.1)',
+                    pointHoverBackgroundColor: 'rgba(249, 26, 142, 1)', // neon magenta hover
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(10, 10, 12, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#cbd5e1',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return ' Revenue: K' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.03)'
+                        },
+                        ticks: {
+                            color: '#8a8d90',
+                            font: {
+                                family: "'Outfit', sans-serif"
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.03)'
+                        },
+                        ticks: {
+                            color: '#8a8d90',
+                            font: {
+                                family: "'Outfit', sans-serif"
+                            },
+                            callback: function(value) {
+                                return 'K' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+</body>
+</html>

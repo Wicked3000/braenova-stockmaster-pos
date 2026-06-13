@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockMasta | Smart POS for Tuck Shops</title>
+    <meta name="description" content="The ultimate, mobile-first inventory and sales management system for tuck shops in PNG.">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0c0c0c; color: #ffffff; font-family: 'Inter', system-ui, -apple-system; overflow-x: hidden; }
+        
+        /* Modern Header */
+        .app-header { 
+            position: fixed; top: 0; left: 0; right: 0; height: 75px; 
+            background: rgba(17, 17, 17, 0.8); backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 20px; z-index: 1100;
+        }
+        .brand { display: flex; align-items: center; gap: 4px; text-decoration: none; }
+        .logo-img { height: 70px; width: auto; }
+        .brand-text { color: #fff; font-weight: 900; letter-spacing: -0.5px; font-size: 1.1rem; line-height: 1.1; }
+        .brand-text span { color: #f91a8e; display: block; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+
+        /* Hero Section */
+        .hero-section {
+            padding: 150px 20px 80px;
+            text-align: center;
+            background: radial-gradient(circle at 50% -20%, rgba(2, 139, 217, 0.15) 0%, rgba(12, 12, 12, 1) 60%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: #888;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        /* Buttons */
+        .btn-glow {
+            background: linear-gradient(135deg, #028bd9 0%, #03aaec 100%);
+            color: white;
+            font-weight: 800;
+            padding: 15px 40px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 30px rgba(2, 139, 217, 0.4);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(2, 139, 217, 0.6);
+            color: white;
+        }
+
+        .btn-outline-glow {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            font-weight: 700;
+            padding: 14px 30px;
+            border-radius: 50px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .btn-outline-glow:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        /* Feature Cards */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+        .feature-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(2, 139, 217, 0.3);
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .feature-card p {
+            color: #888;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .hero-banner-container {
+            width: 100%; 
+            height: 550px; 
+            overflow: hidden; 
+            position: relative; 
+            margin-bottom: 50px;
+        }
+
+        .showcase-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(252, 193, 30, 0.4) !important;
+            box-shadow: 0 20px 45px rgba(252, 193, 30, 0.15) !important;
+        }
+
+        @media (max-width: 768px) {
+            .hero-banner-container { height: 350px; margin-bottom: 30px; }
+            .hero-title { font-size: 2.2rem; }
+            .hero-subtitle { font-size: 1rem; padding: 0 10px; margin-bottom: 30px; }
+            .d-flex.gap-3 { flex-direction: column; width: 100%; max-width: 300px; margin: 0 auto; }
+            .btn-glow, .btn-outline-glow { width: 100%; text-align: center; }
+        }
+
+        /* Custom Slider Styling */
+        .custom-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            margin: 12px 0;
+            cursor: pointer;
+        }
+        .custom-slider::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 4px;
+            background: transparent;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fcc11e !important;
+            border: 2px solid #fcc11e !important;
+            box-shadow: 0 0 10px rgba(252, 193, 30, 0.6) !important;
+            margin-top: -6px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #ffd93d !important;
+        }
+        .custom-slider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
+            background: transparent;
+        }
+        .custom-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fcc11e !important;
+            border: 2px solid #fcc11e !important;
+            box-shadow: 0 0 10px rgba(252, 193, 30, 0.6) !important;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        .custom-slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: #ffd93d !important;
+        }
+
+        /* Pricing Cards Default Transitions */
+        .pricing-card {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+                        border-color 0.4s ease,
+                        box-shadow 0.4s ease,
+                        opacity 0.4s ease;
+        }
+        
+        /* Recommended State (Default Desktop) */
+        .pricing-card.recommended {
+            transform: scale(1.08) !important;
+            border-color: #fcc11e !important;
+            box-shadow: 0 25px 60px rgba(252, 193, 30, 0.25) !important;
+            z-index: 3 !important;
+            opacity: 1 !important;
+        }
+        
+        /* Dimmed State (Default Desktop) */
+        .pricing-card.dimmed {
+            transform: scale(0.95) !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+            box-shadow: none !important;
+            z-index: 1 !important;
+            opacity: 0.5 !important;
+        }
+
+        /* Mobile Responsive Adjustments for highlights */
+        @media (max-width: 992px) {
+            .pricing-card.recommended {
+                transform: scale(1.02) !important;
+                box-shadow: 0 15px 35px rgba(252, 193, 30, 0.2) !important;
+            }
+            .pricing-card.dimmed {
+                transform: scale(1.0) !important;
+                opacity: 0.82 !important;
+            }
+        }
+
+        /* Floating WhatsApp Chat Widget */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #25d366;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(37, 211, 102, 0.4);
+            z-index: 9999;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1) translateY(-5px);
+            background-color: #20ba5a;
+            color: #fff;
+            box-shadow: 0 15px 30px rgba(37, 211, 102, 0.6);
+        }
+        .whatsapp-float::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #25d366;
+            opacity: 0.6;
+            z-index: -1;
+            animation: pulse-ring 2.5s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.35); opacity: 0; }
+            100% { transform: scale(0.95); opacity: 0; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <a href="/" class="brand">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+            
+        </a>
+        <div>
+            <a href="/login" class="btn btn-sm btn-outline-glow rounded-pill px-4" style="padding: 8px 20px; font-size: 0.8rem;">Login</a>
+        </div>
+    </header>
+
+    <section class="hero-section" style="padding-top: 75px; padding-left: 0; padding-right: 0;">
+        <div class="hero-banner-container">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, transparent 30%, #0c0c0c 100%); z-index: 2;"></div>
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{{ url_for('static', filename='hero_banner-new.png') }}'); background-size: cover; background-position: center center; background-repeat: no-repeat; z-index: 1;"></div>
+        </div>
+
+        <div style="padding: 0 20px;">
+            <h1 class="hero-title">Manage Your Tuck Shop<br><span>Like a Pro.</span></h1>
+            <p class="hero-subtitle">Stop losing money to shrinkage. Track every sale, manage inventory, and handle Dinau (credit) seamlessly from your phone.</p>
+            
+            <div class="d-flex gap-3 mt-2 mx-auto justify-content-center">
+                <a href="#pricing" class="btn-glow">Get Started Now</a>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- SCREENSHOTS/MOCKUPS SHOWCASE -->
+    <section class="showcase-section" id="features" style="background: #0c0c0c; padding: 80px 20px 40px; border-top: 1px solid rgba(255,255,255,0.02);">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Experience the <span style="color: #fcc11e;">Premium UI</span></h2>
+            <p style="color: #888; max-width: 600px; margin: 0 auto; font-size: 1.1rem;">Clean, modern, and high-performance screens designed for PNG businesses.</p>
+        </div>
+        
+        <div class="container" style="max-width: 1000px;">
+            <div class="row align-items-center g-5">
+                <div class="col-12 col-md-6 order-2 order-md-1">
+                    <div class="mockup-feature active" data-index="0" style="padding: 20px; border-left: 3px solid #f91a8e; margin-bottom: 20px; cursor: pointer; transition: all 0.3s; background: rgba(249, 26, 142, 0.05); border-radius: 0 12px 12px 0;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">1. POS Sales Screen</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Lightning-fast transactions, barcode ready, and built for touchscreens. Never hold up a line again.</p>
+                    </div>
+                    <div class="mockup-feature" data-index="1" style="padding: 20px; border-left: 3px solid transparent; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">2. Store Credit (Dinau) Manager</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Track who owes what, settle debts with a single tap, and automatically pause credit limits when customers fall behind.</p>
+                    </div>
+                    <div class="mockup-feature" data-index="2" style="padding: 20px; border-left: 3px solid transparent; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;">
+                        <h4 style="font-weight: 800; font-size: 1.3rem; margin-bottom: 8px; color: #fff;">3. Geographic Shop Map</h4>
+                        <p style="margin: 0; color: #aaa; font-size: 0.95rem;">Super Admins can see the exact physical location of every active branch plotted seamlessly on a neon CartoDB map.</p>
+                    </div>
+                </div>
+                
+                <div class="col-12 col-md-6 order-1 order-md-2 d-flex justify-content-center">
+                    <!-- CSS Phone Mockup -->
+                    <div style="position: relative; width: 280px; height: 580px; background: #000; border-radius: 40px; border: 12px solid #1a1a1a; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px #333, inset 0 0 10px rgba(0,0,0,0.5); overflow: hidden;">
+                        <!-- iPhone Notch -->
+                        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 25px; background: #1a1a1a; border-radius: 0 0 15px 15px; z-index: 10;"></div>
+                        
+                        <!-- Images Container -->
+                        <div style="position: relative; width: 100%; height: 100%; background: #111;">
+                            <img class="mockup-img active" src="{{ url_for('static', filename='mock/Mockup-2.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity 0.5s ease; z-index: 2;">
+                            <img class="mockup-img" src="{{ url_for('static', filename='mock/dinau_tracking_ui.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; z-index: 1;">
+                            <img class="mockup-img" src="{{ url_for('static', filename='mock/geographic_distribution_map.png') }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s ease; z-index: 1;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const features = document.querySelectorAll('.mockup-feature');
+                const images = document.querySelectorAll('.mockup-img');
+                let currentIndex = 0;
+                let interval;
+
+                function activateSlide(index) {
+                    features.forEach((f, i) => {
+                        if (i === index) {
+                            f.style.borderLeftColor = '#f91a8e';
+                            f.style.background = 'rgba(249, 26, 142, 0.05)';
+                        } else {
+                            f.style.borderLeftColor = 'transparent';
+                            f.style.background = 'transparent';
+                        }
+                    });
+                    
+                    images.forEach((img, i) => {
+                        if (i === index) {
+                            img.style.opacity = '1';
+                            img.style.zIndex = '2';
+                        } else {
+                            img.style.opacity = '0';
+                            img.style.zIndex = '1';
+                        }
+                    });
+                    currentIndex = index;
+                }
+
+                function nextSlide() {
+                    let next = (currentIndex + 1) % features.length;
+                    activateSlide(next);
+                }
+
+                interval = setInterval(nextSlide, 4000);
+
+                features.forEach((feature, idx) => {
+                    feature.addEventListener('click', () => {
+                        clearInterval(interval);
+                        activateSlide(idx);
+                        interval = setInterval(nextSlide, 4000);
+                    });
+                });
+            });
+        </script>
+    </section>
+
+    <section class="features-section" style="background: linear-gradient(180deg, #0c0c0c 0%, #061121 100%); padding: 80px 20px;">
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Powerful Features. <span style="color: #03aaec;">Simple Design.</span></h2>
+            <p style="color: #888; max-width: 600px; margin: 0 auto; font-size: 1.1rem;">Built specifically for the unique needs of PNG tuck shops.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card" style="border-top: 3px solid #028bd9;">
+                <div class="feature-icon"><i class="bi bi-phone"></i></div>
+                <h3>Mobile-First POS</h3>
+                <p>Designed perfectly for Android phones and tablets. Your cashiers can check out customers in seconds with our lightning-fast interface.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #fcc11e;">
+                <div class="feature-icon"><i class="bi bi-journal"></i></div>
+                <h3>Dinau Tracking</h3>
+                <p>Never lose track of who owes you money. Securely log credit sales and track repayments in a digital ledger that can't be misplaced.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #03aaec;">
+                <div class="feature-icon"><i class="bi bi-bar-chart"></i></div>
+                <h3>Real-Time Insights</h3>
+                <p>Monitor your shop's performance from anywhere. See total sales, expected cash, and low-stock alerts instantly on your private dashboard.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #ff4757;">
+                <div class="feature-icon"><i class="bi bi-people"></i></div>
+                <h3>Multi-Cashier Support</h3>
+                <p>Create secure, restricted accounts for your staff. Track which cashier made which sale to enforce absolute accountability.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #2ed573;">
+                <div class="feature-icon"><i class="bi bi-lightning"></i></div>
+                <h3>Fast & Reliable</h3>
+                <p>Engineered to be incredibly lightweight and fast, ensuring you can process sales quickly even on slow 3G mobile data connections.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #a29bfe;">
+                <div class="feature-icon"><i class="bi bi-cloud"></i></div>
+                <h3>Secure Cloud Backup</h3>
+                <p>If your phone breaks or gets stolen, your business doesn't stop. Simply log in on a new device and all your shop data is instantly restored.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #ff9f43;">
+                <div class="feature-icon"><i class="bi bi-upc-scan"></i></div>
+                <h3>Barcode Scanning</h3>
+                <p>Use your device's camera to scan barcodes and ring up items instantly. Speeds up checkout and prevents manual entry errors.</p>
+            </div>
+            <div class="feature-card" style="border-top: 3px solid #25D366;">
+                <div class="feature-icon"><i class="bi bi-whatsapp"></i></div>
+                <h3>WhatsApp Digital Receipts</h3>
+                <p>Send professional digital receipts directly to your customers' WhatsApp instantly after a sale. Save on paper and build customer loyalty.</p>
+            </div>
+        </div>
+    </section>
+        
+    <section class="how-it-works-section" style="background: #030812; padding: 100px 20px; border-top: 1px solid rgba(255,255,255,0.05);">
+        <div style="max-width: 800px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 50px;">
+                <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">How It Works</h2>
+                <p style="color: #888; font-size: 1.1rem;">From registration to your first sale in under 5 minutes.</p>
+            </div>
+
+            <div class="d-flex flex-column gap-4 text-start bg-dark" style="padding: 40px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                <div class="d-flex gap-4 align-items-center">
+                    <div style="background: rgba(2, 139, 217, 0.2); color: #03aaec; font-weight: 900; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem;">1</div>
+                    <div>
+                        <h4 style="font-weight: 800; margin-bottom: 5px; font-size: 1.2rem;">Register Your Shop</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 1rem;">Select a plan, register your account credentials, and receive upfront payment instructions.</p>
+                    </div>
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.05); margin: 10px 0;">
+                <div class="d-flex gap-4 align-items-center">
+                    <div style="background: rgba(252, 193, 30, 0.2); color: #fcc11e; font-weight: 900; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem;">2</div>
+                    <div>
+                        <h4 style="font-weight: 800; margin-bottom: 5px; font-size: 1.2rem;">Make Upfront Payment</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 1rem;">Send BSP bank transfer or Mobile Money transfer. Superadmin will activate your shop status immediately upon verification.</p>
+                    </div>
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.05); margin: 10px 0;">
+                <div class="d-flex gap-4 align-items-center">
+                    <div style="background: rgba(46, 213, 115, 0.2); color: #2ed573; font-weight: 900; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem;">3</div>
+                    <div>
+                        <h4 style="font-weight: 800; margin-bottom: 5px; font-size: 1.2rem;">Start Selling & Tracking</h4>
+                        <p style="color: #aaa; margin: 0; font-size: 1rem;">Create staff logins, add inventory, and scan or select products to record sales seamlessly.</p>
+                    </div>
+                </div>
+            </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST BADGES SECTION -->
+    <section style="background: #061121; padding: 40px 20px; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 30px; text-align: center;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem; color: #028bd9;"><i class="bi bi-lock"></i></div>
+                <div class="text-start">
+                    <h5 style="margin: 0; font-weight: 800; font-size: 1.1rem;">Bank-Level Security</h5>
+                    <p style="margin: 0; color: #888; font-size: 0.9rem;">Encrypted isolated data</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem; color: #fcc11e;"><i class="bi bi-cloud"></i></div>
+                <div class="text-start">
+                    <h5 style="margin: 0; font-weight: 800; font-size: 1.1rem;">Daily Cloud Backups</h5>
+                    <p style="margin: 0; color: #888; font-size: 0.9rem;">Never lose your records</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem; color: #2ed573;"><i class="bi bi-shield"></i></div>
+                <div class="text-start">
+                    <h5 style="margin: 0; font-weight: 800; font-size: 1.1rem;">99.9% Uptime</h5>
+                    <p style="margin: 0; color: #888; font-size: 0.9rem;">Always online and reliable</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section style="background: #0c0c0c; padding: 100px 20px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Trusted by Shop Owners</h2>
+            <p style="color: #888; font-size: 1.1rem;">See what other PNG tuck shop owners are saying.</p>
+        </div>
+        <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+            <div style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                <div style="font-size: 3rem; color: rgba(2, 139, 217, 0.2); position: absolute; top: 10px; left: 20px;">"</div>
+                <p style="font-style: italic; color: #ddd; margin-bottom: 20px; position: relative; z-index: 1;">"I used to lose K50 a day to shrinkage and unrecorded credit. Since using StockMasta, every single toea is accounted for. It pays for itself!"</p>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 40px; height: 40px; background: #028bd9; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">J</div>
+                    <div>
+                        <h5 style="margin: 0; font-weight: 700; font-size: 1rem;">John M.</h5>
+                        <p style="margin: 0; color: #888; font-size: 0.85rem;">Shop Owner, Port Moresby</p>
+                    </div>
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                <div style="font-size: 3rem; color: rgba(252, 193, 30, 0.2); position: absolute; top: 10px; left: 20px;">"</div>
+                <p style="font-style: italic; color: #ddd; margin-bottom: 20px; position: relative; z-index: 1;">"The Dinau tracker alone is worth it. No more arguments over who owes what. I just open the app and show them their digital balance."</p>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 40px; height: 40px; background: #fcc11e; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">S</div>
+                    <div>
+                        <h5 style="margin: 0; font-weight: 700; font-size: 1rem;">Sarah K.</h5>
+                        <p style="margin: 0; color: #888; font-size: 0.85rem;">Tuck Shop Manager, Lae</p>
+                    </div>
+                </div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); position: relative;">
+                <div style="font-size: 3rem; color: rgba(46, 213, 115, 0.2); position: absolute; top: 10px; left: 20px;">"</div>
+                <p style="font-style: italic; color: #ddd; margin-bottom: 20px; position: relative; z-index: 1;">"My cashiers love it. It's faster than writing in a book, and I can check my sales totals from home without being at the shop."</p>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 40px; height: 40px; background: #2ed573; color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">M</div>
+                    <div>
+                        <h5 style="margin: 0; font-weight: 700; font-size: 1rem;">Michael T.</h5>
+                        <p style="margin: 0; color: #888; font-size: 0.85rem;">Owner, Mt Hagen</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section id="pricing" style="background: linear-gradient(180deg, #061121 0%, #030812 100%); padding: 100px 20px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Simple, Transparent Pricing</h2>
+            <p style="color: #888; font-size: 1.1rem;">Choose the perfect plan for your business size. No free trial. Upfront payment required.</p>
+        </div>
+
+        
+        <!-- Billing Cycle Toggle -->
+        <div class="d-flex justify-content-center align-items-center mb-5 gap-3">
+            <span id="monthlyLabel" class="fw-bold" style="color: #fff; font-size: 1.1rem; transition: color 0.3s;">Monthly</span>
+            <div class="form-check form-switch" style="margin: 0; padding-left: 0;">
+                <input class="form-check-input" type="checkbox" role="switch" id="billingCycleToggle" onchange="toggleBillingCycle()" style="width: 60px; height: 30px; margin-left: 0; cursor: pointer; background-color: #028bd9; border-color: #028bd9;">
+            </div>
+            <span id="yearlyLabel" class="fw-bold" style="color: #888; font-size: 1.1rem; transition: color 0.3s;">Yearly <span class="badge rounded-pill bg-success ms-1" style="font-size: 0.7rem; vertical-align: middle;">Get 2 Months Free</span></span>
+        </div>
+
+        <div style="max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; align-items: stretch; padding-top: 20px;">
+            
+            <!-- Starter Plan -->
+            <div id="card-starter" class="pricing-card" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
+                <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Starter Plan</h3>
+                <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span><span class="price-val" data-monthly="50" data-yearly="500">50</span><span class="price-period" style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Up to 100 Products</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Basic Sales Tracking</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">1 Cashier Account</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-x-lg"></i></span> <span style="color: #777; font-size: 0.95rem; text-decoration: line-through;">Smart Barcode Scanning</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-x-lg"></i></span> <span style="color: #777; font-size: 0.95rem; text-decoration: line-through;">WhatsApp Digital Receipts</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-x-lg"></i></span> <span style="color: #777; font-size: 0.95rem; text-decoration: line-through;">Store Credit (Dinau)</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-x-lg"></i></span> <span style="color: #777; font-size: 0.95rem; text-decoration: line-through;">Daily Expense Tracking</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-x-lg"></i></span> <span style="color: #777; font-size: 0.95rem; text-decoration: line-through;">Warehouse & Bulk Storage</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #888;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Standard Email Support</span></div>
+                </div>
+                <a href="/register?plan=starter&cycle=monthly" class="btn btn-outline-glow rounded-pill plan-cta" data-plan="starter" style="border: 2px solid #555; color: #ddd; font-weight: 700; padding: 12px; width: 100%;">Subscribe Now</a>
+            </div>
+
+            <!-- Pro Plan -->
+            <div id="card-pro" class="pricing-card" style="background: #0c0c0c; border: 2px solid #028bd9; border-radius: 30px; padding: 50px 40px; text-align: center; box-shadow: 0 20px 50px rgba(2, 139, 217, 0.15); position: relative; transform: scale(1.05); z-index: 2; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);">
+                <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%); color: #000; font-weight: 900; padding: 5px 20px; border-radius: 20px; font-size: 0.9rem;">MOST POPULAR</div>
+                <h3 style="font-weight: 800; margin-bottom: 15px; font-size: 1.8rem; color: #fff;">Pro Shop Plan</h3>
+                <div style="font-size: 3.5rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.5rem; vertical-align: middle; color: #028bd9;">K</span><span class="price-val" data-monthly="200" data-yearly="2000">200</span><span class="price-period" style="font-size: 1rem; color: #888; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 15px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Unlimited Products & Sales</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Smart Barcode Scanning</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">WhatsApp Digital Receipts</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Secure Dinau (Credit) Ledger</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Daily Expense Tracking</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Warehouse & Bulk Storage</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Register Float Management</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Multi-Cashier Accounts</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Real-Time Profit Analytics</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #2ed573;"><i class="bi bi-check-lg"></i></span> <span style="font-size: 1rem;">Automatic Cloud Backups</span></div>
+                </div>
+                <a href="/register?plan=pro&cycle=monthly" class="btn-glow plan-cta" data-plan="pro" style="display: block; width: 100%; padding: 15px;">Subscribe Now</a>
+            </div>
+
+            <!-- Enterprise Plan (Multi-Shop) -->
+            <div id="card-multi" class="pricing-card" style="background: rgba(255,255,255,0.02); border: 2px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); z-index: 1;">
+                <h3 style="font-weight: 700; margin-bottom: 15px; font-size: 1.5rem; color: #ddd;">Multi-Shop Plan</h3>
+                <div style="font-size: 3rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 30px;">
+                    <span style="font-size: 1.2rem; vertical-align: middle; color: #888;">K</span><span class="price-val" data-monthly="450" data-yearly="4500">450</span><span class="price-period" style="font-size: 0.9rem; color: #666; font-weight: 600;"> / month</span>
+                </div>
+                <div style="text-align: left; margin-bottom: 40px; display: flex; flex-direction: column; gap: 12px; flex-grow: 1;">
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">All Pro Shop Features</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Manage Up to 5 Shop Locations</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Centralized Inventory View</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Manager Access Roles</span></div>
+                    <div style="display: flex; gap: 10px; align-items: start;"><span style="color: #fcc11e;"><i class="bi bi-check-lg"></i></span> <span style="color: #bbb; font-size: 0.95rem;">Priority 24/7 Phone Support</span></div>
+                </div>
+                <a href="/register?plan=multi&cycle=monthly" class="btn btn-outline-glow rounded-pill plan-cta" data-plan="multi" style="border: 2px solid #555; color: #ddd; font-weight: 700; padding: 12px; width: 100%;">Subscribe Now</a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section style="background: #030812; padding: 100px 20px;">
+        <div style="text-align: center; margin-bottom: 60px;">
+            <h2 style="font-weight: 900; font-size: 2.5rem; margin-bottom: 15px;">Frequently Asked Questions</h2>
+            <p style="color: #888; font-size: 1.1rem;">Everything you need to know about StockMasta.</p>
+        </div>
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Custom minimal accordion using Bootstrap classes -->
+            <div class="accordion accordion-flush custom-dark-accordion" id="faqAccordion">
+                
+                <div class="accordion-item" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <h2 class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" style="background: transparent; color: #fff; font-weight: 700; font-size: 1.1rem; box-shadow: none; padding: 25px 0;">
+                            Do I need a strong internet connection?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body" style="color: #bbb; padding: 0 0 25px 0;">
+                            Not at all! StockMasta is engineered to be incredibly lightweight. It uses very little data and works perfectly fine on standard 3G mobile connections across PNG.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <h2 class="accordion-header" id="headingTwo">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" style="background: transparent; color: #fff; font-weight: 700; font-size: 1.1rem; box-shadow: none; padding: 25px 0;">
+                            Can my cashiers see my total profit?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body" style="color: #bbb; padding: 0 0 25px 0;">
+                            No. When you create an account for a cashier, they can only see the checkout screen and product list. Only you (the Owner) have access to the dashboard showing total sales, expected cash, and profits.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <h2 class="accordion-header" id="headingThree">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" style="background: transparent; color: #fff; font-weight: 700; font-size: 1.1rem; box-shadow: none; padding: 25px 0;">
+                            How do I pay for my subscription?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body" style="color: #bbb; padding: 0 0 25px 0;">
+                            Since there is no free trial, you are required to register and make your payment upfront before system access is granted. After registering, you will receive payment details. You can pay via BSP bank account transfer or Mobile Money. Once our admin verifies your payment, your shop account will be activated immediately.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item" style="background: transparent; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <h2 class="accordion-header" id="headingFour">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" style="background: transparent; color: #fff; font-weight: 700; font-size: 1.1rem; box-shadow: none; padding: 25px 0;">
+                            What kind of device do I need?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                        <div class="accordion-body" style="color: #bbb; padding: 0 0 25px 0;">
+                            StockMasta works directly in the browser of any smartphone, tablet, or computer. You don't need expensive POS hardware—a simple Android phone for your cashier is all it takes!
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA SECTION -->
+    <section style="background: linear-gradient(rgba(2, 139, 217, 0.75), rgba(6, 17, 33, 0.95)), url('{{ url_for('static', filename='BACK.png') }}'); background-size: cover; background-position: center; padding: 100px 20px; text-align: center; border-top: 1px solid rgba(2, 139, 217, 0.3);">
+        <div style="max-width: 600px; margin: 0 auto;">
+            <h2 style="font-weight: 900; font-size: 2.8rem; margin-bottom: 20px; color: #fff;">Ready to professionalize your business?</h2>
+            <p style="color: #d0e8f8; font-size: 1.2rem; margin-bottom: 40px;">Stop the shrinkage. Track the Dinau. Take control today.</p>
+            <a href="#pricing" class="btn-glow" style="background: #fcc11e; color: #000; box-shadow: 0 10px 30px rgba(252, 193, 30, 0.4); padding: 20px 50px; font-size: 1.3rem;">Get Started Now</a>
+        </div>
+    </section>
+
+    <footer style="background: #080808; border-top: 1px solid rgba(255,255,255,0.05); padding: 50px 20px 30px; text-align: center;">
+        <div class="mb-4">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="StockMasta" style="height: 55px; width: auto;">
+        </div>
+        <div class="d-flex justify-content-center gap-4 mb-4">
+            <a href="/terms" style="color: #888; text-decoration: none; font-size: 0.9rem;">Terms of Service</a>
+            <a href="/privacy" style="color: #888; text-decoration: none; font-size: 0.9rem;">Privacy Policy</a>
+            <a href="/contact" style="color: #028bd9; text-decoration: none; font-size: 0.9rem; font-weight: bold;">Contact Support</a>
+        </div>
+        <div style="color: #555; font-size: 0.8rem;">
+            &copy; <script>document.write(new Date().getFullYear())</script> BraeNova IT Solutions. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS for Accordion -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* Fix Bootstrap Accordion Dark Mode quirks */
+        .accordion-button::after { filter: invert(1) grayscale(100%) brightness(200%); }
+        .accordion-button:not(.collapsed) { background-color: transparent !important; color: #fcc11e !important; box-shadow: none !important; }
+    </style>
+
+    <!-- Floating WhatsApp Widget -->
+    <a href="https://wa.me/67570000000" target="_blank" class="whatsapp-float" title="Chat on WhatsApp">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.333 4.982L2 22l5.233-1.371a9.936 9.936 0 004.779 1.218h.004c5.505 0 9.988-4.478 9.989-9.984 0-2.669-1.037-5.176-2.922-7.062C17.199 3.037 14.691 2 12.012 2zm5.727 14.17c-.313.882-1.815 1.722-2.485 1.848-.602.112-1.373.197-3.99-1.02-3.14-1.464-5.114-4.836-5.27-5.048-.157-.212-1.282-1.705-1.282-3.253s.81-2.302 1.097-2.603c.288-.302.628-.377.838-.377h.575c.183 0 .445-.072.706.566.262.637.89 2.196.968 2.353.078.157.13.339.026.546-.104.207-.156.339-.313.521-.157.183-.327.409-.467.549-.157.157-.321.327-.138.64.183.314.815 1.346 1.748 2.176.932.83 1.72 1.087 2.034 1.244.314.157.497.13.68-.078.183-.209.785-.913.995-1.225.209-.313.418-.261.706-.157.288.104 1.83.864 2.144 1.02.314.157.523.235.6.366.078.13.078.756-.235 1.638z"/>
+        </svg>
+    </a>
+
+    <!-- Interactive Plan Recommendation Calculator Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const productsSlider = document.getElementById('calc-products');
+            const cashiersSlider = document.getElementById('calc-cashiers');
+            const shopsSlider = document.getElementById('calc-shops');
+
+            const productsVal = document.getElementById('calc-products-val');
+            const cashiersVal = document.getElementById('calc-cashiers-val');
+            const shopsVal = document.getElementById('calc-shops-val');
+
+            const recommendedName = document.getElementById('calc-recommended-name');
+            const recommendedPrice = document.getElementById('calc-recommended-price');
+            const ctaBtn = document.getElementById('calc-cta-btn');
+
+            function updateSliderProgress(slider) {
+                const percentage = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
+                slider.style.background = `linear-gradient(to right, #fcc11e 0%, #fcc11e ${percentage}%, rgba(255, 255, 255, 0.1) ${percentage}%, rgba(255, 255, 255, 0.1) 100%)`;
+            }
+
+            function updateCalculator() {
+                const products = parseInt(productsSlider.value);
+                const cashiers = parseInt(cashiersSlider.value);
+                const shops = parseInt(shopsSlider.value);
+
+                // Update text display
+                productsVal.innerText = products === 500 ? '500+ Products' : `${products} Products`;
+                cashiersVal.innerText = cashiers === 10 ? '10+ Cashiers' : `${cashiers} ${cashiers === 1 ? 'Cashier' : 'Cashiers'}`;
+                shopsVal.innerText = shops === 5 ? '5+ Shop Locations' : `${shops} ${shops === 1 ? 'Shop Location' : 'Shop Locations'}`;
+
+                const isYearly = document.getElementById('billingCycleToggle') ? document.getElementById('billingCycleToggle').checked : false;
+
+                // Calculate plan recommendation
+                let planKey = 'starter';
+                let planName = 'Starter Plan';
+                let planPrice = isYearly ? 'K500 / year' : 'K50 / month';
+                let highlightCardId = 'card-starter';
+
+                if (shops > 1) {
+                    planKey = 'multi';
+                    planName = 'Multi-Shop Plan';
+                    planPrice = isYearly ? 'K4,500 / year' : 'K450 / month';
+                    highlightCardId = 'card-multi';
+                } else if (products > 100 || cashiers > 1) {
+                    planKey = 'pro';
+                    planName = 'Pro Shop Plan';
+                    planPrice = isYearly ? 'K2,000 / year' : 'K200 / month';
+                    highlightCardId = 'card-pro';
+                }
+
+                // Update calculator details
+                if (recommendedName.innerText !== planName) {
+                    recommendedName.style.transform = 'scale(0.95)';
+                    recommendedName.style.opacity = '0.7';
+                    setTimeout(() => {
+                        recommendedName.innerText = planName;
+                        recommendedName.style.transform = 'scale(1)';
+                        recommendedName.style.opacity = '1';
+                    }, 80);
+                }
+                recommendedPrice.innerText = planPrice;
+                ctaBtn.href = `/register?plan=${planKey}`;
+
+                // Update visual highlights on pricing cards
+                updateHighlights(highlightCardId);
+            }
+
+            function updateHighlights(recommendedId) {
+                const cardIds = ['card-starter', 'card-pro', 'card-multi'];
+                cardIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el) return;
+                    
+                    // Find button inside this card to highlight/reset
+                    const btn = el.querySelector('a.btn, a.btn-glow');
+                    
+                    if (id === recommendedId) {
+                        el.classList.add('recommended');
+                        el.classList.remove('dimmed');
+                        
+                        if (btn) {
+                            btn.style.background = 'linear-gradient(135deg, #fcc11e 0%, #ffd93d 100%)';
+                            btn.style.borderColor = '#fcc11e';
+                            btn.style.color = '#000';
+                            btn.style.boxShadow = '0 8px 20px rgba(252, 193, 30, 0.4)';
+                        }
+                    } else {
+                        el.classList.add('dimmed');
+                        el.classList.remove('recommended');
+                        
+                        if (btn) {
+                            // Reset buttons to their base state styles
+                            if (id === 'card-pro') {
+                                btn.style.background = '';
+                                btn.style.borderColor = '';
+                                btn.style.color = '';
+                                btn.style.boxShadow = '';
+                            } else {
+                                btn.style.background = 'transparent';
+                                btn.style.borderColor = 'rgba(255,255,255,0.15)';
+                                btn.style.color = '#ddd';
+                                btn.style.boxShadow = 'none';
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Bind events & handle dynamic backgrounds
+            function handleSliderInput(e) {
+                updateSliderProgress(e.target);
+                updateCalculator();
+            }
+
+            productsSlider.addEventListener('input', handleSliderInput);
+            cashiersSlider.addEventListener('input', handleSliderInput);
+            shopsSlider.addEventListener('input', handleSliderInput);
+
+            // Initial run to set progress states and card highlights
+            updateSliderProgress(productsSlider);
+            updateSliderProgress(cashiersSlider);
+            updateSliderProgress(shopsSlider);
+            updateCalculator();
+        });
+    </script>
+    <!-- Billing Toggle Script -->
+    <script>
+        function toggleBillingCycle() {
+            const isYearly = document.getElementById('billingCycleToggle').checked;
+            const monthlyLabel = document.getElementById('monthlyLabel');
+            const yearlyLabel = document.getElementById('yearlyLabel');
+            
+            if (isYearly) {
+                monthlyLabel.style.color = '#888';
+                yearlyLabel.style.color = '#fff';
+            } else {
+                monthlyLabel.style.color = '#fff';
+                yearlyLabel.style.color = '#888';
+            }
+
+            document.querySelectorAll('.price-val').forEach(el => {
+                // simple pop animation
+                el.style.transform = 'scale(0.8)';
+                el.style.opacity = '0';
+                setTimeout(() => {
+                    let val = isYearly ? el.getAttribute('data-yearly') : el.getAttribute('data-monthly');
+                    el.innerText = parseInt(val).toLocaleString('en-US');
+                    el.style.transform = 'scale(1)';
+                    el.style.opacity = '1';
+                }, 150);
+            });
+            
+            document.querySelectorAll('.price-period').forEach(el => {
+                setTimeout(() => {
+                    el.innerText = isYearly ? ' / year' : ' / month';
+                }, 150);
+            });
+
+            document.querySelectorAll('.plan-cta').forEach(el => {
+                const plan = el.getAttribute('data-plan');
+                const cycle = isYearly ? 'yearly' : 'monthly';
+                el.href = `/register?plan=${plan}&cycle=${cycle}`;
+            });
+            
+            // Sync calculator text if it exists
+            const calcBtn = document.getElementById('calc-cta-btn');
+            if (calcBtn) {
+                // Re-trigger calculator to update recommendation text
+                const productsSlider = document.getElementById('calc-products');
+                if (productsSlider) {
+                    productsSlider.dispatchEvent(new Event('input'));
+                }
+            }
+        }
+        
+        // Add CSS transition for smooth price popping
+        document.head.insertAdjacentHTML('beforeend', '<style>.price-val { display: inline-block; transition: all 0.15s ease-in-out; }</style>');
+    </script>
+</body>
+</html>

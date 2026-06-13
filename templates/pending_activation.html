@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Payment Activation | StockMasta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0c0c0c; color: #ffffff; font-family: 'Inter', system-ui, -apple-system; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .activation-card { background: #151515; border: 1px solid #333; border-radius: 24px; padding: 40px; width: 100%; max-width: 600px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .logo-img { height: 60px; margin-bottom: 15px; }
+        .brand-text { color: #fff; font-weight: 900; letter-spacing: -0.5px; font-size: 1.3rem; line-height: 1.1; margin-bottom: 25px; }
+        .brand-text span { color: #fcc11e; display: block; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px; }
+        
+        .payment-box { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; margin-bottom: 20px; text-align: left; }
+        .step-num { width: 30px; height: 30px; border-radius: 50%; background: #fcc11e; color: #000; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; }
+        
+        .btn-glow {
+            background: linear-gradient(135deg, #028bd9 0%, #03aaec 100%);
+            color: white;
+            font-weight: 800;
+            padding: 14px 30px;
+            border-radius: 50px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(2, 139, 217, 0.3);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+        }
+        .btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(2, 139, 217, 0.5);
+            color: white;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+
+<div class="activation-card text-center">
+    <a href="/" style="text-decoration: none;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
+        
+    </a>
+
+    <div class="mb-4">
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold" style="font-size: 0.9rem;">
+            <i class="bi bi-hourglass-split"></i> PENDING ACTIVATION
+        </span>
+    </div>
+
+    <h3 class="fw-bold mb-2">Almost there, {{ username or 'Owner' }}!</h3>
+    <p class="text-muted mb-4">Your tuck shop account is created, but requires upfront payment activation to log in.</p>
+
+    <!-- Plan Summary -->
+    <div class="payment-box d-flex justify-content-between align-items-center mb-4" style="background: rgba(2, 139, 217, 0.08); border-color: rgba(2, 139, 217, 0.2);">
+        <div>
+            <h6 class="mb-1 text-muted">Selected Subscription</h6>
+            <h5 class="fw-bold mb-0 text-white">{{ plan_name }}</h5>
+        </div>
+        <div class="text-end">
+            <h6 class="mb-1 text-muted">Amount Due</h6>
+            <h4 class="fw-bold mb-0 text-info">{{ price }} <span style="font-size: 0.8rem; color: #888;">/ {% if cycle == 'yearly' %}year{% else %}month{% endif %}</span></h4>
+        </div>
+    </div>
+
+    <h5 class="fw-bold mb-3 text-start">How to Activate Your Account:</h5>
+
+    <!-- Step 1: Payment Options -->
+    <div class="payment-box">
+        <div class="d-flex align-items-center mb-3">
+            <span class="step-num">1</span>
+            <h6 class="mb-0 fw-bold">Transfer the subscription fee using one of these options:</h6>
+        </div>
+        
+        <ul class="nav nav-pills mb-3 d-flex gap-2" id="paymentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active btn-sm rounded-pill py-2 px-3 fw-bold" id="bsp-tab" data-bs-toggle="pill" data-bs-target="#bsp" type="button" role="tab">BSP Bank Transfer</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link btn-sm rounded-pill py-2 px-3 fw-bold" id="mobile-tab" data-bs-toggle="pill" data-bs-target="#mobile" type="button" role="tab">Mobile Money</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="paymentTabsContent">
+            <!-- BSP -->
+            <div class="tab-pane fade show active" id="bsp" role="tabpanel">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Bank Name:</span>
+                        <strong class="text-white">Bank South Pacific (BSP)</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Account Name:</span>
+                        <strong class="text-white">BraeNova IT Solutions</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Account Number:</span>
+                        <strong class="text-white">1001234567</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-0">
+                        <span class="text-muted">Account Type:</span>
+                        <strong class="text-white">Business Checking</strong>
+                    </div>
+                </div>
+            </div>
+            <!-- Mobile Money -->
+            <div class="tab-pane fade" id="mobile" role="tabpanel">
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Provider:</span>
+                        <strong class="text-white">MiBank / Mobile Money</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Mobile Number:</span>
+                        <strong class="text-white">+675 7123 4567</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-0">
+                        <span class="text-muted">Reference:</span>
+                        <strong class="text-warning">{{ username or 'Shop Activation' }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Submit Receipt -->
+    <div class="payment-box">
+        <div class="d-flex align-items-center mb-3">
+            <span class="step-num">2</span>
+            <h6 class="mb-0 fw-bold">Send a screenshot of the receipt:</h6>
+        </div>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">Please send your transaction receipt along with your username <strong class="text-info">{{ username }}</strong> to our activation team via WhatsApp or Email.</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex flex-column gap-2">
+        <a href="https://wa.me/67571234567?text=Hi%20StockMasta,%20here%20is%20my%20payment%20receipt%20for%20username%20{{ username }}" target="_blank" class="btn-glow text-center">
+            <i class="bi bi-chat-dots"></i> Send Receipt via WhatsApp (+675 7123 4567)
+        </a>
+        <a href="mailto:activation@braenova.com.pg?subject=StockMasta%20Activation%20-%20{{ username }}&body=Hi%20StockMasta,%20attached%20is%20the%20receipt%20for%20my%20account%20activation%20with%20username%20{{ username }}." class="btn btn-outline-secondary rounded-pill py-3 fw-bold" style="border: 1px solid #333;">
+            <i class="bi bi-envelope"></i> Email Receipt (activation@braenova.com.pg)
+        </a>
+        <a href="/login" class="text-decoration-none mt-3" style="font-size: 0.9rem; color: #888;">
+            Back to <span style="color: #fcc11e;">Login Screen</span>
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
