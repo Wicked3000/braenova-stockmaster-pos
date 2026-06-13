@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
 
     steps:
       - name: Checkout repository
@@ -29,14 +30,10 @@ jobs:
 
       - name: Save log on failure
         if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cat mobile_app/pub_get.log > error.log
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git pull origin main
-          git add error.log
-          git commit -m "chore: save pub get log on failure" || true
-          git push
+          gh issue create --title "Flutter Build Failed" --body "$(cat mobile_app/pub_get.log)" || true
 
       - name: Build Flutter Web
         working-directory: mobile_app
