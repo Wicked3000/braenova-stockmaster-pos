@@ -30,11 +30,12 @@ jobs:
       - name: Save log on failure
         if: failure()
         run: |
-          cp mobile_app/pub_get.log static/flutter/pub_get.log
+          cat mobile_app/pub_get.log > error.log
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add static/flutter/pub_get.log
-          git commit -m "chore: save pub get log on failure"
+          git pull origin main
+          git add error.log
+          git commit -m "chore: save pub get log on failure" || true
           git push
 
       - name: Build Flutter Web
