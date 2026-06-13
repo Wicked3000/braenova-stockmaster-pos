@@ -5,6 +5,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from functools import wraps
 from werkzeug.utils import secure_filename
 from database import (
+    supabase,
     verify_user, get_all_inventory, get_all_categories, 
     add_sale, get_sales_history, get_sales_summary, get_inventory_status, 
     get_inventory_financials, get_all_cashiers, add_user,
