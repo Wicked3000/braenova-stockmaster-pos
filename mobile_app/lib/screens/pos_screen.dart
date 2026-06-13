@@ -117,7 +117,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     try {
       final client = ref.read(apiClientProvider);
       final response = await client.checkout({
-        'items': _cart.map((i) => {'id': i['id'], 'qty': i['qty'], 'price': i['price']}).toList(),
+        'items': _cart.map((i) => {'id': i['id'], 'qty': i['qty'], 'price': i['price'], 'total_price': i['total_price']}).toList(),
         'payment_method': method,
         'customer_name': customerName,
         'total_amount': _cartTotal,
