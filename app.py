@@ -1657,11 +1657,7 @@ def api_current_shift():
 def api_open_shift():
     shop_id = request.user.get('shop_id')
     user_id = request.user.get('user_id')
-    role = request.user.get('role')
     
-    if role not in ['owner', 'superadmin', 'manager']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-        
     data = request.json
     starting_float = float(data.get('starting_float', 0))
     
@@ -1679,11 +1675,7 @@ def api_open_shift():
 @jwt_required
 def api_close_shift():
     shop_id = request.user.get('shop_id')
-    role = request.user.get('role')
     
-    if role not in ['owner', 'superadmin', 'manager']:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
-        
     data = request.json
     actual_cash = float(data.get('actual_cash', 0))
     shift_id = data.get('shift_id')
