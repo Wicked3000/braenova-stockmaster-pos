@@ -1563,3 +1563,143 @@ def api_reports():
         }
     })
 
+
+
+# --- NEW API ROUTES FOR FLUTTER FEATURE PARITY ---
+
+@app.route('/api/v1/shifts/current', methods=['GET'])
+@jwt_required
+def api_current_shift():
+    shop_id = request.user.get('shop_id')
+    res = supabase.table('shifts').select('*').eq('shop_id', shop_id).eq('status', 'open').execute()
+    if res.data:
+        return jsonify({'success': True, 'data': res.data[0]})
+    return jsonify({'success': False, 'message': 'No open shift'})
+
+@app.route('/api/v1/shifts/open', methods=['POST'])
+@jwt_required
+def api_open_shift():
+    shop_id = request.user.get('shop_id')
+    user_id = request.user.get('user_id')
+    role = request.user.get('role')
+    
+    if role not in ['owner', 'superadmin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    starting_float = float(data.get('starting_float', 0))
+    
+    res = supabase.table('shifts').select('*').eq('shop_id', shop_id).eq('status', 'open').execute()
+    if res.data:
+        return jsonify({'success': False, 'message': 'A shift is already open.'}), 400
+        
+    try:
+        open_shift(shop_id, user_id, starting_float)
+        return jsonify({'success': True, 'message': 'Shift opened'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/shifts/close', methods=['POST'])
+@jwt_required
+def api_close_shift():
+    shop_id = request.user.get('shop_id')
+    role = request.user.get('role')
+    
+    if role not in ['owner', 'superadmin', 'manager']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    actual_cash = float(data.get('actual_cash', 0))
+    shift_id = data.get('shift_id')
+    
+    try:
+        shift = supabase.table('shifts').select('starting_float').eq('id', shift_id).execute().data[0]
+        sales = supabase.table('sales').select('total_price').eq('shift_id', shift_id).eq('payment_method', 'cash').execute().data
+        cash_sales = sum(float(s['total_price']) for s in sales)
+        expected_cash = float(shift['starting_float']) + cash_sales
+        
+        close_shift(shift_id, actual_cash, expected_cash)
+        return jsonify({'success': True, 'message': 'Shift closed'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/warehouse/restock', methods=['POST'])
+@jwt_required
+def api_warehouse_restock():
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') not in ['owner', 'superadmin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    item_id = data.get('item_id')
+    qty = int(data.get('quantity', 0))
+    
+    try:
+        restock_warehouse_item(item_id, qty, shop_id, request.user.get('user_id'))
+        return jsonify({'success': True, 'message': 'Restocked'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/warehouse/transfer', methods=['POST'])
+@jwt_required
+def api_warehouse_transfer():
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') not in ['owner', 'superadmin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    item_id = data.get('item_id')
+    qty = int(data.get('quantity', 0))
+    
+    try:
+        transfer_warehouse_to_shop(item_id, qty, shop_id, request.user.get('user_id'))
+        return jsonify({'success': True, 'message': 'Transferred'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/reports/close', methods=['POST'])
+@jwt_required
+def api_reports_close():
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') not in ['owner', 'superadmin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    try:
+        date_str = generate_daily_report(shop_id)
+        return jsonify({'success': True, 'message': f'Report for {date_str} saved.'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/shop/profile', methods=['PUT'])
+@jwt_required
+def api_shop_profile():
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') not in ['owner', 'superadmin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    update_data = {}
+    if 'shop_name' in data: update_data['shop_name'] = data['shop_name']
+    if 'receipt_header' in data: update_data['receipt_header'] = data['receipt_header']
+    if 'receipt_footer' in data: update_data['receipt_footer'] = data['receipt_footer']
+    
+    try:
+        if update_data:
+            supabase.table('shops').update(update_data).eq('id', shop_id).execute()
+        return jsonify({'success': True, 'message': 'Profile updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/v1/category/delete/<int:cat_id>', methods=['DELETE'])
+@jwt_required
+def api_category_delete(cat_id):
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') not in ['owner', 'superadmin']:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    try:
+        supabase.table('categories').delete().eq('id', cat_id).eq('shop_id', shop_id).execute()
+        return jsonify({'success': True, 'message': 'Category deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
