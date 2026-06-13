@@ -223,7 +223,9 @@ def landing():
             return render_template('landing.html')
             
         if session.get('role') == 'cashier':
-            return redirect(url_for('pos'))
+            session.clear()
+            flash("Cashiers must use the POS Mobile App.", "error")
+            return redirect(url_for('login'))
         return redirect(url_for('dashboard'))
     return render_template('landing.html')
 
@@ -667,8 +669,6 @@ def centralized_inventory():
 def update_debt_status():
     if session.get('plan') == 'starter':
         flash("Dinau (Store Credit) is not available on the Starter Plan.", "error")
-        if session.get('role') == 'cashier':
-            return redirect(url_for('pos'))
         return redirect(url_for('dashboard'))
     try:
         record_id = request.form.get('record_id')
