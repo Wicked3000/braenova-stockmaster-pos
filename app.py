@@ -1370,7 +1370,7 @@ def api_checkout():
         if payment_method == 'dinau' and plan == 'starter':
             return jsonify({'success': False, 'message': 'Store credit (Dinau) is not available on the Starter Plan.'}), 400
 
-        total_transaction_amount = sum(float(i['total_price']) for i in items)
+        total_transaction_amount = sum(float(i.get('total_price', float(i.get('price', 0)) * i.get('qty', 1))) for i in items)
         if payment_method == 'dinau' and total_transaction_amount < 20.00:
             return jsonify({'success': False, 'message': 'Minimum K20.00 required for credit sales.'}), 400
 
@@ -1381,7 +1381,7 @@ def api_checkout():
             add_sale(
                 inventory_id=item['id'],
                 qty_sold=item['qty'],
-                total_price=item['total_price'],
+                total_price=item.get('total_price', float(item.get('price', 0)) * item.get('qty', 1)),
                 shop_id=shop_id,
                 cashier_id=user_id,
                 is_dinau=(payment_method == 'dinau'),
