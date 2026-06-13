@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_html/html.dart' as html;
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
@@ -126,7 +128,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   double get _cartTotal => _cart.fold(0.0, (s, i) => s + (i['total_price'] as num).toDouble());
   int get _cartCount => _cart.fold(0, (s, i) => s + (i['qty'] as int));
 
-  Future<void> _checkout(String method, {String customerName = ''}) async {
+  Future<void> _checkout(String method, {String customerName = '', double cashTendered = 0, double changeAmount = 0}) async {
     if (_cart.isEmpty) return;
     setState(() => _isCheckingOut = true);
     try {
@@ -140,7 +142,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       if (response.data['success'] && mounted) {
         final receiptId = response.data['receipt_id'] ?? response.data['data']?['receipt_id'] ?? '';
         final finalTotal = _cartTotal;
-        _showReceipt(receiptId, method, customerName, finalTotal);
+        final cartSnapshot = List<Map<String, dynamic>>.from(_cart);
+        _showReceipt(receiptId, method, customerName, finalTotal, cartSnapshot, cashTendered, changeAmount);
         setState(() => _cart.clear());
         _loadData();
       } else {
@@ -161,55 +164,146 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
-  void _showReceipt(dynamic receiptId, String method, String customerName, double totalPaid) {
+  void _showReceipt(dynamic receiptId, String method, String customerName, double totalPaid, List<Map<String, dynamic>> items, double cashTendered, double changeAmount) {
     final fmt = NumberFormat.currency(symbol: 'K');
+    final now = DateTime.now();
+    final dateStr = DateFormat('dd/MM/yyyy').format(now);
+    final timeStr = DateFormat('hh:mm a').format(now);
+
+    String displayMethod = method.toUpperCase();
+    if (method == 'mobile') displayMethod = 'MOBILE BANKING TRANSFER';
+    if (method == 'card') displayMethod = 'INTERNET BANKING TRANSFER';
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_rounded, color: AppTheme.secondary, size: 64),
-            const SizedBox(height: 12),
-            const Text('Sale Complete!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
-            if (receiptId != '') Text('Receipt #$receiptId', style: const TextStyle(color: AppTheme.textSecondary)),
-            const Divider(height: 28),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Payment'),
-                Text(method.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w600)),
-              ],
-            ),
-            if (customerName.isNotEmpty) ...[
-              const SizedBox(height: 6),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle_rounded, color: AppTheme.secondary, size: 54),
+              const SizedBox(height: 12),
+              const Text('Sale Complete!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 4),
+              if (receiptId != '') Text('Receipt #$receiptId', style: const TextStyle(color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
+              const Divider(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Customer'),
-                  Text(customerName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Date: $dateStr', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
+                  Text('Time: $timeStr', style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary)),
                 ],
               ),
-            ],
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                Text(fmt.format(totalPaid), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 18)),
+              const Divider(height: 24),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  itemBuilder: (_, i) {
+                    final item = items[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(child: Text('${item['qty']}x ${item['name']}', style: const TextStyle(fontSize: 14))),
+                          Text(fmt.format(item['total_price']), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Payment Method', style: TextStyle(fontSize: 14)),
+                  Text(displayMethod, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                ],
+              ),
+              if (customerName.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Customer', style: TextStyle(fontSize: 14)),
+                    Text(customerName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                  ],
+                ),
               ],
-            ),
-          ],
+              if (method == 'cash') ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Cash Tendered', style: TextStyle(fontSize: 14)),
+                    Text(fmt.format(cashTendered), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Change', style: TextStyle(fontSize: 14)),
+                    Text(fmt.format(changeAmount), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppTheme.surfaceLight, borderRadius: BorderRadius.circular(8)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                    Text(fmt.format(totalPaid), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 18)),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                onPressed: () {
+                  try {
+                    html.window.print();
+                  } catch (_) {}
+                },
+                icon: const Icon(Icons.print_rounded),
+                tooltip: 'Print Receipt',
+              ),
+              IconButton(
+                onPressed: () async {
+                  String text = '*STOCKMASTA RECEIPT*\nReceipt #: $receiptId\n----------------------\n';
+                  for (var i in items) {
+                    text += '${i['qty']}x ${i['name']} - K${((i['total_price'] as num).toDouble()).toStringAsFixed(2)}\n';
+                  }
+                  text += '----------------------\n*TOTAL: K${totalPaid.toStringAsFixed(2)}*\n';
+                  text += 'Thank you for shopping with us!';
+                  final url = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+                icon: const Icon(Icons.chat_bubble_rounded, color: Colors.green),
+                tooltip: 'WhatsApp Receipt',
+              ),
+            ],
+          ),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(ctx),
               child: const Text('Done'),
             ),
           ),
@@ -370,8 +464,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient cash tendered'), backgroundColor: AppTheme.error));
                     return;
                   }
+                  final changeAmt = t - _cartTotal;
                   Navigator.pop(ctx);
-                  _checkout('cash');
+                  _checkout('cash', cashTendered: t, changeAmount: changeAmt);
                 },
                 child: const Text('Confirm Sale'),
               ),
