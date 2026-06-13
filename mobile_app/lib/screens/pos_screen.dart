@@ -485,7 +485,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final nameController = TextEditingController();
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Store Credit (Dinau)', style: TextStyle(fontWeight: FontWeight.w700)),
