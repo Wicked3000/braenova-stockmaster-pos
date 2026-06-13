@@ -15,13 +15,13 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _currentIndex = 1; // Default to POS
+  String _currentRoute = '/pos'; // Default
   String _role = 'cashier';
   bool _isLoading = true;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  List<String> _routes = [];
-  List<String> _labels = [];
-  List<String> _icons = [];
+  List<Map<String, dynamic>> _bottomNavItems = [];
+  List<Map<String, dynamic>> _drawerItems = [];
 
   @override
   void initState() {
@@ -33,51 +33,146 @@ class _MainLayoutState extends State<MainLayout> {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role') ?? 'cashier';
     
-    // Always available tabs
-    List<String> routes = ['/dashboard', '/pos', '/inventory', '/dinau'];
-    List<String> labels = ['Dashboard', 'POS', 'Inventory', 'Dinau'];
-    List<String> icons = [
-      'assets/icons/dashboard.svg',
-      'assets/icons/pos.svg',
-      'assets/icons/inventory.svg',
-      'assets/icons/dinau.svg',
+    // Bottom Nav: Max 3 items (4th will be 'More')
+    List<Map<String, dynamic>> bottomNav = [
+      {'route': '/dashboard', 'label': 'Dashboard', 'icon': 'assets/icons/dashboard.svg'},
+      {'route': '/pos', 'label': 'POS', 'icon': 'assets/icons/pos.svg'},
+      {'route': '/inventory', 'label': 'Inventory', 'icon': 'assets/icons/inventory.svg'},
+    ];
+    
+    // Drawer Items
+    List<Map<String, dynamic>> drawerNav = [
+      {'route': '/dinau', 'label': 'Dinau', 'icon': 'assets/icons/dinau.svg'},
     ];
 
-    // Owner only tabs
     if (role == 'owner' || role == 'superadmin') {
-      routes.add('/warehouse');
-      labels.add('Warehouse');
-      icons.add('assets/icons/inventory.svg'); // Reuse inventory icon for now or use a different one
-      
-      routes.add('/reports');
-      labels.add('Reports');
-      icons.add('assets/icons/dashboard.svg'); // Reuse dashboard icon
-      
-      routes.add('/settings');
-      labels.add('Settings');
-      icons.add('assets/icons/settings.svg');
+      drawerNav.add({'route': '/warehouse', 'label': 'Warehouse', 'icon': 'assets/icons/inventory.svg'});
+      drawerNav.add({'route': '/reports', 'label': 'Reports', 'icon': 'assets/icons/dashboard.svg'});
+      drawerNav.add({'route': '/settings', 'label': 'Settings', 'icon': Icons.settings});
     }
 
     setState(() {
       _role = role;
-      _routes = routes;
-      _labels = labels;
-      _icons = icons;
-      
-      // Ensure current index is valid
-      if (_currentIndex >= _routes.length) {
-        _currentIndex = 0;
-      }
+      _bottomNavItems = bottomNav;
+      _drawerItems = drawerNav;
       _isLoading = false;
     });
   }
 
-  void _onTap(int index) {
-    if (index == _currentIndex) return;
+  void _onNavTap(String route) {
+    if (route == _currentRoute) return;
     setState(() {
-      _currentIndex = index;
+      _currentRoute = route;
     });
-    context.go(_routes[index]);
+    context.go(route);
+  }
+
+  Widget _buildIcon(dynamic iconData, Color color) {
+    if (iconData is String) {
+      return SvgPicture.asset(iconData, width: 24, height: 24, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
+    } else if (iconData is IconData) {
+      return Icon(iconData, size: 24, color: color);
+    }
+    return const SizedBox(width: 24, height: 24);
+  }
+
+  Widget _buildNavItem(Map<String, dynamic> item, bool isSelected, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap ?? () => _onNavTap(item['route']),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primary.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildIcon(item['icon'], isSelected ? AppTheme.primary : AppTheme.textSecondary),
+            const SizedBox(height: 4),
+            Text(
+              item['label'],
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      backgroundColor: AppTheme.surface,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              color: AppTheme.background,
+              child: Image.asset(
+                'assets/images/logo.png', 
+                height: 40, 
+                alignment: Alignment.centerLeft,
+                errorBuilder: (_, __, ___) => const Text(
+                  'StockMaster', 
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: _drawerItems.map((item) {
+                  final isSelected = _currentRoute == item['route'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      leading: _buildIcon(item['icon'], isSelected ? AppTheme.primary : AppTheme.textSecondary),
+                      title: Text(
+                        item['label'],
+                        style: TextStyle(
+                          color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedTileColor: AppTheme.primary.withOpacity(0.1),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        _onNavTap(item['route']);
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const Divider(color: AppTheme.surfaceLight),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: ListTile(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                leading: const Icon(Icons.logout, color: AppTheme.error),
+                title: const Text('Logout', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold)),
+                onTap: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear();
+                  if (mounted) context.go('/login');
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -86,68 +181,42 @@ class _MainLayoutState extends State<MainLayout> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    bool isDrawerRouteSelected = _drawerItems.any((item) => item['route'] == _currentRoute);
+
     return Scaffold(
+      key: _scaffoldKey,
       body: widget.child,
+      drawer: _buildDrawer(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          border: Border(
+          border: const Border(
             top: BorderSide(color: AppTheme.surfaceLight, width: 1),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withOpacity(0.15),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
           ],
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: List.generate(_labels.length, (index) {
-                final isSelected = _currentIndex == index;
-                return GestureDetector(
-                  onTap: () => _onTap(index),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppTheme.primary.withOpacity(0.15)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SvgPicture.asset(
-                          _icons[index],
-                          width: 24,
-                          height: 24,
-                          colorFilter: ColorFilter.mode(
-                            isSelected ? AppTheme.primary : AppTheme.textSecondary,
-                            BlendMode.srcIn,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _labels[index],
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ..._bottomNavItems.map((item) {
+                  final isSelected = _currentRoute == item['route'];
+                  return _buildNavItem(item, isSelected);
+                }),
+                _buildNavItem(
+                  {'label': 'Menu', 'icon': Icons.menu},
+                  isDrawerRouteSelected,
+                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                ),
+              ],
             ),
           ),
         ),
