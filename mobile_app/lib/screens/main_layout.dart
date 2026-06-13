@@ -21,7 +21,6 @@ class _MainLayoutState extends State<MainLayout> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<Map<String, dynamic>> _bottomNavItems = [];
-  List<Map<String, dynamic>> _endDrawerItems = [];
 
   @override
   void initState() {
@@ -33,32 +32,28 @@ class _MainLayoutState extends State<MainLayout> {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role') ?? 'cashier';
     
-    // Bottom Nav: Max 5 items (Dashboard, POS, Inventory, Dinau, Menu)
+    // Bottom Nav
     List<Map<String, dynamic>> bottomNav = [
-      {'route': '/dashboard', 'label': 'Dashboard', 'icon': 'assets/icons/dashboard.svg'},
       {'route': '/pos', 'label': 'POS', 'icon': 'assets/icons/pos.svg'},
       {'route': '/inventory', 'label': 'Inventory', 'icon': 'assets/icons/inventory.svg'},
       {'route': '/dinau', 'label': 'Dinau', 'icon': 'assets/icons/dinau.svg'},
+      {'route': '/logout', 'label': 'Logout', 'icon': Icons.logout},
     ];
-    
-    // Right Side Menu (endDrawer) Items
-    List<Map<String, dynamic>> rightMenuNav = [];
-
-    if (role == 'owner' || role == 'superadmin') {
-      rightMenuNav.add({'route': '/warehouse', 'label': 'Warehouse', 'icon': 'assets/icons/inventory.svg'});
-      rightMenuNav.add({'route': '/reports', 'label': 'Reports', 'icon': 'assets/icons/dashboard.svg'});
-      rightMenuNav.add({'route': '/settings', 'label': 'Settings', 'icon': Icons.settings});
-    }
 
     setState(() {
       _role = role;
       _bottomNavItems = bottomNav;
-      _endDrawerItems = rightMenuNav;
       _isLoading = false;
     });
   }
 
-  void _onNavTap(String route) {
+  void _onNavTap(String route) async {
+    if (route == '/logout') {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      if (mounted) context.go('/login');
+      return;
+    }
     if (route == _currentRoute) return;
     setState(() {
       _currentRoute = route;
@@ -109,75 +104,7 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildEndDrawer() {
-    return Drawer(
-      backgroundColor: AppTheme.surface,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              color: AppTheme.background,
-              child: Image.asset(
-                'assets/images/logo.png', 
-                height: 40, 
-                alignment: Alignment.centerLeft,
-                errorBuilder: (_, __, ___) => const Text(
-                  'Menu', 
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: _endDrawerItems.map((item) {
-                  final isSelected = _currentRoute == item['route'];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: ListTile(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      leading: _buildIcon(item['icon'], isSelected ? AppTheme.primary : AppTheme.textSecondary),
-                      title: Text(
-                        item['label'],
-                        style: TextStyle(
-                          color: isSelected ? AppTheme.primary : AppTheme.textPrimary,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      selected: isSelected,
-                      selectedTileColor: AppTheme.primary.withOpacity(0.1),
-                      onTap: () {
-                        Navigator.pop(context); // Close endDrawer
-                        _onNavTap(item['route']);
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const Divider(color: AppTheme.surfaceLight),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: ListTile(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: const Icon(Icons.logout, color: AppTheme.error),
-                title: const Text('Logout', style: TextStyle(color: AppTheme.error, fontWeight: FontWeight.bold)),
-                onTap: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.clear();
-                  if (mounted) context.go('/login');
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -185,12 +112,9 @@ class _MainLayoutState extends State<MainLayout> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    bool isDrawerRouteSelected = _endDrawerItems.any((item) => item['route'] == _currentRoute);
-
     return Scaffold(
       key: _scaffoldKey,
       body: widget.child,
-      endDrawer: _buildEndDrawer(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
@@ -217,14 +141,6 @@ class _MainLayoutState extends State<MainLayout> {
                     child: _buildNavItem(item, isSelected),
                   );
                 }),
-                if (_endDrawerItems.isNotEmpty)
-                  Expanded(
-                    child: _buildNavItem(
-                      {'label': 'Menu', 'icon': Icons.menu},
-                      isDrawerRouteSelected,
-                      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
-                    ),
-                  ),
               ],
             ),
           ),

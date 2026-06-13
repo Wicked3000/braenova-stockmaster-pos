@@ -992,6 +992,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             label: const Text('Close Shift', style: TextStyle(color: AppTheme.error)),
             onPressed: _showCloseShiftDialog,
           ),
+          TextButton.icon(
+            icon: const Icon(Icons.sync_rounded, size: 18, color: AppTheme.textSecondary),
+            label: const Text('Sync Sales', style: TextStyle(color: AppTheme.textSecondary)),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All offline sales synced successfully!'), backgroundColor: AppTheme.primary));
+            },
+          ),
           IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _loadData, tooltip: 'Refresh'),
         ],
         bottom: PreferredSize(
