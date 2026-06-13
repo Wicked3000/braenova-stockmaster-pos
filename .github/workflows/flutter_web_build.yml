@@ -1,0 +1,43 @@
+name: Build Flutter Web & Push to Static
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'mobile_app/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: mobile_app
+        run: flutter pub get
+
+      - name: Build Flutter Web
+        working-directory: mobile_app
+        run: flutter build web --base-href /static/flutter/
+
+      - name: Copy build to static/flutter
+        run: |
+          rm -rf static/flutter/*
+          cp -R mobile_app/build/web/* static/flutter/
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add static/flutter/
+          git commit -m "chore: auto-build flutter web app" || echo "No changes to commit"
+          git push
