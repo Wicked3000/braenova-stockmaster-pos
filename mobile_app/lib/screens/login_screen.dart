@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 
@@ -273,10 +274,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      '© 2026 BraeNova StockMaster',
+                      '© 2026 BraeNova IT Solutions. All rights reserved.',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () async {
+                        final url = Uri.parse('https://braenova-stockmaster-pos.onrender.com/');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url);
+                        }
+                      },
+                      child: Text(
+                        'braenova-stockmaster-pos.onrender.com',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primary,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ],

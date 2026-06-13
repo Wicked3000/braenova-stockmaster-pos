@@ -7,8 +7,6 @@ import 'screens/pos_screen.dart';
 import 'screens/inventory_screen.dart';
 import 'screens/dinau_screen.dart';
 import 'screens/sales_history_screen.dart';
-import 'screens/expenses_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/main_layout.dart';
 
 void main() {
