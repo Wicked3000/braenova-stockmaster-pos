@@ -1270,13 +1270,20 @@ def api_inventory():
     inventory = get_all_inventory(shop_id)
     return jsonify({'success': True, 'data': inventory})
 
-@app.route('/api/v1/inventory/<int:item_id>', methods=['PUT'])
+@app.route('/api/v1/inventory/<int:item_id>', methods=['PUT', 'DELETE'])
 @jwt_required
 def api_update_inventory(item_id):
     shop_id = request.user.get('shop_id')
     if request.user.get('role') == 'cashier':
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
         
+    if request.method == 'DELETE':
+        try:
+            delete_inventory_item(item_id, shop_id)
+            return jsonify({'success': True, 'message': 'Item deleted'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
     data = request.json
     kwargs = {}
     if 'item_name' in data: kwargs['name'] = data['item_name']
@@ -1333,7 +1340,7 @@ def api_dashboard_summary():
         'cat_dist': [dict(c) for c in cat_dist] if cat_dist else []
     })
 
-@app.route('/api/v1/dinau', methods=['GET'])
+@app.route('/api/v1/dinau', methods=['GET', 'POST'])
 @jwt_required
 def api_dinau():
     shop_id = request.user.get('shop_id')
@@ -1341,13 +1348,38 @@ def api_dinau():
     if plan == 'starter':
         return jsonify({'success': False, 'message': 'Dinau not available on starter plan'}), 403
         
+    if request.method == 'POST':
+        data = request.json
+        if not data or 'customer_name' not in data or 'amount' not in data:
+            return jsonify({'success': False, 'message': 'Invalid data'}), 400
+        try:
+            from database import add_dinau_record
+            add_dinau_record(data['customer_name'], data['amount'], shop_id, data.get('note', ''))
+            return jsonify({'success': True, 'message': 'Store credit added'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+            
     dinau_records = get_all_dinau(shop_id)
-    # Parse dates to string for JSON serialization
     for record in dinau_records:
         if isinstance(record.get('record_date'), datetime):
             record['record_date'] = record['record_date'].isoformat()
             
     return jsonify({'success': True, 'data': dinau_records})
+
+@app.route('/api/v1/dinau/<int:record_id>', methods=['PUT'])
+@jwt_required
+def api_update_dinau(record_id):
+    shop_id = request.user.get('shop_id')
+    data = request.json
+    if not data or 'status' not in data:
+        return jsonify({'success': False, 'message': 'Invalid data'}), 400
+    try:
+        from database import update_dinau_status
+        update_dinau_status(record_id, data['status'], shop_id)
+        return jsonify({'success': True, 'message': 'Dinau status updated'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/api/v1/checkout', methods=['POST'])
 @jwt_required
@@ -1453,8 +1485,50 @@ def api_delete_cashier(cashier_id):
     delete_user(cashier_id, shop_id)
     return jsonify({'success': True, 'message': 'Cashier deleted'})
 
+@app.route('/api/v1/cashiers/<int:cashier_id>/reset', methods=['PUT'])
+@jwt_required
+def api_reset_cashier_pwd(cashier_id):
+    shop_id = request.user.get('shop_id')
+    if request.user.get('role') == 'cashier':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+    data = request.json
+    if not data or 'password' not in data:
+        return jsonify({'success': False, 'message': 'Password required'}), 400
+        
+    from werkzeug.security import generate_password_hash
+    from database import reset_password
+    try:
+        pw_hash = generate_password_hash(data['password'])
+        reset_password(cashier_id, pw_hash, shop_id)
+        return jsonify({'success': True, 'message': 'Password reset successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+
+@app.route('/api/v1/auth/register', methods=['POST'])
+def api_register():
+    data = request.json
+    if not data or 'shop_name' not in data or 'username' not in data or 'password' not in data:
+        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+        
+    shop_name = data['shop_name']
+    username = data['username']
+    password = data['password']
+    
+    from werkzeug.security import generate_password_hash
+    from database import register_shop_and_owner
+    
+    try:
+        pw_hash = generate_password_hash(password)
+        # Register on starter plan
+        user = register_shop_and_owner(shop_name, username, pw_hash, 'starter', 'monthly')
+        return jsonify({'success': True, 'message': 'Registration successful!'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': f"Registration failed. Username may already exist. {e}"}), 400
 
 @app.route('/<filename>')
 def serve_notice_attachment(filename):
@@ -1479,9 +1553,10 @@ def api_warehouse():
         return jsonify({'success': False, 'message': 'Warehouse is a Pro feature.'}), 403
         
     if request.method == 'GET':
-        from database import get_warehouse_inventory
+        from database import get_warehouse_inventory, get_warehouse_logs
         items = get_warehouse_inventory(shop_id)
-        return jsonify({'success': True, 'data': items})
+        logs = get_warehouse_logs(shop_id)
+        return jsonify({'success': True, 'data': items, 'logs': logs})
         
     if request.method == 'POST':
         data = request.get_json()

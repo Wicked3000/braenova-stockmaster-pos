@@ -10,6 +10,8 @@ import 'screens/dinau_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/sales_history_screen.dart';
 import 'screens/cashiers_screen.dart';
+import 'screens/expenses_screen.dart';
+import 'screens/register_screen.dart';
 import 'screens/main_layout.dart';
 import 'screens/warehouse_screen.dart';
 import 'screens/reports_screen.dart';

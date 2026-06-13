@@ -259,13 +259,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 subtitle: 'Edit shop info',
                 onTap: _showShopProfileDialog,
               ),
-              _buildTile(
-                icon: Icons.star_rounded,
-                title: 'Subscription Plan',
-                subtitle: 'Manage plan & billing',
-                iconColor: const Color(0xFF8B5CF6),
-                onTap: () {},
-              ),
+                _buildTile(
+                  icon: Icons.receipt_long_outlined,
+                  title: 'Manage Expenses',
+                  subtitle: 'Track operational costs',
+                  iconColor: const Color(0xFFF59E0B),
+                  onTap: () {
+                    context.push('/expenses');
+                  },
+                ),
+                _buildTile(
+                  icon: Icons.workspace_premium_outlined,
+                  title: 'Subscription Plan',
+                  subtitle: 'Manage plan & billing',
+                  iconColor: const Color(0xFF8B5CF6),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Manage Subscription'),
+                        content: const Text('To manage your billing and subscription plan, please log into the StockMaster Web Dashboard on your computer.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               const SizedBox(height: 16),
             ],
 

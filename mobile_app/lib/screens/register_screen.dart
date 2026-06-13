@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/api_client.dart';
 import 'login_screen.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -23,12 +24,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final res = await ApiService.registerPublic(
-        _nameController.text,
-        _emailController.text,
-        _passwordController.text,
-      );
-      if (res['success'] == true) {
+      final client = ref.read(apiClientProvider);
+      final res = await client.register({
+        'shop_name': _nameController.text.trim(),
+        'username': _emailController.text.trim(),
+        'password': _passwordController.text,
+      });
+      
+      if (res.data['success'] == true) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registration successful! Please sign in.')),
@@ -38,12 +41,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       } else {
-        setState(() => _errorMessage = res['error'] ?? 'Registration failed');
+        setState(() => _errorMessage = res.data['message'] ?? 'Registration failed');
       }
     } catch (e) {
       setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -94,7 +97,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Full Name',
+                    labelText: 'Shop Name',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.person),
                   ),
@@ -103,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextField(
                   controller: _emailController,
                   decoration: const InputDecoration(
-                    labelText: 'Email Address',
+                    labelText: 'Username',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.email),
                   ),

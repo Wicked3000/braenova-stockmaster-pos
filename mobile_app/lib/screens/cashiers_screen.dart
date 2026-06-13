@@ -45,6 +45,52 @@ class _CashiersScreenState extends ConsumerState<CashiersScreen> {
     }
   }
 
+  Future<void> _resetPassword(int id, String username) async {
+    final pwdCtrl = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Enter new password for $username:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pwdCtrl,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'New Password', border: OutlineInputBorder()),
+            )
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              if (pwdCtrl.text.isNotEmpty) Navigator.pop(context, true);
+            },
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && pwdCtrl.text.isNotEmpty) {
+      try {
+        final client = ref.read(apiClientProvider);
+        final res = await client.resetCashierPassword(id, pwdCtrl.text);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(res.data['message'] ?? 'Password reset successfully'),
+            backgroundColor: res.data['success'] ? AppTheme.secondary : AppTheme.error,
+          ));
+        }
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      }
+    }
+  }
+
   Future<void> _deleteCashier(int id, String username) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -186,9 +232,19 @@ class _CashiersScreenState extends ConsumerState<CashiersScreen> {
                         ),
                         title: Text(cashier['username'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text('Role: ${cashier['role']}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, color: AppTheme.error),
-                          onPressed: () => _deleteCashier(cashier['id'], cashier['username']),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.lock_reset_outlined, color: AppTheme.secondary),
+                              onPressed: () => _resetPassword(cashier['id'], cashier['username']),
+                              tooltip: 'Reset Password',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: AppTheme.error),
+                              onPressed: () => _deleteCashier(cashier['id'], cashier['username']),
+                            ),
+                          ],
                         ),
                       ),
                     );

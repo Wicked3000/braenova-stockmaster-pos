@@ -39,6 +39,10 @@ class ApiClient {
   }
 
   // --- Authentication ---
+  
+  Future<Response> register(Map<String, dynamic> data) async {
+    return await dio.post('/auth/register', data: data);
+  }
   Future<Response> login(String username, String password) async {
     final response = await dio.post('/auth/login', data: {
       'username': username,
@@ -103,6 +107,10 @@ class ApiClient {
     });
   }
 
+  
+  Future<Response> resetCashierPassword(int cashierId, String newPassword) async {
+    return await dio.put('/cashiers/$cashierId/reset', data: {'password': newPassword});
+  }
   Future<Response> deleteCashier(int cashierId) async {
     return await dio.delete('/cashiers/$cashierId');
   }
