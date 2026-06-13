@@ -139,7 +139,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       });
       if (response.data['success'] && mounted) {
         final receiptId = response.data['receipt_id'] ?? response.data['data']?['receipt_id'] ?? '';
-        _showReceipt(receiptId, method, customerName);
+        final finalTotal = _cartTotal;
+        _showReceipt(receiptId, method, customerName, finalTotal);
         setState(() => _cart.clear());
         _loadData();
       } else {
@@ -160,7 +161,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
-  void _showReceipt(dynamic receiptId, String method, String customerName) {
+  void _showReceipt(dynamic receiptId, String method, String customerName, double totalPaid) {
     final fmt = NumberFormat.currency(symbol: 'K');
     showDialog(
       context: context,
@@ -199,7 +200,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total Paid', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                Text(fmt.format(_cartTotal), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 18)),
+                Text(fmt.format(totalPaid), style: const TextStyle(color: AppTheme.secondary, fontWeight: FontWeight.w800, fontSize: 18)),
               ],
             ),
           ],
@@ -248,16 +249,44 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       color: AppTheme.secondary,
                       onTap: () {
                         Navigator.pop(context);
-                        _checkout('cash');
+                        _showCashDialog();
                       },
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _PaymentButton(
-                      icon: Icons.credit_card_rounded,
-                      label: 'Dinau\n(Store Credit)',
+                      icon: Icons.phone_android_rounded,
+                      label: 'Mobile Banking',
                       color: AppTheme.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _checkout('mobile');
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _PaymentButton(
+                      icon: Icons.credit_card_rounded,
+                      label: 'Internet Banking',
+                      color: AppTheme.primary,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _checkout('card');
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _PaymentButton(
+                      icon: Icons.book_rounded,
+                      label: 'Dinau\n(Store Credit)',
+                      color: AppTheme.error,
                       onTap: () {
                         Navigator.pop(context);
                         _showDinauDialog();
@@ -278,7 +307,86 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
+  void _showCashDialog() {
+    final tenderedCtrl = TextEditingController();
+    final fmt = NumberFormat.currency(symbol: 'K');
+    double change = 0;
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: AppTheme.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Cash Payment', style: TextStyle(fontWeight: FontWeight.w700)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Due:', style: TextStyle(fontSize: 16)),
+                    Text(fmt.format(_cartTotal), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: AppTheme.secondary)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: tenderedCtrl,
+                  autofocus: true,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(
+                    labelText: 'Cash Tendered',
+                    prefixIcon: Icon(Icons.payments_outlined),
+                  ),
+                  onChanged: (val) {
+                    final t = double.tryParse(val) ?? 0;
+                    setDialogState(() {
+                      change = t - _cartTotal;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.3), borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Change:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(change >= 0 ? fmt.format(change) : 'Insufficient', 
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: change >= 0 ? AppTheme.secondary : AppTheme.error)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+              ElevatedButton(
+                onPressed: () {
+                  final t = double.tryParse(tenderedCtrl.text) ?? 0;
+                  if (t < _cartTotal) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Insufficient cash tendered'), backgroundColor: AppTheme.error));
+                    return;
+                  }
+                  Navigator.pop(ctx);
+                  _checkout('cash');
+                },
+                child: const Text('Confirm Sale'),
+              ),
+            ],
+          );
+        }
+      ),
+    );
+  }
+
   void _showDinauDialog() {
+    if (_cartTotal < 20.0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dinau requires a minimum purchase of K20.00'), backgroundColor: AppTheme.error));
+      return;
+    }
     final nameController = TextEditingController();
     showDialog(
       context: context,
