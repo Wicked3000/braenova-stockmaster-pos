@@ -268,7 +268,8 @@ def delete_inventory_item(item_id, shop_id):
 def add_sale(inventory_id, qty_sold, total_price, shop_id, cashier_id=None, is_dinau=False, customer_name=None, payment_method='cash', receipt_id=None, shift_id=None):
     res = supabase.table('inventory').select('cost_price', 'quantity').eq('id', inventory_id).eq('shop_id', shop_id).execute()
     item = res.data[0] if res.data else None
-    cost_at_sale = (float(item['cost_price']) * int(qty_sold)) if item else 0.0
+    cost_price = item.get('cost_price') or 0.0
+    cost_at_sale = (float(cost_price) * int(qty_sold)) if item else 0.0
     
     sale_data = {
         "inventory_id": inventory_id,
@@ -531,8 +532,8 @@ def get_all_reports(shop_id):
 
 def get_inventory_financials(shop_id):
     res = supabase.table('inventory').select('quantity, cost_price, unit_price').eq('is_active', 1).eq('shop_id', shop_id).execute()
-    buying_power = sum(float(i['quantity']) * float(i['cost_price']) for i in res.data)
-    shelf_value = sum(float(i['quantity']) * float(i['unit_price']) for i in res.data)
+    buying_power = sum(float(i.get('quantity') or 0) * float(i.get('cost_price') or 0) for i in res.data)
+    shelf_value = sum(float(i.get('quantity') or 0) * float(i.get('unit_price') or i.get('price') or 0) for i in res.data)
     return {'total_buying_power': buying_power, 'potential_revenue': shelf_value}
 
 def get_expired_items(shop_id):
