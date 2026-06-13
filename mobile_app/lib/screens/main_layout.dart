@@ -21,7 +21,7 @@ class _MainLayoutState extends State<MainLayout> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<Map<String, dynamic>> _bottomNavItems = [];
-  List<Map<String, dynamic>> _drawerItems = [];
+  List<Map<String, dynamic>> _endDrawerItems = [];
 
   @override
   void initState() {
@@ -33,28 +33,27 @@ class _MainLayoutState extends State<MainLayout> {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('role') ?? 'cashier';
     
-    // Bottom Nav: Max 3 items (4th will be 'More')
+    // Bottom Nav: Max 5 items (Dashboard, POS, Inventory, Dinau, Menu)
     List<Map<String, dynamic>> bottomNav = [
       {'route': '/dashboard', 'label': 'Dashboard', 'icon': 'assets/icons/dashboard.svg'},
       {'route': '/pos', 'label': 'POS', 'icon': 'assets/icons/pos.svg'},
       {'route': '/inventory', 'label': 'Inventory', 'icon': 'assets/icons/inventory.svg'},
-    ];
-    
-    // Drawer Items
-    List<Map<String, dynamic>> drawerNav = [
       {'route': '/dinau', 'label': 'Dinau', 'icon': 'assets/icons/dinau.svg'},
     ];
+    
+    // Right Side Menu (endDrawer) Items
+    List<Map<String, dynamic>> rightMenuNav = [];
 
     if (role == 'owner' || role == 'superadmin') {
-      drawerNav.add({'route': '/warehouse', 'label': 'Warehouse', 'icon': 'assets/icons/inventory.svg'});
-      drawerNav.add({'route': '/reports', 'label': 'Reports', 'icon': 'assets/icons/dashboard.svg'});
-      drawerNav.add({'route': '/settings', 'label': 'Settings', 'icon': Icons.settings});
+      rightMenuNav.add({'route': '/warehouse', 'label': 'Warehouse', 'icon': 'assets/icons/inventory.svg'});
+      rightMenuNav.add({'route': '/reports', 'label': 'Reports', 'icon': 'assets/icons/dashboard.svg'});
+      rightMenuNav.add({'route': '/settings', 'label': 'Settings', 'icon': Icons.settings});
     }
 
     setState(() {
       _role = role;
       _bottomNavItems = bottomNav;
-      _drawerItems = drawerNav;
+      _endDrawerItems = rightMenuNav;
       _isLoading = false;
     });
   }
@@ -69,7 +68,12 @@ class _MainLayoutState extends State<MainLayout> {
 
   Widget _buildIcon(dynamic iconData, Color color) {
     if (iconData is String) {
-      return SvgPicture.asset(iconData, width: 24, height: 24, colorFilter: ColorFilter.mode(color, BlendMode.srcIn));
+      return SvgPicture.asset(
+        iconData, 
+        width: 24, 
+        height: 24, 
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn)
+      );
     } else if (iconData is IconData) {
       return Icon(iconData, size: 24, color: color);
     }
@@ -81,7 +85,7 @@ class _MainLayoutState extends State<MainLayout> {
       onTap: onTap ?? () => _onNavTap(item['route']),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppTheme.primary.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
@@ -94,7 +98,7 @@ class _MainLayoutState extends State<MainLayout> {
             Text(
               item['label'],
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10, // slightly smaller to fit 5 items comfortably
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
               ),
@@ -105,7 +109,7 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildDrawer() {
+  Widget _buildEndDrawer() {
     return Drawer(
       backgroundColor: AppTheme.surface,
       child: SafeArea(
@@ -120,7 +124,7 @@ class _MainLayoutState extends State<MainLayout> {
                 height: 40, 
                 alignment: Alignment.centerLeft,
                 errorBuilder: (_, __, ___) => const Text(
-                  'StockMaster', 
+                  'Menu', 
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)
                 ),
               ),
@@ -129,7 +133,7 @@ class _MainLayoutState extends State<MainLayout> {
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
-                children: _drawerItems.map((item) {
+                children: _endDrawerItems.map((item) {
                   final isSelected = _currentRoute == item['route'];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -146,7 +150,7 @@ class _MainLayoutState extends State<MainLayout> {
                       selected: isSelected,
                       selectedTileColor: AppTheme.primary.withOpacity(0.1),
                       onTap: () {
-                        Navigator.pop(context); // Close drawer
+                        Navigator.pop(context); // Close endDrawer
                         _onNavTap(item['route']);
                       },
                     ),
@@ -181,12 +185,12 @@ class _MainLayoutState extends State<MainLayout> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    bool isDrawerRouteSelected = _drawerItems.any((item) => item['route'] == _currentRoute);
+    bool isDrawerRouteSelected = _endDrawerItems.any((item) => item['route'] == _currentRoute);
 
     return Scaffold(
       key: _scaffoldKey,
       body: widget.child,
-      drawer: _buildDrawer(),
+      endDrawer: _buildEndDrawer(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
@@ -203,19 +207,24 @@ class _MainLayoutState extends State<MainLayout> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ..._bottomNavItems.map((item) {
                   final isSelected = _currentRoute == item['route'];
-                  return _buildNavItem(item, isSelected);
+                  return Expanded(
+                    child: _buildNavItem(item, isSelected),
+                  );
                 }),
-                _buildNavItem(
-                  {'label': 'Menu', 'icon': Icons.menu},
-                  isDrawerRouteSelected,
-                  onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                ),
+                if (_endDrawerItems.isNotEmpty)
+                  Expanded(
+                    child: _buildNavItem(
+                      {'label': 'Menu', 'icon': Icons.menu},
+                      isDrawerRouteSelected,
+                      onTap: () => _scaffoldKey.currentState?.openEndDrawer(),
+                    ),
+                  ),
               ],
             ),
           ),
