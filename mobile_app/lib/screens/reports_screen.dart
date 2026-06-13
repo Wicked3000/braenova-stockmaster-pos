@@ -55,6 +55,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
   }
 
+  Future<void> _closeDay() async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ref.read(apiClientProvider).closeDayReport();
+      if (res.data['success']) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message']), backgroundColor: AppTheme.secondary));
+        await _loadReportsData();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to close day'), backgroundColor: AppTheme.error));
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      setState(() => _isLoading = false);
+    }
+  }
+
   Widget _buildLockedState() {
     return Center(
       child: Column(
@@ -180,6 +197,23 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 );
               },
             ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(context: context, builder: (_) => AlertDialog(
+            title: const Text('Close Day'),
+            content: const Text('Are you sure you want to generate the End of Day report? This will aggregate all closed shifts for today.'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ElevatedButton(onPressed: () {
+                Navigator.pop(context);
+                _closeDay();
+              }, child: const Text('Generate Z-Report'))
+            ],
+          ));
+        },
+        icon: const Icon(Icons.summarize_rounded),
+        label: const Text('Close Day'),
+      ),
     );
   }
 }

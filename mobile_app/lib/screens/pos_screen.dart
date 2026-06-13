@@ -13,6 +13,7 @@ class PosScreen extends ConsumerStatefulWidget {
 }
 
 class _PosScreenState extends ConsumerState<PosScreen> {
+
   List<dynamic> _inventory = [];
   List<dynamic> _categories = [];
   List<Map<String, dynamic>> _cart = [];
@@ -20,6 +21,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId;
   bool _isCheckingOut = false;
+  
+  bool _hasOpenShift = false;
+  Map<String, dynamic>? _currentShift;
+
 
   @override
   void initState() {
@@ -31,12 +36,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     setState(() => _isLoading = true);
     try {
       final client = ref.read(apiClientProvider);
+      final shiftRes = await client.getCurrentShift();
+      bool hasShift = shiftRes.data['success'] == true;
+      
+      if (!hasShift) {
+        if (mounted) setState(() { _hasOpenShift = false; _isLoading = false; });
+        return;
+      }
+      
       final results = await Future.wait([
         client.getInventory(),
         client.getCategories(),
       ]);
       if (mounted) {
         setState(() {
+          _hasOpenShift = true;
+          _currentShift = shiftRes.data['data'];
           if (results[0].data['success']) _inventory = results[0].data['data'];
           if (results[1].data['success']) _categories = results[1].data['data'];
         });
@@ -583,11 +598,113 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
+
+  Future<void> _openShift(double floatAmount) async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ref.read(apiClientProvider).openShift(floatAmount);
+      if (res.data['success']) {
+        await _loadData();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to open shift'), backgroundColor: AppTheme.error));
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _closeShift(double actualCash) async {
+    if (_currentShift == null) return;
+    setState(() => _isLoading = true);
+    try {
+      final res = await ref.read(apiClientProvider).closeShift(_currentShift!['id'], actualCash);
+      if (res.data['success']) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shift closed successfully'), backgroundColor: AppTheme.secondary));
+        await _loadData();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to close shift'), backgroundColor: AppTheme.error));
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      setState(() => _isLoading = false);
+    }
+  }
+  
+  void _showOpenShiftDialog() {
+    final floatCtrl = TextEditingController(text: '0.00');
+    showDialog(context: context, barrierDismissible: false, builder: (_) => AlertDialog(
+      title: const Text('Open Register Shift'),
+      content: TextField(
+        controller: floatCtrl,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(labelText: 'Starting Cash Float (K)', prefixText: 'K '),
+      ),
+      actions: [
+        ElevatedButton(onPressed: () {
+          final amt = double.tryParse(floatCtrl.text) ?? 0.0;
+          Navigator.pop(context);
+          _openShift(amt);
+        }, child: const Text('Open Shift'))
+      ],
+    ));
+  }
+
+  void _showCloseShiftDialog() {
+    final cashCtrl = TextEditingController(text: '0.00');
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: const Text('Close Register Shift'),
+      content: TextField(
+        controller: cashCtrl,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        decoration: const InputDecoration(labelText: 'Actual Cash in Drawer (K)', prefixText: 'K '),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+          onPressed: () {
+          final amt = double.tryParse(cashCtrl.text) ?? 0.0;
+          Navigator.pop(context);
+          _closeShift(amt);
+        }, child: const Text('Close Shift'))
+      ],
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
+
     final isWide = MediaQuery.of(context).size.width >= 800;
     final fmt = NumberFormat.currency(symbol: 'K');
     final filtered = _filteredInventory;
+
+    if (!_hasOpenShift && !_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Point of Sale')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.point_of_sale_rounded, size: 80, color: AppTheme.textSecondary),
+              const SizedBox(height: 16),
+              const Text('Register Closed', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('You must open a shift to process sales.', style: TextStyle(color: AppTheme.textSecondary)),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: _showOpenShiftDialog,
+                icon: const Icon(Icons.lock_open_rounded),
+                label: const Text('Open Shift'),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
+              )
+            ],
+          ),
+        ),
+      );
+    }
 
     Widget productArea = Column(children: [
       // Category filter chips
@@ -667,6 +784,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       appBar: AppBar(
         title: const Text('Point of Sale', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
+          if (_hasOpenShift) TextButton.icon(
+            icon: const Icon(Icons.lock_outline_rounded, size: 18, color: AppTheme.error),
+            label: const Text('Close Shift', style: TextStyle(color: AppTheme.error)),
+            onPressed: _showCloseShiftDialog,
+          ),
           IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _loadData, tooltip: 'Refresh'),
         ],
         bottom: PreferredSize(

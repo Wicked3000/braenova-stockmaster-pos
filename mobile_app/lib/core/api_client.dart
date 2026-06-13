@@ -165,4 +165,43 @@ class ApiClient {
     });
     return await dio.post('/upload', data: formData);
   }
+
+  // --- Feature Parity Endpoints ---
+  
+  // Shifts
+  Future<Response> getCurrentShift() async {
+    return await dio.get('/shifts/current');
+  }
+
+  Future<Response> openShift(double startingFloat) async {
+    return await dio.post('/shifts/open', data: {'starting_float': startingFloat});
+  }
+
+  Future<Response> closeShift(int shiftId, double actualCash) async {
+    return await dio.post('/shifts/close', data: {'shift_id': shiftId, 'actual_cash': actualCash});
+  }
+
+  // Warehouse Operations
+  Future<Response> restockWarehouse(int itemId, int quantity) async {
+    return await dio.post('/warehouse/restock', data: {'item_id': itemId, 'quantity': quantity});
+  }
+
+  Future<Response> transferWarehouse(int itemId, int quantity) async {
+    return await dio.post('/warehouse/transfer', data: {'item_id': itemId, 'quantity': quantity});
+  }
+
+  // End of Day
+  Future<Response> closeDayReport() async {
+    return await dio.post('/reports/close');
+  }
+
+  // Shop Profile
+  Future<Response> updateShopProfile(Map<String, dynamic> data) async {
+    return await dio.put('/shop/profile', data: data);
+  }
+
+  // Category Deletion
+  Future<Response> deleteCategory(int catId) async {
+    return await dio.delete('/category/delete/$catId');
+  }
 }

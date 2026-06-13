@@ -86,8 +86,101 @@ class _WarehouseScreenState extends ConsumerState<WarehouseScreen> {
     );
   }
 
+
+  Future<void> _restockItem(int itemId, int qty) async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ref.read(apiClientProvider).restockWarehouse(itemId, qty);
+      if (res.data['success']) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item restocked'), backgroundColor: AppTheme.secondary));
+        await _loadWarehouseData();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to restock'), backgroundColor: AppTheme.error));
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _transferItem(int itemId, int qty) async {
+    setState(() => _isLoading = true);
+    try {
+      final res = await ref.read(apiClientProvider).transferWarehouse(itemId, qty);
+      if (res.data['success']) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Item transferred to shop'), backgroundColor: AppTheme.secondary));
+        await _loadWarehouseData();
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to transfer'), backgroundColor: AppTheme.error));
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showActionDialog(Map<String, dynamic> item, bool isRestock) {
+    final qtyCtrl = TextEditingController(text: '1');
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: Text(isRestock ? 'Restock Warehouse' : 'Transfer to Shop'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(item['item_name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          TextField(
+            controller: qtyCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: isRestock ? 'Quantity to Add' : 'Quantity to Transfer'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          final qty = int.tryParse(qtyCtrl.text) ?? 0;
+          if (qty <= 0) return;
+          Navigator.pop(context);
+          if (isRestock) {
+            _restockItem(item['id'], qty);
+          } else {
+            _transferItem(item['id'], qty);
+          }
+        }, child: const Text('Confirm'))
+      ],
+    ));
+  }
+
+  void _showItemOptions(Map<String, dynamic> item) {
+    showModalBottomSheet(context: context, builder: (_) => SafeArea(child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.add_business_rounded, color: AppTheme.secondary),
+          title: const Text('Restock Warehouse Item'),
+          onTap: () {
+            Navigator.pop(context);
+            _showActionDialog(item, true);
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.local_shipping_rounded, color: AppTheme.primary),
+          title: const Text('Transfer to Shop Inventory'),
+          onTap: () {
+            Navigator.pop(context);
+            _showActionDialog(item, false);
+          },
+        ),
+      ]
+    )));
+  }
+
   @override
   Widget build(BuildContext context) {
+
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -119,6 +212,7 @@ class _WarehouseScreenState extends ConsumerState<WarehouseScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
+                    onTap: () => _showItemOptions(item),
                     leading: const CircleAvatar(
                       backgroundColor: AppTheme.surfaceLight,
                       child: Icon(Icons.inventory_2, color: AppTheme.primary),

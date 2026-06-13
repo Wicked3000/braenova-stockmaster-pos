@@ -89,7 +89,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     return list;
   }
 
-  List<dynamic> get _lowStockItems => _inventory.where((i) => ((i['quantity'] ?? 0) as int) <= 5 && ((i['quantity'] ?? 0) as int) > 0).toList();
+  List<dynamic> get _lowStockItems => _inventory.where((i) {
+    final qty = (i['quantity'] ?? 0) as int;
+    final thresh = (i['min_threshold'] ?? i['low_stock_threshold'] ?? 5) as int;
+    return qty > 0 && qty <= thresh;
+  }).toList();
   List<dynamic> get _outOfStockItems => _inventory.where((i) => ((i['quantity'] ?? 0) as int) == 0).toList();
 
   String _getCategoryName(dynamic categoryId) {
@@ -390,7 +394,39 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     );
   }
 
+
+  Future<void> _deleteCategory(dynamic cat) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete Category', style: TextStyle(fontWeight: FontWeight.w700)),
+        content: Text('Delete category "${cat['name']}"?\nAll products in this category will become Uncategorized.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.deleteCategory(cat['id']);
+      _loadData();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Category deleted'), backgroundColor: AppTheme.secondary));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+    }
+  }
+
   void _showCategoryManager() {
+
     final nameCtrl = TextEditingController();
     bool isAdding = false;
 
@@ -469,6 +505,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           title: Text(cat['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text('$itemCount product${itemCount != 1 ? 's' : ''}',
                             style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, color: AppTheme.error),
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _deleteCategory(cat);
+                            },
+                          ),
                         );
                       },
                     ),
@@ -484,7 +527,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
     final stockQty = (item['quantity'] ?? 0) as int;
     final price = ((item['unit_price'] ?? item['price'] ?? 0) as num).toDouble();
     final isOut = stockQty == 0;
-    final isLow = stockQty > 0 && stockQty <= 5;
+    final thresh = (item['min_threshold'] ?? item['low_stock_threshold'] ?? 5) as int;
+    final isLow = stockQty > 0 && stockQty <= thresh;
     final isOwner = _role == 'owner' || _role == 'superadmin';
 
     Widget tileContent = Container(

@@ -119,8 +119,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+
+  Future<void> _updateShopProfile(String shopName, String header, String footer) async {
+    final client = ref.read(apiClientProvider);
+    try {
+      final res = await client.updateShopProfile({
+        if (shopName.isNotEmpty) 'shop_name': shopName,
+        if (header.isNotEmpty) 'receipt_header': header,
+        if (footer.isNotEmpty) 'receipt_footer': footer,
+      });
+      if (res.data['success']) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shop profile updated'), backgroundColor: AppTheme.secondary));
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res.data['message'] ?? 'Failed to update profile'), backgroundColor: AppTheme.error));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.error));
+    }
+  }
+
+  void _showShopProfileDialog() {
+    final nameCtrl = TextEditingController();
+    final headerCtrl = TextEditingController();
+    final footerCtrl = TextEditingController();
+    
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: const Text('Update Shop Details'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Shop Name (optional)')),
+            const SizedBox(height: 12),
+            TextField(controller: headerCtrl, decoration: const InputDecoration(labelText: 'Receipt Header (optional)')),
+            const SizedBox(height: 12),
+            TextField(controller: footerCtrl, decoration: const InputDecoration(labelText: 'Receipt Footer (optional)')),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        ElevatedButton(onPressed: () {
+          Navigator.pop(context);
+          _updateShopProfile(nameCtrl.text.trim(), headerCtrl.text.trim(), footerCtrl.text.trim());
+        }, child: const Text('Save'))
+      ],
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -208,7 +257,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 icon: Icons.storefront_rounded,
                 title: 'Shop Details',
                 subtitle: 'Edit shop info',
-                onTap: () {},
+                onTap: _showShopProfileDialog,
               ),
               _buildTile(
                 icon: Icons.star_rounded,
