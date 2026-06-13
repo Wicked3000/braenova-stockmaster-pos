@@ -141,7 +141,7 @@ def owner_required(f):
     def decorated_function(*args, **kwargs):
         if session.get('role') not in ['owner', 'superadmin']:
             flash("Unauthorized Access: Owners Only", "error")
-            return redirect(url_for('pos'))
+            return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -150,7 +150,7 @@ def manager_or_owner_required(f):
     def decorated_function(*args, **kwargs):
         if session.get('role') not in ['owner', 'manager', 'superadmin']:
             flash("Unauthorized Access: Managers & Owners Only", "error")
-            return redirect(url_for('pos'))
+            return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -187,7 +187,9 @@ def login():
                 if user['role'] == 'superadmin':
                     return redirect(url_for('superadmin_dashboard'))
                 if user['role'] == 'cashier':
-                    return redirect(url_for('pos'))
+                    session.clear()
+                    flash("Cashiers must use the POS Mobile App.", "error")
+                    return redirect(url_for('login'))
                 return redirect(url_for('dashboard'))
             flash("Invalid Credentials", "error")
         except Exception as e:
@@ -627,18 +629,6 @@ def daily_reports_history():
 
 # --- SHARED/CASHIER ACCESSIBLE ROUTES ---
 
-@app.route('/pos')
-@login_required
-def pos():
-    inventory = get_all_inventory(session.get('shop_id'))
-    categories = get_all_categories(session.get('shop_id'))
-    try:
-        active_shift = get_active_shift(session.get('shop_id'))
-    except Exception as e:
-        print(f"Shift lookup failed (table may not exist yet): {e}")
-        active_shift = None
-    return render_template('pos.html', inventory=inventory, categories=categories, active_shift=active_shift)
-
 @app.route('/inventory')
 @login_required
 def inventory_mgmt():
@@ -654,8 +644,6 @@ def inventory_mgmt():
 def dinau_mgmt():
     if session.get('plan') == 'starter':
         flash("Dinau (Store Credit) is not available on the Starter Plan.", "error")
-        if session.get('role') == 'cashier':
-            return redirect(url_for('pos'))
         return redirect(url_for('dashboard'))
     list_items = get_all_dinau(session.get('shop_id'))
     return render_template('dinau.html', dinau=list_items)
@@ -673,59 +661,6 @@ def centralized_inventory():
     return render_template('centralized_inventory.html', inventory=inventory)
 
 # --- API & ACTIONS ---
-
-@app.route('/api/checkout', methods=['POST'])
-@login_required
-def checkout():
-    try:
-        data = request.json
-        items = data.get('items', [])
-        payment_method = data.get('payment_method', 'cash')
-        customer_name = data.get('customer_name')
-        shift_id = data.get('shift_id')
-        
-        if not items:
-            return jsonify({'success': False, 'message': 'Cart is empty'}), 400
-
-        if payment_method == 'dinau' and session.get('plan') == 'starter':
-            return jsonify({'success': False, 'message': 'Store credit (Dinau) is not available on the Starter Plan.'}), 400
-
-        total_transaction_amount = sum(float(i['total_price']) for i in items)
-        if payment_method == 'dinau' and total_transaction_amount < 20.00:
-            return jsonify({'success': False, 'message': 'Minimum K20.00 required for credit sales.'}), 400
-
-        import uuid
-        receipt_id = str(uuid.uuid4())[:8].upper()
-
-        for item in items:
-            add_sale(
-                inventory_id=item['id'],
-                qty_sold=item['qty'],
-                total_price=item['total_price'],
-                shop_id=session.get('shop_id'),
-                cashier_id=session.get('user_id'),
-                is_dinau=(payment_method == 'dinau'),
-                customer_name=customer_name,
-                payment_method=payment_method,
-                receipt_id=receipt_id,
-                shift_id=shift_id
-            )
-        
-        # Automatically purge sales records older than 30 days
-        cleanup_old_sales(session.get('shop_id'))
-
-        # If it's a credit (dinau) sale, record the total debt once
-        if payment_method == 'dinau' and customer_name:
-            add_dinau_record(customer_name, total_transaction_amount, session.get('shop_id'))
-        
-        return jsonify({
-            'success': True,
-            'receipt_id': receipt_id
-        })
-            
-    except Exception as e:
-        print(f"Checkout error: {str(e)}")
-        return jsonify({'success': False, 'message': f'Server Error: {str(e)}'}), 500
 
 @app.route('/api/dinau/status', methods=['POST'])
 @login_required
@@ -1055,7 +990,7 @@ def open_register_shift():
         flash("Register opened successfully.", "success")
     except Exception as e:
         flash(f"Error opening register: {str(e)}", "error")
-    return redirect(url_for('pos'))
+    return redirect(url_for('dashboard'))
 
 @app.route('/shifts/close', methods=['POST'])
 @manager_or_owner_required
@@ -1074,8 +1009,6 @@ def close_register_shift():
     except Exception as e:
         flash(f"Error closing register: {str(e)}", "error")
     
-    if session.get('role') == 'cashier':
-        return redirect(url_for('pos'))
     return redirect(url_for('dashboard'))
 
 @app.route('/users/add', methods=['POST'])
