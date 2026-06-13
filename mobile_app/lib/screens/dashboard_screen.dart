@@ -144,8 +144,55 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             child: LineChart(
               LineChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.surfaceLight, strokeWidth: 1),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < _chartData.length) {
+                          final dateStr = _chartData[index]['date'].toString();
+                          final parts = dateStr.split(' ');
+                          String label = '';
+                          if (parts.length >= 3) {
+                             label = '${parts[1]} ${parts[2]}'; 
+                          } else {
+                             final dParts = dateStr.split('-');
+                             if (dParts.length >= 3) {
+                               label = '${dParts[2]}/${dParts[1]}';
+                             } else {
+                               label = dateStr.length > 5 ? dateStr.substring(0, 5) : dateStr;
+                             }
+                          }
+                          return Padding(padding: const EdgeInsets.only(top: 6.0), child: Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)));
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 42,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text('K${value.toInt()}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
+                        );
+                      },
+                    ),
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
                   LineChartBarData(
@@ -175,8 +222,43 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             child: BarChart(
               BarChartData(
-                gridData: const FlGridData(show: false),
-                titlesData: const FlTitlesData(show: false),
+                gridData: FlGridData(
+                  show: true, 
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(color: AppTheme.surfaceLight, strokeWidth: 1),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 42,
+                      getTitlesWidget: (value, meta) {
+                        if (value == 0) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text('K${value.toInt()}', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
+                        );
+                      },
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 24,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < _hourlyData.length) {
+                          final hourStr = _hourlyData[index]['hour'].toString();
+                          return Padding(padding: const EdgeInsets.only(top: 6.0), child: Text('${hourStr}h', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)));
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ),
+                ),
                 borderData: FlBorderData(show: false),
                 barGroups: _hourlyData.asMap().entries.map((e) => BarChartGroupData(
                   x: e.key,
