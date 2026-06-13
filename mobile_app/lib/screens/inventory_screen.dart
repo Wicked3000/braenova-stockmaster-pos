@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import 'login_screen.dart';
 
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -270,12 +271,65 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 const SizedBox(height: 16),
                 
                 // Image URL
-                const Text('Image URL (optional)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Product Image', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
+                    TextButton.icon(
+                      onPressed: () async {
+                        try {
+                          final picker = ImagePicker();
+                          final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                          if (pickedFile != null) {
+                            setSheet(() => isSaving = true);
+                            final bytes = await pickedFile.readAsBytes();
+                            final client = ref.read(apiClientProvider);
+                            final res = await client.uploadImage(bytes, pickedFile.name);
+                            if (res.data['success']) {
+                              imageUrlCtrl.text = res.data['url'];
+                              setSheet(() {});
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+                        } finally {
+                          setSheet(() => isSaving = false);
+                        }
+                      },
+                      icon: const Icon(Icons.upload_file, size: 16),
+                      label: const Text('Upload', style: TextStyle(fontSize: 12)),
+                    )
+                  ],
+                ),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: imageUrlCtrl,
                   decoration: const InputDecoration(hintText: 'https://...', prefixIcon: Icon(Icons.image_outlined)),
+                  onChanged: (_) => setSheet(() {}),
                 ),
+                if (imageUrlCtrl.text.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.surfaceLight),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          imageUrlCtrl.text,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Icon(Icons.broken_image, color: AppTheme.textSecondary, size: 30),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 32),
 
                 // Save button
@@ -452,7 +506,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
               ? Image.network(
                   item['image_url'],
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
                 )
               : Icon(Icons.inventory_2_rounded,

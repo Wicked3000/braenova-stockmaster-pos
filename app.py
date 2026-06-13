@@ -1215,6 +1215,29 @@ def api_login():
         }
     })
 
+@app.route('/api/v1/upload', methods=['POST'])
+@jwt_required
+def api_upload_image():
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'message': 'No file uploaded'}), 400
+        file = request.files['file']
+        if file and file.filename != '':
+            import uuid
+            from werkzeug.utils import secure_filename
+            from database import supabase
+            filename = f"{uuid.uuid4().hex}_{secure_filename(file.filename)}"
+            supabase.storage.from_("products").upload(
+                path=filename,
+                file=file.read(),
+                file_options={"content-type": file.content_type}
+            )
+            image_url = supabase.storage.from_("products").get_public_url(filename)
+            return jsonify({'success': True, 'url': image_url})
+        return jsonify({'success': False, 'message': 'Invalid file'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @app.route('/api/v1/inventory', methods=['GET', 'POST'])
 @jwt_required
 def api_inventory():

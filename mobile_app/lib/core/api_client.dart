@@ -20,13 +20,16 @@ class ApiClient {
   }
 
   void _setupInterceptors() {
+
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await secureStorage.read(key: 'jwt_token');
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        options.headers['Content-Type'] = 'application/json';
+        if (options.data is! FormData) {
+          options.headers['Content-Type'] = 'application/json';
+        }
         return handler.next(options);
       },
       onError: (DioException e, handler) {
@@ -153,5 +156,13 @@ class ApiClient {
 
   Future<Response> getReports() async {
     return await dio.get('/reports');
+  }
+
+  // --- Upload Image ---
+  Future<Response> uploadImage(List<int> bytes, String filename) async {
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    return await dio.post('/upload', data: formData);
   }
 }

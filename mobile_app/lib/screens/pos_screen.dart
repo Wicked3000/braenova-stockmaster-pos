@@ -452,11 +452,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 ),
                 child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
                     ? Image.network(
-                        item['image_url'],
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, size: 42, color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
-                      )
-                    : Icon(Icons.inventory_2_rounded, size: 42,
+                  item['image_url'],
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
+                )
+              : Icon(Icons.inventory_2_rounded, size: 42,
                         color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
               ),
             ),
