@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'mobile_app/**'
 
 jobs:
   build:
@@ -28,16 +26,9 @@ jobs:
         working-directory: mobile_app
         run: flutter pub get > pub_get.log 2>&1 || (cat pub_get.log && exit 1)
 
-      - name: Save log on failure
-        if: failure()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh issue create --title "Flutter Build Failed" --body "$(cat mobile_app/pub_get.log)" || true
-
       - name: Build Flutter Web
         working-directory: mobile_app
-        run: flutter build web --base-href /static/flutter/
+        run: flutter build web --base-href /static/flutter/ > build_web.log 2>&1 || (cat build_web.log && exit 1)
 
       - name: Copy build to static/flutter
         run: |
@@ -51,3 +42,17 @@ jobs:
           git add static/flutter/
           git commit -m "chore: auto-build flutter web app" || echo "No changes to commit"
           git push
+
+      - name: Save log on failure
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LOG_CONTENT=""
+          if [ -f mobile_app/pub_get.log ]; then
+            LOG_CONTENT="### pub_get.log"$'\n\n'"\$(cat mobile_app/pub_get.log)"$'\n\n'
+          fi
+          if [ -f mobile_app/build_web.log ]; then
+            LOG_CONTENT="\${LOG_CONTENT}### build_web.log"$'\n\n'"\$(cat mobile_app/build_web.log)"
+          fi
+          gh issue create --title "Flutter Build Failed" --body "\$LOG_CONTENT" || true
