@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -26,6 +29,10 @@ jobs:
         working-directory: mobile_app
         run: flutter pub get > pub_get.log 2>&1 || (cat pub_get.log && exit 1)
 
+      - name: Run Tests
+        working-directory: mobile_app
+        run: flutter test
+
       - name: Build Flutter Web
         working-directory: mobile_app
         run: flutter build web --base-href /static/flutter/ > build_web.log 2>&1 || (cat build_web.log && exit 1)
@@ -36,6 +43,7 @@ jobs:
           cp -R mobile_app/build/web/* static/flutter/
 
       - name: Commit and Push changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
