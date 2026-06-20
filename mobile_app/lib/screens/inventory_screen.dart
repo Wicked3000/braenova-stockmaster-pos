@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -251,7 +250,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                 const Text('Category', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
-                  value: selectedCatId,
+                  initialValue: selectedCatId,
                   decoration: const InputDecoration(hintText: 'Select Category', prefixIcon: Icon(Icons.category_rounded)),
                   dropdownColor: AppTheme.surfaceLight,
                   items: [
@@ -500,7 +499,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                         final itemCount = _inventory.where((item) => item['category_id']?.toString() == cat['id'].toString()).length;
                         return ListTile(
                           leading: Container(width: 38, height: 38, alignment: Alignment.center,
-                            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                            decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                             child: const Icon(Icons.category_rounded, color: AppTheme.primary, size: 20)),
                           title: Text(cat['name'], style: const TextStyle(fontWeight: FontWeight.w600)),
                           subtitle: Text('$itemCount product${itemCount != 1 ? 's' : ''}',
@@ -538,23 +537,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
         color: AppTheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isOut ? AppTheme.error.withOpacity(0.3) : isLow ? Colors.orange.withOpacity(0.3) : AppTheme.surfaceLight,
+          color: isOut ? AppTheme.error.withValues(alpha: 0.3) : isLow ? Colors.orange.withValues(alpha: 0.3) : AppTheme.surfaceLight,
         ),
       ),
       child: Row(children: [
         Container(width: 50, height: 50,
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
-            color: isOut ? AppTheme.error.withOpacity(0.08) : AppTheme.primary.withOpacity(0.08),
+            color: isOut ? AppTheme.error.withValues(alpha: 0.08) : AppTheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12)),
           child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
               ? Image.network(
                   item['image_url'],
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
+                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.6), size: 26),
                 )
               : Icon(Icons.inventory_2_rounded,
-                  color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26)),
+                  color: isOut ? AppTheme.error.withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.6), size: 26)),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(item['item_name'],
@@ -563,7 +562,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           const SizedBox(height: 3),
           Row(children: [
             Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.5), borderRadius: BorderRadius.circular(5)),
+              decoration: BoxDecoration(color: AppTheme.surfaceLight.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(5)),
               child: Text(_getCategoryName(item['category_id']),
                 style: const TextStyle(color: AppTheme.textSecondary, fontSize: 11))),
             if (item['barcode'] != null && item['barcode'].toString().isNotEmpty) ...[
@@ -579,7 +578,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: isOut ? AppTheme.error.withOpacity(0.12) : isLow ? Colors.orange.withOpacity(0.12) : AppTheme.secondary.withOpacity(0.1),
+              color: isOut ? AppTheme.error.withValues(alpha: 0.12) : isLow ? Colors.orange.withValues(alpha: 0.12) : AppTheme.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8)),
             child: Text(
               isOut ? 'Out of Stock' : isLow ? '⚠ Low: $stockQty' : 'Qty: $stockQty',
@@ -679,7 +678,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                         selected: _filterCategoryId == null,
                         onSelected: (_) => setState(() => _filterCategoryId = null),
                         backgroundColor: AppTheme.surfaceLight,
-                        selectedColor: AppTheme.primary.withOpacity(0.2),
+                        selectedColor: AppTheme.primary.withValues(alpha: 0.2),
                         labelStyle: TextStyle(
                           color: _filterCategoryId == null ? AppTheme.primary : AppTheme.textSecondary,
                           fontWeight: _filterCategoryId == null ? FontWeight.w700 : FontWeight.normal,
@@ -696,7 +695,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen>
                           selected: sel,
                           onSelected: (_) => setState(() => _filterCategoryId = sel ? null : id),
                           backgroundColor: AppTheme.surfaceLight,
-                          selectedColor: AppTheme.primary.withOpacity(0.2),
+                          selectedColor: AppTheme.primary.withValues(alpha: 0.2),
                           labelStyle: TextStyle(color: sel ? AppTheme.primary : AppTheme.textSecondary,
                             fontWeight: sel ? FontWeight.w700 : FontWeight.normal, fontSize: 12),
                           side: BorderSide(color: sel ? AppTheme.primary : Colors.transparent),
@@ -780,14 +779,14 @@ class _StatPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Text(value, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 13)),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: color.withOpacity(0.8), fontSize: 11)),
+        Text(label, style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 11)),
       ]),
     );
   }

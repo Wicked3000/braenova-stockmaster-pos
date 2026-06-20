@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
-import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -443,7 +442,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.3), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: AppTheme.surfaceLight.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -575,7 +574,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               margin: const EdgeInsets.only(bottom: 10),
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppTheme.surfaceLight.withOpacity(0.25),
+                                color: AppTheme.surfaceLight.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(color: AppTheme.surfaceLight),
                               ),
@@ -608,7 +607,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   child: Column(children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.3), borderRadius: BorderRadius.circular(14)),
+                      decoration: BoxDecoration(color: AppTheme.surfaceLight.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(14)),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -651,11 +650,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: cartQty > 0 ? AppTheme.primary : (isOut ? AppTheme.error.withOpacity(0.3) : AppTheme.surfaceLight),
+            color: cartQty > 0 ? AppTheme.primary : (isOut ? AppTheme.error.withValues(alpha: 0.3) : AppTheme.surfaceLight),
             width: cartQty > 0 ? 2 : 1,
           ),
           boxShadow: [BoxShadow(
-            color: cartQty > 0 ? AppTheme.primary.withOpacity(0.15) : Colors.black.withOpacity(0.08),
+            color: cartQty > 0 ? AppTheme.primary.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.08),
             blurRadius: 10, offset: const Offset(0, 3),
           )],
         ),
@@ -665,17 +664,17 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               child: Container(
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
-                  color: isOut ? AppTheme.surfaceLight.withOpacity(0.3) : AppTheme.primary.withOpacity(0.07),
+                  color: isOut ? AppTheme.surfaceLight.withValues(alpha: 0.3) : AppTheme.primary.withValues(alpha: 0.07),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
                 ),
                 child: item['image_url'] != null && item['image_url'].toString().isNotEmpty
                     ? Image.network(
                   item['image_url'],
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withOpacity(0.5) : AppTheme.primary.withOpacity(0.6), size: 26),
+                  errorBuilder: (_, __, ___) => Icon(Icons.inventory_2_rounded, color: isOut ? AppTheme.error.withValues(alpha: 0.5) : AppTheme.primary.withValues(alpha: 0.6), size: 26),
                 )
               : Icon(Icons.inventory_2_rounded, size: 42,
-                        color: isOut ? AppTheme.textSecondary.withOpacity(0.3) : AppTheme.primary.withOpacity(0.55)),
+                        color: isOut ? AppTheme.textSecondary.withValues(alpha: 0.3) : AppTheme.primary.withValues(alpha: 0.55)),
               ),
             ),
             Padding(
@@ -691,8 +690,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isOut ? AppTheme.error.withOpacity(0.12) :
-                          (stockQty <= 5 ? Colors.orange.withOpacity(0.12) : AppTheme.secondary.withOpacity(0.1)),
+                      color: isOut ? AppTheme.error.withValues(alpha: 0.12) :
+                          (stockQty <= 5 ? Colors.orange.withValues(alpha: 0.12) : AppTheme.secondary.withValues(alpha: 0.1)),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(isOut ? 'OUT' : 'x$stockQty',
@@ -708,7 +707,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
               child: Text('$cartQty', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)))),
           if (isOut) Positioned.fill(child: Container(
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.35), borderRadius: BorderRadius.circular(16)),
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35), borderRadius: BorderRadius.circular(16)),
             alignment: Alignment.center,
             child: const Text('OUT OF STOCK', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w800)),
           )),
@@ -727,7 +726,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       child: Column(children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(color: AppTheme.surfaceLight.withOpacity(0.25),
+          decoration: BoxDecoration(color: AppTheme.surfaceLight.withValues(alpha: 0.25),
             border: const Border(bottom: BorderSide(color: AppTheme.surfaceLight, width: 1))),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Text('Cart • ${_cartCount} item${_cartCount != 1 ? 's' : ''}',
@@ -925,7 +924,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   selected: _selectedCategoryId == null,
                   onSelected: (_) => setState(() => _selectedCategoryId = null),
                   backgroundColor: AppTheme.surfaceLight,
-                  selectedColor: AppTheme.primary.withOpacity(0.25),
+                  selectedColor: AppTheme.primary.withValues(alpha: 0.25),
                   labelStyle: TextStyle(
                     color: _selectedCategoryId == null ? AppTheme.primary : AppTheme.textSecondary,
                     fontWeight: _selectedCategoryId == null ? FontWeight.w700 : FontWeight.normal,
@@ -944,7 +943,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     selected: selected,
                     onSelected: (_) => setState(() => _selectedCategoryId = selected ? null : id),
                     backgroundColor: AppTheme.surfaceLight,
-                    selectedColor: AppTheme.primary.withOpacity(0.25),
+                    selectedColor: AppTheme.primary.withValues(alpha: 0.25),
                     labelStyle: TextStyle(
                       color: selected ? AppTheme.primary : AppTheme.textSecondary,
                       fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
@@ -1055,7 +1054,7 @@ class _QtyButton extends StatelessWidget {
         width: 28, height: 28,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isAdd ? AppTheme.primary.withOpacity(0.2) : AppTheme.surfaceLight,
+          color: isAdd ? AppTheme.primary.withValues(alpha: 0.2) : AppTheme.surfaceLight,
           borderRadius: BorderRadius.circular(7),
         ),
         child: Icon(icon, size: 15, color: isAdd ? AppTheme.primary : AppTheme.textPrimary),
@@ -1078,9 +1077,9 @@ class _PaymentButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
         ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: color, size: 32),

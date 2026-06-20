@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -78,7 +77,7 @@ class _SalesHistoryScreenState extends ConsumerState<SalesHistoryScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: isDinau ? AppTheme.error.withOpacity(0.2) : AppTheme.primary.withOpacity(0.2),
+                          backgroundColor: isDinau ? AppTheme.error.withValues(alpha: 0.2) : AppTheme.primary.withValues(alpha: 0.2),
                           child: Icon(
                             isDinau ? Icons.book : Icons.receipt,
                             color: isDinau ? AppTheme.error : AppTheme.primary,

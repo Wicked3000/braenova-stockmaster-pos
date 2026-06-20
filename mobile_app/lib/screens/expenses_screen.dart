@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -126,7 +125,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
                               itemBuilder: (context, index) {
                                 final exp = _expenses[index];
                                 return ListTile(
-                                  leading: CircleAvatar(backgroundColor: AppTheme.error.withOpacity(0.1), child: Icon(Icons.money_off, color: AppTheme.error)),
+                                  leading: CircleAvatar(backgroundColor: AppTheme.error.withValues(alpha: 0.1), child: Icon(Icons.money_off, color: AppTheme.error)),
                                   title: Text(exp['description']),
                                   subtitle: Text(exp['logged_by_name'] ?? 'Staff'),
                                   trailing: Text(fmt.format(exp['amount']), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.error)),

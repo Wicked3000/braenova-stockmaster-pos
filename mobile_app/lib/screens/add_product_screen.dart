@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/api_client.dart';
-import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
 class AddProductScreen extends ConsumerStatefulWidget {
@@ -180,7 +178,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     items: _categories.map((c) {
                       return DropdownMenuItem<String>(
                         value: c['name'] ?? c['id'].toString(), // Adjust based on API structure

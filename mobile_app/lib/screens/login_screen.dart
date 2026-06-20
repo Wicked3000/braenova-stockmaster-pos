@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/api_client.dart';
@@ -103,7 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withOpacity(0.3),
+                            color: AppTheme.primary.withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 5,
                           ),
@@ -155,7 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             blurRadius: 30,
                             offset: const Offset(0, 10),
                           ),
@@ -186,9 +185,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppTheme.error.withOpacity(0.1),
+                                color: AppTheme.error.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: AppTheme.error.withOpacity(0.3)),
+                                border: Border.all(color: AppTheme.error.withValues(alpha: 0.3)),
                               ),
                               child: Row(
                                 children: [
@@ -277,7 +276,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       '© 2026 BraeNova IT Solutions. All rights reserved.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppTheme.textSecondary.withOpacity(0.6),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.6),
                       ),
                     ),
                     const SizedBox(height: 8),

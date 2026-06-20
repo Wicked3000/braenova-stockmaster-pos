@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../core/api_client.dart';
 import '../theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
@@ -227,7 +226,7 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppTheme.primary.withOpacity(0.8), AppTheme.primary],
+                            colors: [AppTheme.primary.withValues(alpha: 0.8), AppTheme.primary],
                           ),
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -307,7 +306,7 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
                                       color: AppTheme.surface,
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                        color: isPaid ? AppTheme.secondary.withOpacity(0.2) : AppTheme.error.withOpacity(0.2),
+                                        color: isPaid ? AppTheme.secondary.withValues(alpha: 0.2) : AppTheme.error.withValues(alpha: 0.2),
                                         width: 1,
                                       ),
                                     ),
@@ -316,7 +315,7 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
                                         Container(
                                           width: 46, height: 46,
                                           decoration: BoxDecoration(
-                                            color: isPaid ? AppTheme.secondary.withOpacity(0.1) : AppTheme.error.withOpacity(0.1),
+                                            color: isPaid ? AppTheme.secondary.withValues(alpha: 0.1) : AppTheme.error.withValues(alpha: 0.1),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
@@ -365,7 +364,7 @@ class _DinauScreenState extends ConsumerState<DinauScreen> {
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                                 decoration: BoxDecoration(
-                                                  color: AppTheme.secondary.withOpacity(0.12),
+                                                  color: AppTheme.secondary.withValues(alpha: 0.12),
                                                   borderRadius: BorderRadius.circular(8),
                                                 ),
                                                 child: const Text('PAID', style: TextStyle(color: AppTheme.secondary, fontSize: 11, fontWeight: FontWeight.w700)),
