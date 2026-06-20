@@ -38,6 +38,13 @@ dependencies:
   url_launcher: any
   universal_html: ^2.2.4
 
+  # Barcode Scanner
+  mobile_scanner: ^5.1.1
+
+  # Local Database / Caching
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
 flutter:
   uses-material-design: true
   assets:

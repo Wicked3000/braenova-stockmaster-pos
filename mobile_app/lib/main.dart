@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/pos_screen.dart';
@@ -9,7 +10,12 @@ import 'screens/dinau_screen.dart';
 import 'screens/sales_history_screen.dart';
 import 'screens/main_layout.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await Hive.initFlutter();
+  await Hive.openBox('inventoryBox');
+  
   runApp(
     const ProviderScope(
       child: StockMasterApp(),

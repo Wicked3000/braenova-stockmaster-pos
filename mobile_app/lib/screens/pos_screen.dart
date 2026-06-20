@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:universal_html/html.dart' as html;
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:convert';
 import '../theme/app_theme.dart';
 import 'login_screen.dart';
 
@@ -35,6 +38,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
+    final box = Hive.box('inventoryBox');
+    
     try {
       final client = ref.read(apiClientProvider);
       final shiftRes = await client.getCurrentShift();
@@ -53,15 +58,28 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         setState(() {
           _hasOpenShift = true;
           _currentShift = shiftRes.data['data'];
-          if (results[0].data['success']) _inventory = results[0].data['data'];
-          if (results[1].data['success']) _categories = results[1].data['data'];
+          if (results[0].data['success']) {
+            _inventory = results[0].data['data'];
+            box.put('inventory', jsonEncode(_inventory));
+          }
+          if (results[1].data['success']) {
+            _categories = results[1].data['data'];
+            box.put('categories', jsonEncode(_categories));
+          }
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading: $e'), backgroundColor: AppTheme.error),
+          const SnackBar(content: Text('Offline Mode: Loading cached inventory.'), backgroundColor: Colors.orange),
         );
+        setState(() {
+          _hasOpenShift = true; // Assume shift open in offline mode
+          final cachedInv = box.get('inventory');
+          if (cachedInv != null) _inventory = jsonDecode(cachedInv);
+          final cachedCat = box.get('categories');
+          if (cachedCat != null) _categories = jsonDecode(cachedCat);
+        });
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -122,6 +140,70 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         _cart[index]['total_price'] = newQty * (_cart[index]['price'] as num).toDouble();
       }
     });
+  }
+
+  void _scanBarcode() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Scan Product Barcode', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: MobileScanner(
+                    onDetect: (capture) {
+                      final List<Barcode> barcodes = capture.barcodes;
+                      if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
+                        final String code = barcodes.first.rawValue!;
+                        Navigator.pop(ctx);
+                        _handleScannedBarcode(code);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('Position the barcode inside the frame.'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleScannedBarcode(String code) {
+    try {
+      final item = _inventory.firstWhere(
+        (i) => i['barcode']?.toString() == code,
+        orElse: () => null,
+      );
+      if (item != null) {
+        _addToCart(item);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${item['item_name']} added to cart!'), backgroundColor: AppTheme.secondary));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Barcode $code not found in inventory'), backgroundColor: AppTheme.error));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Product not found'), backgroundColor: AppTheme.error));
+    }
   }
 
   double get _cartTotal => _cart.fold(0.0, (s, i) => s + (i['total_price'] as num).toDouble());
@@ -991,6 +1073,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             label: const Text('Close Shift', style: TextStyle(color: AppTheme.error)),
             onPressed: _showCloseShiftDialog,
           ),
+          IconButton(icon: const Icon(Icons.qr_code_scanner_rounded), onPressed: _scanBarcode, tooltip: 'Scan Barcode', color: AppTheme.primary),
           TextButton.icon(
             icon: const Icon(Icons.sync_rounded, size: 18, color: AppTheme.textSecondary),
             label: const Text('Sync Sales', style: TextStyle(color: AppTheme.textSecondary)),
