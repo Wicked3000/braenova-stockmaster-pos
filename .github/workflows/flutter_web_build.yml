@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -19,12 +22,20 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
+          flutter-version: '3.24.3'
           channel: 'stable'
 
       - name: Install dependencies
         working-directory: mobile_app
         run: flutter pub get > pub_get.log 2>&1 || (cat pub_get.log && exit 1)
+
+      - name: Flutter Analyze
+        working-directory: mobile_app
+        run: flutter analyze
+
+      - name: Run Tests
+        working-directory: mobile_app
+        run: flutter test
 
       - name: Build Flutter Web
         working-directory: mobile_app
@@ -36,6 +47,7 @@ jobs:
           cp -R mobile_app/build/web/* static/flutter/
 
       - name: Commit and Push changes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'

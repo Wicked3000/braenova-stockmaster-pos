@@ -15,6 +15,7 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   String _currentRoute = '/pos'; // Default
+  // ignore: unused_field
   String _role = 'cashier';
   bool _isLoading = true;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
