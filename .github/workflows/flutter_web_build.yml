@@ -29,6 +29,10 @@ jobs:
         working-directory: mobile_app
         run: flutter pub get > pub_get.log 2>&1 || (cat pub_get.log && exit 1)
 
+      - name: Flutter Analyze
+        working-directory: mobile_app
+        run: flutter analyze
+
       - name: Run Tests
         working-directory: mobile_app
         run: flutter test
